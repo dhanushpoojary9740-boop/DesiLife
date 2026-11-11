@@ -47,7 +47,6 @@ public class CareerManager {
 
     private final int dark = Color.rgb(12,25,23);
     private final int gold = Color.rgb(226,184,105);
-    private final int blue = Color.rgb(35,75,120);
     private final int white = Color.WHITE;
 
     public CareerManager(
@@ -183,7 +182,6 @@ public class CareerManager {
         if (age < 18) {
             addInfo(root,"Age Requirement",
                     "Career applications open at age 18.");
-            button(root,"BACK",() -> activity.finish());
             showScreen(scroll);
             return;
         }
@@ -200,14 +198,11 @@ public class CareerManager {
         addInfo(root,"Company",
                 employed ? company : "Not applicable");
 
-        addInfo(root,"Monthly Salary",
-                rupees(monthlySalary));
+        addInfo(root,"Monthly Salary",rupees(monthlySalary));
 
-        addInfo(root,"Work Experience",
-                experience+" years");
+        addInfo(root,"Work Experience",experience+" years");
 
-        addInfo(root,"Promotions",
-                String.valueOf(promotions));
+        addInfo(root,"Promotions",String.valueOf(promotions));
 
         addInfo(root,"Available Cash",rupees(money));
 
@@ -216,45 +211,33 @@ public class CareerManager {
         if (retired) {
             button(root,"RETIREMENT INFORMATION",
                     this::showRetirement);
+
         } else if (employed) {
             button(root,"🏆 CAREER DEVELOPMENT",
-                    () -> showCareerDevelopment());
+                    this::showCareerDevelopment);
 
-            button(root,"💼 CHANGE JOB",
-                    () -> showJobs());
+            button(root,"💼 CHANGE JOB",this::showJobs);
 
-            button(root,"RESIGN FROM JOB",
-                    () -> resign());
+            button(root,"RESIGN FROM JOB",this::resign);
 
         } else if (businessActive) {
-            button(root,"🏢 MANAGE BUSINESS",
-                    () -> manageBusiness());
+            button(root,"🏢 MANAGE BUSINESS",this::manageBusiness);
 
-            button(root,"APPLY FOR A JOB",
-                    () -> showJobs());
+            button(root,"APPLY FOR A JOB",this::showJobs);
 
         } else {
-            button(root,"🔎 FIND A JOB",
-                    () -> showJobs());
+            button(root,"🔎 FIND A JOB",this::showJobs);
 
-            button(root,"🏢 START YOUR BUSINESS",
-                    () -> startBusiness());
+            button(root,"🏢 START YOUR BUSINESS",this::startBusiness);
 
-            button(root,"💻 FREELANCING",
-                    () -> freelancing());
+            button(root,"💻 FREELANCING",this::freelancing);
         }
 
-        button(root,"🏛️ GOVERNMENT JOBS",
-                () -> showGovernmentJobs());
+        button(root,"🏛️ GOVERNMENT JOBS",this::showGovernmentJobs);
 
-        button(root,"📊 CAREER STATISTICS",
-                () -> showStatistics());
+        button(root,"📊 CAREER STATISTICS",this::showStatistics);
 
-        button(root,"🏖️ RETIREMENT",
-                () -> retire());
-
-        button(root,"BACK TO LIFE",
-                () -> showMessage("Career","Return to your life dashboard using the bottom navigation."));
+        button(root,"🏖️ RETIREMENT",this::retire);
 
         showScreen(scroll);
     }
@@ -297,15 +280,10 @@ public class CareerManager {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(12,8,12,8);
-        card.setBackground(shape(
-                Color.rgb(35,45,62),15
-        ));
+        card.setBackground(shape(Color.rgb(35,45,62),15));
 
-        TextView a = text(title,13,Color.LTGRAY);
-        TextView b = text(value,20,white);
-
-        card.addView(a);
-        card.addView(b);
+        card.addView(text(title,13,Color.LTGRAY));
+        card.addView(text(value,20,white));
 
         LinearLayout.LayoutParams p =
                 new LinearLayout.LayoutParams(-1,-2);
@@ -355,97 +333,86 @@ public class CareerManager {
 
         long salary;
         String category;
-        String employer = "Private Company";
+        String employer;
 
         switch(job) {
-
             case "Delivery Partner":
-                salary = 18000;
-                category = "Private";
-                employer = "Delivery Services";
+                salary=18000;
+                category="Private";
+                employer="Delivery Services";
                 break;
-
             case "Retail Associate":
-                salary = 16000;
-                category = "Private";
-                employer = "Retail Company";
+                salary=16000;
+                category="Private";
+                employer="Retail Company";
                 break;
-
             case "Office Assistant":
-                salary = 20000;
-                category = "Private";
-                employer = "Corporate Office";
+                salary=20000;
+                category="Private";
+                employer="Corporate Office";
                 break;
-
             case "Customer Support Executive":
-                salary = 24000;
-                category = "Private";
-                employer = "Customer Services";
+                salary=24000;
+                category="Private";
+                employer="Customer Services";
                 break;
-
             case "Sales Executive":
-                salary = 25000;
-                category = "Private";
-                employer = "Sales Corporation";
+                salary=25000;
+                category="Private";
+                employer="Sales Corporation";
                 break;
-
             case "Bank Clerk":
-                salary = 32000;
-                category = "Banking";
-                employer = "Indian Banking Sector";
+                salary=32000;
+                category="Banking";
+                employer="Indian Banking Sector";
                 break;
-
             case "Accountant":
-                salary = 35000;
-                category = "Finance";
-                employer = "Finance Company";
+                salary=35000;
+                category="Finance";
+                employer="Finance Company";
                 break;
-
             case "School Teacher":
-                salary = 30000;
-                category = "Education";
-                employer = "Private School";
+                salary=30000;
+                category="Education";
+                employer="Private School";
                 break;
-
             case "Software Developer":
-                salary = 55000;
-                category = "IT";
-                employer = "Technology Company";
+                salary=55000;
+                category="IT";
+                employer="Technology Company";
                 break;
-
             case "Government Officer":
-                salary = 48000;
-                category = "Government";
-                employer = "Government Department";
+                salary=48000;
+                category="Government";
+                employer="Government Department";
                 break;
-
             case "Police Constable":
-                salary = 30000;
-                category = "Government";
-                employer = "State Police Department";
+                salary=30000;
+                category="Government";
+                employer="State Police Department";
                 break;
-
             default:
-                salary = 45000;
-                category = "Corporate";
-                employer = "Business Corporation";
+                salary=45000;
+                category="Corporate";
+                employer="Business Corporation";
                 break;
         }
 
         if (!checkEligibility(job)) {
             showMessage("Qualification Required",
-                    "Your current education or qualification does not meet the requirements for this job.\n\nComplete your education and try again.");
+                    "Your current education or qualification does not meet the requirements for this job.");
             return;
         }
 
-        final long offeredSalary = salary;
-        final String offeredCategory = category;
-        final String offeredEmployer = employer;
+        final long offeredSalary=salary;
+        final String offeredCategory=category;
+        final String offeredEmployer=employer;
 
-        int chance = 45 + intelligence/3;
-        chance = Math.min(95,chance);
+        final int chance=Math.min(
+                95,45+intelligence/3
+        );
 
-        int result = (int)(Math.random()*100);
+        final int result=(int)(Math.random()*100);
 
         new AlertDialog.Builder(activity)
                 .setTitle("Job Interview")
@@ -453,23 +420,22 @@ public class CareerManager {
                         "Position: "+job+
                         "\nCompany: "+employer+
                         "\nExpected monthly salary: "+rupees(salary)+
-                        "\n\nInterview performance depends on your intelligence and qualifications.\n\nAttend the interview?"
+                        "\n\nAttend the interview?"
                 )
                 .setNegativeButton("CANCEL",null)
-                .setPositiveButton("ATTEND",
-                        (d,w) -> {
+                .setPositiveButton("ATTEND",(d,w) -> {
 
                     if (result < chance) {
 
-                        employed = true;
-                        jobTitle = job;
-                        company = offeredEmployer;
-                        sector = offeredCategory;
-                        monthlySalary = offeredSalary;
+                        employed=true;
+                        jobTitle=job;
+                        company=offeredEmployer;
+                        sector=offeredCategory;
+                        monthlySalary=offeredSalary;
 
-                        experience = 0;
-                        promotions = 0;
-                        lastPaidAge = age;
+                        experience=0;
+                        promotions=0;
+                        lastPaidAge=age;
 
                         saveCareer();
 
@@ -481,39 +447,31 @@ public class CareerManager {
                                 "\n\nYour salary will be credited when you age up to the next year.");
 
                     } else {
-
                         showMessage("Interview Result",
-                                "Unfortunately, you were not selected.\n\nImprove your intelligence and qualifications and try again.");
+                                "Unfortunately, you were not selected. Improve your intelligence and qualifications and try again.");
                     }
-
                 })
                 .show();
     }
 
     private boolean checkEligibility(String job) {
 
-        String e = education.toLowerCase(Locale.US);
+        String e=education.toLowerCase(Locale.US);
 
-        boolean hasSSLC =
-                e.contains("sslc") ||
+        boolean hasSSLC=e.contains("sslc") ||
                 e.contains("puc") ||
                 e.contains("graduated");
 
-        boolean hasPUC =
-                e.contains("puc") ||
+        boolean hasPUC=e.contains("puc") ||
                 e.contains("graduated");
 
-        if (job.equals("Delivery Partner")) {
-            return true;
-        }
+        if (job.equals("Delivery Partner")) return true;
 
         if (job.equals("Police Constable")) {
-            return age <= 27 && hasSSLC;
+            return age<=27 && hasSSLC;
         }
 
-        if (job.equals("Retail Associate")) {
-            return hasSSLC;
-        }
+        if (job.equals("Retail Associate")) return hasSSLC;
 
         if (job.equals("Office Assistant") ||
                 job.equals("Customer Support Executive") ||
@@ -535,7 +493,7 @@ public class CareerManager {
 
     private void showGovernmentJobs() {
 
-        String[] options = {
+        String[] options={
                 "Government Clerk",
                 "Police Constable",
                 "Government Officer"
@@ -545,24 +503,20 @@ public class CareerManager {
                 .setTitle("🏛️ Government Careers")
                 .setItems(options,(d,which) -> {
 
-                    String job = options[which];
-
-                    if (job.equals("Police Constable")) {
-                        applyForJob("Police Constable");
-                    } else if (job.equals("Government Clerk")) {
-
+                    if (which==0) {
                         if (!degreeCompleted) {
                             showMessage("Qualification",
                                     "A completed degree is required in this simulation.");
                             return;
                         }
-
                         applyForJob("Government Officer");
+
+                    } else if (which==1) {
+                        applyForJob("Police Constable");
 
                     } else {
                         applyForJob("Government Officer");
                     }
-
                 })
                 .setNegativeButton("CLOSE",null)
                 .show();
@@ -570,7 +524,7 @@ public class CareerManager {
 
     private void showCareerDevelopment() {
 
-        String info =
+        String info=
                 "Current position: "+jobTitle+
                 "\nCompany: "+company+
                 "\nMonthly salary: "+rupees(monthlySalary)+
@@ -580,35 +534,33 @@ public class CareerManager {
         new AlertDialog.Builder(activity)
                 .setTitle("🏆 Career Development")
                 .setMessage(info)
-                .setPositiveButton("TRAINING",
-                        (d,w) -> training())
+                .setPositiveButton("TRAINING",(d,w) -> training())
                 .setNegativeButton("CLOSE",null)
                 .show();
     }
 
     private void training() {
 
-        long fee = 5000;
+        long fee=5000;
 
-        if (money < fee) {
+        if (money<fee) {
             showMessage("Insufficient Funds",
                     "You need "+rupees(fee)+" for professional training.");
             return;
         }
 
-        money -= fee;
+        money-=fee;
 
-        int improvement = 3+(int)(Math.random()*5);
-        long bonus = monthlySalary * improvement / 100;
+        int improvement=3+(int)(Math.random()*5);
+        long bonus=monthlySalary*improvement/100;
 
-        monthlySalary += bonus;
+        monthlySalary+=bonus;
 
         callback.onMoneyChanged(money);
         saveCareer();
 
         showMessage("Training Completed",
-                "Your professional skills improved.\n\n"+
-                "Monthly salary increased by "+rupees(bonus)+".");
+                "Your professional skills improved.\n\nMonthly salary increased by "+rupees(bonus)+".");
     }
 
     private void resign() {
@@ -619,12 +571,12 @@ public class CareerManager {
                 .setNegativeButton("CANCEL",null)
                 .setPositiveButton("RESIGN",(d,w) -> {
 
-                    employed = false;
-                    monthlySalary = 0;
-                    jobTitle = "";
-                    company = "";
-                    sector = "";
-                    lastPaidAge = -1;
+                    employed=false;
+                    monthlySalary=0;
+                    jobTitle="";
+                    company="";
+                    sector="";
+                    lastPaidAge=-1;
 
                     saveCareer();
 
@@ -636,9 +588,9 @@ public class CareerManager {
 
     private void startBusiness() {
 
-        if (age < 18 || retired) return;
+        if (age<18 || retired) return;
 
-        String[] businesses = {
+        String[] businesses={
                 "Small Retail Shop",
                 "Restaurant",
                 "Clothing Store",
@@ -661,26 +613,26 @@ public class CareerManager {
 
         switch(name) {
             case "Small Retail Shop":
-                investment = 100000;
+                investment=100000;
                 break;
             case "Restaurant":
-                investment = 300000;
+                investment=300000;
                 break;
             case "Clothing Store":
-                investment = 200000;
+                investment=200000;
                 break;
             case "Online Business":
-                investment = 50000;
+                investment=50000;
                 break;
             case "Technology Startup":
-                investment = 500000;
+                investment=500000;
                 break;
             default:
-                investment = 1000000;
+                investment=1000000;
                 break;
         }
 
-        if (money < investment) {
+        if (money<investment) {
             showMessage("Insufficient Capital",
                     "Required investment: "+rupees(investment)+
                     "\nYour available money: "+rupees(money));
@@ -697,21 +649,19 @@ public class CareerManager {
                 .setNegativeButton("CANCEL",null)
                 .setPositiveButton("LAUNCH",(d,w) -> {
 
-                    money -= investment;
+                    money-=investment;
 
-                    businessName = name;
-                    businessActive = true;
-                    businessProfit = investment/20;
+                    businessName=name;
+                    businessActive=true;
+                    businessProfit=investment/20;
 
                     callback.onMoneyChanged(money);
                     saveCareer();
 
                     showMessage("Business Launched!",
-                            "Congratulations!\n\n"+
-                            "Your "+name+" is now operational.\n"+
-                            "Estimated yearly operating profit: "+
-                            rupees(businessProfit)+
-                            "\n\nActual profit may vary.");
+                            "Congratulations!\n\nYour "+name+
+                            " is now operational.\nEstimated yearly operating profit: "+
+                            rupees(businessProfit));
                 })
                 .show();
     }
@@ -722,8 +672,7 @@ public class CareerManager {
                 .setTitle("🏢 Business Management")
                 .setMessage(
                         "Business: "+businessName+
-                        "\nEstimated annual profit: "+rupees(businessProfit)+
-                        "\n\nManage your business as it grows."
+                        "\nEstimated annual profit: "+rupees(businessProfit)
                 )
                 .setPositiveButton("EXPAND BUSINESS",
                         (d,w) -> expandBusiness())
@@ -733,32 +682,32 @@ public class CareerManager {
 
     private void expandBusiness() {
 
-        long investment = Math.max(10000,businessProfit/2);
+        long investment=Math.max(10000,businessProfit/2);
 
-        if (money < investment) {
+        if (money<investment) {
             showMessage("Insufficient Funds",
                     "You need "+rupees(investment)+" to expand.");
             return;
         }
 
-        money -= investment;
-        businessProfit = Math.min(
+        money-=investment;
+
+        businessProfit=Math.min(
                 1000000000L,
-                businessProfit + businessProfit/2
+                businessProfit+businessProfit/2
         );
 
         callback.onMoneyChanged(money);
         saveCareer();
 
         showMessage("Expansion Successful",
-                "Your business has expanded.\n"+
-                "New estimated annual profit: "+
+                "Your business has expanded.\nNew estimated annual profit: "+
                 rupees(businessProfit));
     }
 
     private void freelancing() {
 
-        String[] work = {
+        String[] work={
                 "Content Writing",
                 "Graphic Design",
                 "Programming",
@@ -769,10 +718,10 @@ public class CareerManager {
                 .setTitle("💻 Freelancing")
                 .setItems(work,(d,which) -> {
 
-                    long earning =
-                            5000 + (int)(Math.random()*20000);
+                    long earning=5000+
+                            (int)(Math.random()*20000);
 
-                    money += earning;
+                    money+=earning;
 
                     callback.onMoneyChanged(money);
 
@@ -786,47 +735,45 @@ public class CareerManager {
 
     public void applyAnnualSalary() {
 
-        if (age < 18 || retired) return;
+        if (age<18 || retired) return;
 
-        if (lastPaidAge >= age) return;
+        if (lastPaidAge>=age) return;
 
-        long income = 0;
+        long income=0;
 
-        if (employed && monthlySalary > 0) {
+        if (employed && monthlySalary>0) {
 
-            income = monthlySalary * 12;
+            income=monthlySalary*12;
 
             experience++;
 
-            if (experience % 3 == 0) {
+            if (experience%3==0) {
 
                 promotions++;
 
-                long increment =
-                        monthlySalary * 15 / 100;
-
-                monthlySalary += increment;
+                long increment=monthlySalary*15/100;
+                monthlySalary+=increment;
             }
 
         } else if (businessActive) {
 
-            long randomFactor =
+            long randomFactor=
                     75+(int)(Math.random()*51);
 
-            income = businessProfit * randomFactor / 100;
+            income=businessProfit*randomFactor/100;
 
-            businessProfit = Math.max(
-                    0,businessProfit + businessProfit/10
+            businessProfit=Math.max(
+                    0,businessProfit+businessProfit/10
             );
         }
 
-        lastPaidAge = age;
+        lastPaidAge=age;
 
-        if (income > 0) {
+        if (income>0) {
 
-            money = Math.min(
+            money=Math.min(
                     Integer.MAX_VALUE,
-                    money + income
+                    money+income
             );
 
             callback.onMoneyChanged(money);
@@ -838,19 +785,19 @@ public class CareerManager {
     private void showStatistics() {
 
         showMessage("Career Statistics",
-                "Current job: "+(employed ? jobTitle : "None")+
+                "Current job: "+(employed?jobTitle:"None")+
                 "\nCompany: "+company+
                 "\nMonthly salary: "+rupees(monthlySalary)+
                 "\nWork experience: "+experience+" years"+
                 "\nPromotions: "+promotions+
-                "\nBusiness: "+(businessActive ? businessName : "None")+
+                "\nBusiness: "+(businessActive?businessName:"None")+
                 "\nBusiness annual profit: "+rupees(businessProfit)+
-                "\nRetirement: "+(retired ? "Retired" : "Active"));
+                "\nRetirement: "+(retired?"Retired":"Active"));
     }
 
     private void retire() {
 
-        if (age < 60) {
+        if (age<60) {
             showMessage("Retirement",
                     "You can retire at age 60 in this simulation.");
             return;
@@ -862,9 +809,9 @@ public class CareerManager {
                 .setNegativeButton("CANCEL",null)
                 .setPositiveButton("RETIRE",(d,w) -> {
 
-                    retired = true;
-                    employed = false;
-                    monthlySalary = 0;
+                    retired=true;
+                    employed=false;
+                    monthlySalary=0;
 
                     saveCareer();
 
