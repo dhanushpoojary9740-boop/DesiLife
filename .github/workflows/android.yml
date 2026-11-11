@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,8 +25,8 @@ jobs:
 
       - name: Locate Android SDK
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "$ANDROID_HOME/cmdline-tools" 
+          echo "$ANDROID_HOME"
+          echo "$ANDROID_HOME/cmdline-tools"
 
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
             -type f -name sdkmanager | sort -V | tail -n 1)
@@ -45,18 +48,47 @@ jobs:
       - name: Install Android SDK packages
         run: |
           "$SDKMANAGER" --sdk_root="$ANDROID_HOME" \
-            --install "platform-tools" "platforms;android-35"
+            "platform-tools" "platforms;android-35"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Build DesiLife APK
-        run: gradle assembleDebug
+      - name: Configure permanent release signing
+        env:
+          DESILIFE_KEYSTORE_BASE64: ${{ secrets.DESILIFE_KEYSTORE_BASE64 }}
+          DESILIFE_STORE_PASSWORD: ${{ secrets.DESILIFE_STORE_PASSWORD }}
+          DESILIFE_KEY_ALIAS: ${{ secrets.DESILIFE_KEY_ALIAS }}
+          DESILIFE_KEY_PASSWORD: ${{ secrets.DESILIFE_KEY_PASSWORD }}
+        run: |
+          set -e
 
-      - name: Upload APK
+          if [ -z "$DESILIFE_KEYSTORE_BASE64" ] || \
+             [ -z "$DESILIFE_STORE_PASSWORD" ] || \
+             [ -z "$DESILIFE_KEY_ALIAS" ] || \
+             [ -z "$DESILIFE_KEY_PASSWORD" ]; then
+            echo "Release signing secrets are missing"
+            exit 1
+          fi
+
+          echo "$DESILIFE_KEYSTORE_BASE64" | \
+            base64 --decode > "$RUNNER_TEMP/desilife-release.jks"
+
+          echo "DESILIFE_KEYSTORE_PATH=$RUNNER_TEMP/desilife-release.jks" \
+            >> "$GITHUB_ENV"
+
+      - name: Build signed DesiLife APK
+        env:
+          DESILIFE_STORE_PASSWORD: ${{ secrets.DESILIFE_STORE_PASSWORD }}
+          DESILIFE_KEY_ALIAS: ${{ secrets.DESILIFE_KEY_ALIAS }}
+          DESILIFE_KEY_PASSWORD: ${{ secrets.DESILIFE_KEY_PASSWORD }}
+        run: |
+          gradle assembleRelease
+
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: DesiLife-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: DesiLife-Release
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
