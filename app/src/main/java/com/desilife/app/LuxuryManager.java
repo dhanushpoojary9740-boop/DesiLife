@@ -165,6 +165,17 @@ public class LuxuryManager {
         }
     }
 
+    // Safely replace an existing JSONArray element.
+    private void safeArrayPut(
+        JSONArray array,int index,Object value
+    ) {
+        try {
+            array.put(index,value);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private JSONArray getArray(String key) {
         try {
             return new JSONArray(save.getString(key,"[]"));
@@ -547,7 +558,8 @@ public class LuxuryManager {
                         Math.round(item.optLong("value")*1.10));
                 }
 
-                array.put(index,item);
+                safeArrayPut(array,index,item);
+
                 storeArray(key,array);
                 updateMoney();
 
@@ -613,12 +625,8 @@ public class LuxuryManager {
         JSONArray vehicles=getArray(VEHICLE_KEY);
 
         long annualRent=totalIncome(properties)*12L;
-
-        long propertyCosts=
-            totalMaintenance(properties)*12L;
-
-        long vehicleCosts=
-            totalMaintenance(vehicles)*12L;
+        long propertyCosts=totalMaintenance(properties)*12L;
+        long vehicleCosts=totalMaintenance(vehicles)*12L;
 
         long net=annualRent-propertyCosts-vehicleCosts;
 
@@ -651,11 +659,10 @@ public class LuxuryManager {
             if(item==null) continue;
 
             long value=item.optLong("value",0);
-
             value=Math.round(value*(property?1.025:0.92));
 
             safePut(item,"value",value);
-            array.put(i,item);
+            safeArrayPut(array,i,item);
         }
     }
 
