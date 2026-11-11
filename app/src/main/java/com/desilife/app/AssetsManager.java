@@ -430,7 +430,6 @@ public class AssetsManager {
         }
 
         double power=Math.pow(1+monthlyRate,months);
-
         double emi=principal*monthlyRate*power/(power-1);
 
         return safeInt((long)Math.ceil(emi));
@@ -493,12 +492,15 @@ public class AssetsManager {
             .show();
     }
 
-    // EXTRA REPAYMENT
+    // EXTRA REPAYMENT - CORRECTED
 
     void extraRepayment() {
-        int debt=get("loanDebt",0);
+        final int originalDebt = get("loanDebt",0);
 
         amountDialog("Extra repayment",amount -> {
+
+            int debt = originalDebt;
+
             if(amount>money) {
                 error("Insufficient bank balance.");
                 return;
@@ -744,8 +746,6 @@ public class AssetsManager {
     }
 
     // ANNUAL FINANCIAL SIMULATION
-    // Called by MainActivity when the player ages up.
-    // Simulates 12 individual months.
 
     public static int applyAnnualFinances(
         SharedPreferences save,
@@ -786,7 +786,6 @@ public class AssetsManager {
         );
 
         String loanType=save.getString("loanType","");
-
         long totalPaid=save.getLong("loanTotalPaid",0);
 
         for(int month=0;month<12;month++) {
@@ -800,7 +799,6 @@ public class AssetsManager {
             }
 
             double monthlyRate=rate/1200.0;
-
             long interest=(long)Math.ceil(debt*monthlyRate);
             long due=interest+emi;
 
@@ -823,12 +821,12 @@ public class AssetsManager {
 
             } else {
 
-                // FIX: safely convert the long result to int.
                 debt=safeStaticInt(safeStaticAdd(debt,interest));
 
-                long lateFee=Math.max(100,(long)Math.ceil(emi*0.02));
+                long lateFee=Math.max(
+                    100,(long)Math.ceil(emi*0.02)
+                );
 
-                // FIX: safely convert the long result to int.
                 debt=safeStaticInt(safeStaticAdd(debt,lateFee));
 
                 missed++;
