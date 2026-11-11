@@ -8,6 +8,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowInsets;
 import android.widget.*;
 
 public class MainActivity extends Activity {
@@ -47,7 +48,14 @@ public class MainActivity extends Activity {
 
         getWindow().setStatusBarColor(bg);
         getWindow().setNavigationBarColor(bg);
-        getWindow().getDecorView().setSystemUiVisibility(0);
+        getWindow().getDecorView().setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_VISIBLE
+        );
+
+        // Explicitly handle Android system bars.
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            getWindow().setDecorFitsSystemWindows(false);
+        }
 
         save = getSharedPreferences("DesiLifeSave", MODE_PRIVATE);
 
@@ -96,6 +104,18 @@ public class MainActivity extends Activity {
         dashboardShell.setOrientation(LinearLayout.VERTICAL);
         dashboardShell.setBackgroundColor(bg);
 
+        // Apply Android status-bar and navigation-bar insets.
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            dashboardShell.setOnApplyWindowInsetsListener((v, insets) -> {
+                int top = insets.getSystemWindowInsetTop();
+                int bottom = insets.getSystemWindowInsetBottom();
+
+                v.setPadding(0, top, 0, bottom);
+
+                return insets;
+            });
+        }
+
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(false);
         scroll.setBackgroundColor(bg);
@@ -108,16 +128,22 @@ public class MainActivity extends Activity {
 
         scroll.addView(root);
 
-        dashboardShell.addView(scroll,
-                new LinearLayout.LayoutParams(-1,0,1));
+        dashboardShell.addView(
+            scroll,
+            new LinearLayout.LayoutParams(-1,0,1)
+        );
 
         setContentView(dashboardShell);
+
+        dashboardShell.requestApplyInsets();
     }
 
     void addText(String value, int size, int color) {
         TextView t = text(value,size,color);
+
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
+
         p.setMargins(0,5,0,5);
         root.addView(t,p);
     }
@@ -130,16 +156,20 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
+
         p.setMargins(0,9,0,9);
         root.addView(b,p);
+
         b.setOnClickListener(v -> action.run());
     }
 
     void addDivider() {
         View line = new View(this);
         line.setBackgroundColor(gold);
+
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,2);
+
         p.setMargins(0,18,0,18);
         root.addView(line,p);
     }
@@ -162,6 +192,7 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,55);
+
         p.setMargins(0,5,0,12);
         root.addView(s,p);
 
@@ -170,6 +201,7 @@ public class MainActivity extends Activity {
 
     EditText addInput(String hint) {
         EditText e = new EditText(this);
+
         e.setHint(hint);
         e.setTextColor(white);
         e.setHintTextColor(muted);
@@ -179,6 +211,7 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,55);
+
         p.setMargins(0,8,0,15);
         root.addView(e,p);
 
@@ -200,7 +233,8 @@ public class MainActivity extends Activity {
         addDashboardNav(nav,"🏦","Finance",() -> openFinance());
 
         LinearLayout.LayoutParams p =
-                new LinearLayout.LayoutParams(-1,-2);
+            new LinearLayout.LayoutParams(-1,-2);
+
         p.setMargins(8,0,8,8);
 
         return nav;
@@ -213,7 +247,7 @@ public class MainActivity extends Activity {
         String entry = "Age " + age + " • " + description;
 
         String updated = old.isEmpty()
-                ? entry : old + "\n" + entry;
+            ? entry : old + "\n" + entry;
 
         String[] entries = updated.split("\n");
 
@@ -243,8 +277,9 @@ public class MainActivity extends Activity {
         String[] entries = history.split("\n");
         StringBuilder display = new StringBuilder();
 
-        for (int i = entries.length - 1; i >= 0; i--) {
+        for (int i = entries.length-1; i >= 0; i--) {
             display.append("• ").append(entries[i]);
+
             if (i > 0) display.append("\n\n");
         }
 
@@ -287,7 +322,7 @@ public class MainActivity extends Activity {
                     new android.app.AlertDialog.Builder(this)
                         .setTitle("Start a New Life?")
                         .setMessage(
-                            "Your current life will be replaced when you create a new character. Continue?"
+                            "Your current life will remain saved until you create the new character. Continue?"
                         )
                         .setNegativeButton("CANCEL",null)
                         .setPositiveButton("CONTINUE",
@@ -311,17 +346,17 @@ public class MainActivity extends Activity {
     void showLifeStatistics() {
         String history = save.getString("life_events","");
         int eventCount = history.isEmpty()
-                ? 0 : history.split("\n").length;
+            ? 0 : history.split("\n").length;
 
         String stats =
-                "Name: " + playerName +
-                "\nAge: " + age +
-                "\nHealth: " + health + "%" +
-                "\nHappiness: " + happiness + "%" +
-                "\nIntelligence: " + intelligence + "%" +
-                "\nBank balance: ₹" + money +
-                "\nEducation: " + educationStatus +
-                "\nRecorded life events: " + eventCount;
+            "Name: " + playerName +
+            "\nAge: " + age +
+            "\nHealth: " + health + "%" +
+            "\nHappiness: " + happiness + "%" +
+            "\nIntelligence: " + intelligence + "%" +
+            "\nBank balance: ₹" + money +
+            "\nEducation: " + educationStatus +
+            "\nRecorded life events: " + eventCount;
 
         message(stats);
     }
@@ -333,8 +368,7 @@ public class MainActivity extends Activity {
         panel.setBackground(shape(Color.WHITE,14));
 
         TextView heading = dashboardText(
-            "📖 LIFE EVENTS",18,
-            Color.rgb(17,82,130),true
+            "📖 LIFE EVENTS",18,Color.rgb(17,82,130),true
         );
 
         heading.setGravity(Gravity.LEFT);
@@ -342,7 +376,7 @@ public class MainActivity extends Activity {
 
         String history = save.getString("life_events","");
         String[] events = history.isEmpty()
-                ? new String[0] : history.split("\n");
+            ? new String[0] : history.split("\n");
 
         if (events.length == 0) {
             TextView empty = dashboardText(
@@ -371,9 +405,7 @@ public class MainActivity extends Activity {
 
                 if (shown < 4 && i > 0) {
                     View line = new View(this);
-                    line.setBackgroundColor(
-                        Color.rgb(230,230,230)
-                    );
+                    line.setBackgroundColor(Color.rgb(230,230,230));
 
                     panel.addView(line,
                         new LinearLayout.LayoutParams(-1,1));
@@ -726,12 +758,7 @@ public class MainActivity extends Activity {
         );
 
         storyHeading.setGravity(Gravity.LEFT);
-
-        LinearLayout.LayoutParams storyHeadingParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        storyHeadingParams.setMargins(0,12,0,2);
-        journal.addView(storyHeading,storyHeadingParams);
+        journal.addView(storyHeading);
 
         TextView story = dashboardText(
             getCurrentLifeStory(),14,
@@ -747,7 +774,6 @@ public class MainActivity extends Activity {
         journalParams.setMargins(0,0,0,8);
         root.addView(journal,journalParams);
 
-        // Recent events appear in the middle of the dashboard.
         addLifeEventsPanel();
 
         TextView ageUpButton = dashboardText(
@@ -805,11 +831,12 @@ public class MainActivity extends Activity {
             shape(Color.rgb(229,184,105),18)
         );
 
+        education.setPadding(12,14,12,14);
+
         LinearLayout.LayoutParams educationParams =
             new LinearLayout.LayoutParams(-1,-2);
 
         educationParams.setMargins(0,12,0,4);
-        education.setPadding(12,14,12,14);
 
         root.addView(education,educationParams);
         education.setOnClickListener(v -> showEducation());
@@ -832,7 +859,7 @@ public class MainActivity extends Activity {
             message("Your life has been saved!");
         });
 
-        // Navigation is fixed at the bottom of the screen.
+        // Fixed bottom navigation.
         dashboardShell.addView(createBottomNavigation());
     }
 
@@ -1003,6 +1030,7 @@ public class MainActivity extends Activity {
 
                 happiness = Math.min(100,happiness+5);
                 addLifeEvent("You joined "+schoolType+".");
+
                 saveGame();
                 showEducation();
             });
@@ -1022,12 +1050,14 @@ public class MainActivity extends Activity {
             addButton("📖 STUDY HARD",() -> {
                 intelligence = Math.min(100,intelligence+5);
                 happiness = Math.max(0,happiness-2);
+
                 educationStatus = "Class "+currentClass;
 
                 addLifeEvent("You studied hard in Class "+currentClass+".");
 
                 saveGame();
                 showEducation();
+
                 message("You studied hard! Intelligence increased.");
             });
 
@@ -1038,6 +1068,7 @@ public class MainActivity extends Activity {
 
                 saveGame();
                 showEducation();
+
                 message("You enjoyed your school activities!");
             });
 
@@ -1047,12 +1078,8 @@ public class MainActivity extends Activity {
 
             if (sslcPassed) {
                 addText("SSLC: PASSED ✓",20,white);
-                addText("Your examination is completed.",16,muted);
-
             } else if (sslcAttempted) {
                 addText("SSLC: FAILED",20,white);
-                addText("Your examination attempt is completed.",16,muted);
-
             } else {
                 addText("Your board examination is approaching.",16,white);
                 addButton("📝 TAKE SSLC EXAM",() -> takeExam("SSLC"));
@@ -1067,11 +1094,9 @@ public class MainActivity extends Activity {
 
             } else if (pucPassed) {
                 addText("PUC: PASSED ✓",20,gold);
-                addText("Your PUC examination is completed.",16,white);
 
             } else if (pucAttempted) {
                 addText("PUC: FAILED",20,white);
-                addText("Your examination attempt is completed.",16,muted);
 
             } else if (pucStream.isEmpty()) {
 
@@ -1108,10 +1133,11 @@ public class MainActivity extends Activity {
 
                 addButton("📖 STUDY HARD",() -> {
                     intelligence = Math.min(100,intelligence+5);
+
                     addLifeEvent("You studied for your PUC examinations.");
+
                     saveGame();
                     showEducation();
-                    message("Your intelligence increased!");
                 });
 
                 if (age == 17) {
@@ -1158,7 +1184,6 @@ public class MainActivity extends Activity {
 
                 addText("🎓 DEGREE COMPLETED ✓",22,gold);
                 addText("Course: "+degreeCourse,18,white);
-                addText("Congratulations! You are a graduate.",16,muted);
 
             } else if (degreeCourse.isEmpty()) {
 
@@ -1286,7 +1311,8 @@ public class MainActivity extends Activity {
         }
 
         addLifeEvent(
-            exam+" examination: "+(passed ? "PASSED" : "FAILED")+
+            exam+" examination: "+
+            (passed ? "PASSED" : "FAILED")+
             " with "+examMarks+"/100 marks."
         );
 
@@ -1318,9 +1344,7 @@ public class MainActivity extends Activity {
                     0,Math.min(Integer.MAX_VALUE,newMoney)
                 );
 
-                addLifeEvent(
-                    "You made a career decision or received career income."
-                );
+                addLifeEvent("You made a career decision or received career income.");
 
                 saveGame();
             }
@@ -1344,6 +1368,7 @@ public class MainActivity extends Activity {
                 money = (int)Math.max(
                     0,Math.min(Integer.MAX_VALUE,newMoney)
                 );
+
                 saveGame();
             }
         );
@@ -1427,9 +1452,7 @@ public class MainActivity extends Activity {
                     0,Math.min(Integer.MAX_VALUE,newMoney)
                 );
 
-                addLifeEvent(
-                    "You completed a banking or finance transaction."
-                );
+                addLifeEvent("You completed a banking or finance transaction.");
 
                 saveGame();
             }
@@ -1464,16 +1487,13 @@ public class MainActivity extends Activity {
             financeManager.applyAnnualFinance();
 
             money = (int)Math.max(
-                0,Math.min(
-                    Integer.MAX_VALUE,
-                    financeManager.getCash()
-                )
+                0,Math.min(Integer.MAX_VALUE,financeManager.getCash())
             );
 
             processCareerSalary();
         }
 
-        String event = "";
+        String event;
 
         if (age == 1) {
             event = "You celebrated your first birthday with your family.";
