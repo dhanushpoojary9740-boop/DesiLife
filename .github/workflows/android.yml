@@ -1,3 +1,4 @@
+
 name: Build DesiLife APK
 
 on:
@@ -24,9 +25,10 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           accept-android-sdk-licenses: true
-          packages: |
-            platform-tools
-            platforms;android-35
+
+      - name: Install Android packages
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-35"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
