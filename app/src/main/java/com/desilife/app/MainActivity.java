@@ -33,13 +33,10 @@ public class MainActivity extends Activity {
     int money = 5000;
     int examMarks = 0;
 
-    // Permanent examination records
     boolean sslcAttempted = false;
     boolean sslcPassed = false;
-
     boolean pucAttempted = false;
     boolean pucPassed = false;
-
     boolean degreeCompleted = false;
 
     @Override
@@ -94,37 +91,30 @@ public class MainActivity extends Activity {
 
     void addText(String value, int size, int color) {
         TextView t = text(value,size,color);
-
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
-
         p.setMargins(0,5,0,5);
         root.addView(t,p);
     }
 
     void addButton(String label, Runnable action) {
         TextView b = text(label,16,bg);
-
         b.setTypeface(null,Typeface.BOLD);
         b.setBackground(shape(gold,28));
         b.setPadding(12,16,12,16);
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
-
         p.setMargins(0,9,0,9);
         root.addView(b,p);
-
         b.setOnClickListener(v -> action.run());
     }
 
     void addDivider() {
         View line = new View(this);
         line.setBackgroundColor(gold);
-
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,2);
-
         p.setMargins(0,18,0,18);
         root.addView(line,p);
     }
@@ -147,7 +137,6 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,55);
-
         p.setMargins(0,5,0,12);
         root.addView(s,p);
 
@@ -156,7 +145,6 @@ public class MainActivity extends Activity {
 
     EditText addInput(String hint) {
         EditText e = new EditText(this);
-
         e.setHint(hint);
         e.setTextColor(white);
         e.setHintTextColor(muted);
@@ -166,7 +154,6 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,55);
-
         p.setMargins(0,8,0,15);
         root.addView(e,p);
 
@@ -248,7 +235,6 @@ public class MainActivity extends Activity {
         });
 
         addButton("CREATE MY LIFE", () -> {
-
             String n = name.getText().toString().trim();
 
             if (n.isEmpty()) {
@@ -310,13 +296,11 @@ public class MainActivity extends Activity {
             .putInt("intelligence",intelligence)
             .putInt("money",money)
             .putInt("examMarks",examMarks)
-
             .putBoolean("sslcAttempted",sslcAttempted)
             .putBoolean("sslcPassed",sslcPassed)
             .putBoolean("pucAttempted",pucAttempted)
             .putBoolean("pucPassed",pucPassed)
             .putBoolean("degreeCompleted",degreeCompleted)
-
             .apply();
     }
 
@@ -341,7 +325,6 @@ public class MainActivity extends Activity {
 
         examMarks = save.getInt("examMarks",0);
 
-        // Recover existing progress from earlier game versions.
         sslcPassed = save.getBoolean(
             "sslcPassed",
             educationStatus.equals("SSLC Passed") ||
@@ -375,55 +358,309 @@ public class MainActivity extends Activity {
         }
     }
 
+    // BITLIFE-STYLE DESILIFE DASHBOARD
+
     void showDashboard() {
         setup();
+        root.setPadding(12,12,12,24);
+        root.setGravity(Gravity.TOP);
 
-        addText("🇮🇳 DESILIFE",25,gold);
-        addDivider();
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(14,12,14,12);
+        header.setBackground(shape(Color.rgb(218,48,25),18));
 
-        addText("Hello, "+playerName+"!",27,white);
-        addText("Age: "+age+" years",21,gold);
-        addText(city+" | India",15,muted);
-        addText("Family: "+family,15,muted);
-        addText("Gender: "+gender,15,muted);
+        TextView menu = dashboardText("☰",25,white,true);
+        menu.setOnClickListener(v -> showHome());
+        header.addView(menu,new LinearLayout.LayoutParams(42,-2));
 
-        addDivider();
+        TextView brand = dashboardText("🇮🇳 DesiLife",25,Color.WHITE,true);
+        brand.setGravity(Gravity.CENTER_VERTICAL);
+        header.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
 
-        addText("YOUR LIFE STATS",20,gold);
-        addText("❤️ Health: "+health+"/100",17,white);
-        addText("😊 Happiness: "+happiness+"/100",17,white);
-        addText("🧠 Intelligence: "+intelligence+"/100",17,white);
-        addText("💰 Money: ₹"+money,19,gold);
+        TextView fame = dashboardText("★ 0",23,
+                Color.rgb(255,220,70),true);
+        header.addView(fame,new LinearLayout.LayoutParams(-2,-2));
 
-        addDivider();
+        root.addView(header,new LinearLayout.LayoutParams(-1,-2));
 
-        addText("YOUR LIFE JOURNEY",20,gold);
+        // Character identity strip
+        LinearLayout identity = new LinearLayout(this);
+        identity.setOrientation(LinearLayout.HORIZONTAL);
+        identity.setGravity(Gravity.CENTER_VERTICAL);
+        identity.setPadding(12,12,12,12);
+        identity.setBackground(shape(Color.rgb(229,237,243),14));
 
-        addButton("🎂 AGE UP - NEXT YEAR", () -> ageUp());
-
-        addButton("👨‍👩‍👧 FAMILY", () ->
-            message("Family activities are coming soon.")
+        TextView avatar = dashboardText(
+            gender.equalsIgnoreCase("Female") ? "👩" : "👦",
+            42,Color.rgb(25,75,110),false
         );
+        identity.addView(avatar,new LinearLayout.LayoutParams(58,-2));
 
-        addButton("📚 EDUCATION", () -> showEducation());
+        LinearLayout identityInfo = new LinearLayout(this);
+        identityInfo.setOrientation(LinearLayout.VERTICAL);
 
-        addButton("💼 CAREER", () ->
-            message("Career opportunities are coming soon.")
+        TextView nameView = dashboardText(
+            playerName,21,Color.rgb(12,78,126),true
         );
+        nameView.setGravity(Gravity.LEFT);
 
-        addButton("❤️ RELATIONSHIPS", () ->
-            message("Relationships are coming soon.")
+        TextView detailView = dashboardText(
+            age+" years • "+gender+" • "+city,
+            12,Color.rgb(55,91,119),false
         );
+        detailView.setGravity(Gravity.LEFT);
 
-        addButton("🏠 PROPERTY", () ->
-            message("Houses and vehicles are coming soon.")
+        identityInfo.addView(nameView);
+        identityInfo.addView(detailView);
+
+        identity.addView(identityInfo,
+                new LinearLayout.LayoutParams(0,-2,1));
+
+        TextView balance = dashboardText(
+            "₹"+money+"\nBank Balance",
+            16,Color.rgb(12,78,126),true
         );
+        identity.addView(balance,new LinearLayout.LayoutParams(-2,-2));
 
-        addButton("💾 SAVE GAME", () -> {
+        LinearLayout.LayoutParams identityParams =
+                new LinearLayout.LayoutParams(-1,-2);
+        identityParams.setMargins(0,8,0,8);
+        root.addView(identity,identityParams);
+
+        // Life journal
+        LinearLayout journal = new LinearLayout(this);
+        journal.setOrientation(LinearLayout.VERTICAL);
+        journal.setPadding(14,12,14,12);
+        journal.setBackground(shape(Color.WHITE,14));
+
+        TextView ageHeading = dashboardText(
+            "Age: "+age+" years",19,Color.rgb(17,82,130),true
+        );
+        ageHeading.setGravity(Gravity.LEFT);
+        journal.addView(ageHeading);
+
+        TextView birthInfo = dashboardText(
+            "I was born in "+city+". My family background is "+
+            family.toLowerCase()+".",
+            14,Color.rgb(95,95,95),false
+        );
+        birthInfo.setGravity(Gravity.LEFT);
+        journal.addView(birthInfo);
+
+        TextView storyHeading = dashboardText(
+            "YOUR LIFE JOURNEY",16,Color.rgb(17,82,130),true
+        );
+        storyHeading.setGravity(Gravity.LEFT);
+
+        LinearLayout.LayoutParams storyHeadingParams =
+                new LinearLayout.LayoutParams(-1,-2);
+        storyHeadingParams.setMargins(0,12,0,2);
+        journal.addView(storyHeading,storyHeadingParams);
+
+        TextView story = dashboardText(
+            getCurrentLifeStory(),14,Color.rgb(95,95,95),false
+        );
+        story.setGravity(Gravity.LEFT);
+        journal.addView(story);
+
+        LinearLayout.LayoutParams journalParams =
+                new LinearLayout.LayoutParams(-1,-2);
+        journalParams.setMargins(0,0,0,8);
+        root.addView(journal,journalParams);
+
+        // Large age-up button
+        TextView ageUpButton = dashboardText(
+            "＋\nAGE UP",22,Color.WHITE,true
+        );
+        ageUpButton.setBackground(shape(Color.rgb(39,153,67),100));
+        ageUpButton.setElevation(8);
+
+        LinearLayout.LayoutParams ageUpParams =
+                new LinearLayout.LayoutParams(142,142);
+        ageUpParams.gravity = Gravity.CENTER_HORIZONTAL;
+        ageUpParams.setMargins(0,6,0,12);
+        root.addView(ageUpButton,ageUpParams);
+
+        ageUpButton.setOnClickListener(v -> ageUp());
+
+        // Bottom navigation
+        LinearLayout nav = new LinearLayout(this);
+        nav.setOrientation(LinearLayout.HORIZONTAL);
+        nav.setGravity(Gravity.CENTER);
+        nav.setPadding(4,10,4,10);
+        nav.setBackground(shape(Color.rgb(5,83,145),12));
+
+        addDashboardNav(nav,"👤","Life",() -> showDashboard());
+
+        addDashboardNav(nav,"💰","Assets",
+            () -> message("Assets, savings and vehicles are coming soon."));
+
+        addDashboardNav(nav,"❤️","Relations",
+            () -> message("Family, friends and relationships are coming soon."));
+
+        addDashboardNav(nav,"•••","Activities",
+            () -> message("Activities and life events are coming soon."));
+
+        LinearLayout.LayoutParams navParams =
+                new LinearLayout.LayoutParams(-1,-2);
+        navParams.setMargins(0,0,0,12);
+        root.addView(nav,navParams);
+
+        // Life stats
+        LinearLayout stats = new LinearLayout(this);
+        stats.setOrientation(LinearLayout.VERTICAL);
+        stats.setPadding(12,12,12,12);
+        stats.setBackground(shape(Color.WHITE,14));
+
+        TextView statsTitle = dashboardText(
+            "YOUR LIFE STATS",18,Color.rgb(17,82,130),true
+        );
+        statsTitle.setGravity(Gravity.LEFT);
+        stats.addView(statsTitle);
+
+        addDashboardStat(stats,"Happiness","😊",happiness,
+                Color.rgb(42,157,75));
+        addDashboardStat(stats,"Health","❤️",health,
+                Color.rgb(42,157,75));
+        addDashboardStat(stats,"Smarts","🧠",intelligence,
+                Color.rgb(42,157,75));
+        addDashboardStat(stats,"Looks","✨",65,
+                Color.rgb(235,145,35));
+
+        root.addView(stats,new LinearLayout.LayoutParams(-1,-2));
+
+        TextView education = dashboardText(
+            "📚  EDUCATION",16,bg,true
+        );
+        education.setBackground(shape(Color.rgb(229,184,105),18));
+
+        LinearLayout.LayoutParams educationParams =
+                new LinearLayout.LayoutParams(-1,-2);
+        educationParams.setMargins(0,12,0,4);
+
+        education.setPadding(12,14,12,14);
+        root.addView(education,educationParams);
+        education.setOnClickListener(v -> showEducation());
+
+        TextView saveButton = dashboardText(
+            "💾  SAVE GAME",15,white,true
+        );
+        saveButton.setBackground(shape(Color.rgb(49,63,59),18));
+        saveButton.setPadding(12,13,12,13);
+        root.addView(saveButton,new LinearLayout.LayoutParams(-1,-2));
+
+        saveButton.setOnClickListener(v -> {
             saveGame();
             message("Your life has been saved!");
         });
     }
+
+    TextView dashboardText(String value,int size,int color,boolean bold) {
+        TextView t = new TextView(this);
+        t.setText(value);
+        t.setTextSize(size);
+        t.setTextColor(color);
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(5,5,5,5);
+        if (bold) t.setTypeface(null,Typeface.BOLD);
+        return t;
+    }
+
+    void addDashboardNav(LinearLayout nav,String icon,String label,
+                         Runnable action) {
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.VERTICAL);
+        item.setGravity(Gravity.CENTER);
+        item.setPadding(2,4,2,4);
+
+        TextView iconView = dashboardText(icon,23,Color.WHITE,true);
+        TextView labelView = dashboardText(label,11,Color.WHITE,false);
+
+        item.addView(iconView);
+        item.addView(labelView);
+
+        nav.addView(item,new LinearLayout.LayoutParams(0,-2,1));
+        item.setOnClickListener(v -> action.run());
+    }
+
+    void addDashboardStat(LinearLayout parent,String label,String emoji,
+                          int value,int barColor) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0,5,0,5);
+
+        TextView title = dashboardText(
+            label+" "+emoji,13,Color.rgb(17,82,130),true
+        );
+        title.setGravity(Gravity.LEFT);
+        row.addView(title,new LinearLayout.LayoutParams(105,-2));
+
+        LinearLayout track = new LinearLayout(this);
+        track.setBackground(shape(Color.rgb(225,233,240),5));
+        track.setClipToOutline(true);
+
+        View fill = new View(this);
+        fill.setBackground(shape(barColor,5));
+
+        int safeValue = Math.max(0,Math.min(100,value));
+
+        track.addView(fill,
+                new LinearLayout.LayoutParams(0,13,safeValue));
+
+        if (safeValue < 100) {
+            track.addView(new View(this),
+                new LinearLayout.LayoutParams(0,13,100-safeValue));
+        }
+
+        row.addView(track,new LinearLayout.LayoutParams(0,15,1));
+
+        TextView percent = dashboardText(
+            value+"%",13,Color.rgb(17,82,130),true
+        );
+        row.addView(percent,new LinearLayout.LayoutParams(48,-2));
+
+        parent.addView(row);
+    }
+
+    String getCurrentLifeStory() {
+        if (age == 0) {
+            return "My life story is just beginning. Every year will bring new choices and experiences.";
+        }
+
+        if (degreeCompleted) {
+            return "I completed my "+degreeCourse+
+                    " degree. A new chapter of my life begins.";
+        }
+
+        if (pucPassed && !degreeCourse.isEmpty()) {
+            return "I passed PUC and joined "+degreeCourse+
+                    ". I am continuing my higher education.";
+        }
+
+        if (pucPassed) {
+            return "I successfully passed my PUC examination. I can now choose my degree course.";
+        }
+
+        if (sslcPassed && age >= 16) {
+            return "I passed my SSLC examination. My next goal is to complete PUC.";
+        }
+
+        if (age >= 6 && age <= 14 && !schoolType.isEmpty()) {
+            return "I am studying in Class "+(age-5)+
+                    " at a "+schoolType+".";
+        }
+
+        if (age >= 5) {
+            return "I am growing up and preparing for the next stage of my education.";
+        }
+
+        return "I am enjoying my childhood with my family.";
+    }
+
+    // EDUCATION SYSTEM - EXISTING PROGRESS PRESERVED
 
     void showEducation() {
         setup();
@@ -454,7 +691,6 @@ public class MainActivity extends Activity {
 
             addButton("ADMIT TO SCHOOL", () -> {
                 schoolType = school.getSelectedItem().toString();
-
                 educationStatus = "School admission completed";
 
                 if (schoolType.equals("Private School")) {
@@ -468,7 +704,7 @@ public class MainActivity extends Activity {
 
         } else if (age >= 6 && age <= 14) {
 
-            int currentClass = age - 5;
+            int currentClass = age-5;
 
             addText("🏫 "+schoolType,18,gold);
             addText("Currently studying in Class "+currentClass,20,white);
@@ -523,19 +759,16 @@ public class MainActivity extends Activity {
             addText("🎓 PRE-UNIVERSITY COURSE",21,gold);
 
             if (!sslcPassed) {
-
                 addText(
                     "You must pass SSLC before joining PUC.",
                     16,white
                 );
 
             } else if (pucPassed) {
-
                 addText("PUC: PASSED ✓",20,gold);
                 addText("Your PUC examination is completed.",16,white);
 
             } else if (pucAttempted) {
-
                 addText("PUC: FAILED",20,white);
                 addText(
                     "Your PUC examination attempt is completed.",
@@ -567,7 +800,6 @@ public class MainActivity extends Activity {
             } else {
 
                 addText("Stream: "+pucStream,18,gold);
-
                 addText(
                     age == 16 ? "PUC First Year" : "PUC Second Year",
                     18,white
@@ -591,9 +823,6 @@ public class MainActivity extends Activity {
 
             addText("🎓 HIGHER EDUCATION",22,gold);
 
-            // IMPORTANT: Check permanent PUC result,
-            // not the changing educationStatus string.
-
             if (!pucPassed) {
 
                 if (!sslcPassed) {
@@ -603,7 +832,6 @@ public class MainActivity extends Activity {
                     );
 
                 } else if (pucAttempted) {
-
                     addText("PUC: FAILED",20,white);
                     addText(
                         "Your PUC examination attempt is completed.",
@@ -626,7 +854,6 @@ public class MainActivity extends Activity {
                     });
 
                 } else {
-
                     addText("PUC Stream: "+pucStream,18,white);
 
                     addButton("📝 TAKE PUC EXAM", () ->
@@ -659,9 +886,7 @@ public class MainActivity extends Activity {
                 addButton("JOIN COLLEGE", () -> {
                     degreeCourse = course.getSelectedItem().toString();
                     educationStatus = "Degree 1st Year";
-
                     money = Math.max(0,money-10000);
-
                     saveGame();
                     showEducation();
                 });
@@ -694,6 +919,7 @@ public class MainActivity extends Activity {
                         }
 
                         showEducation();
+
                         message(
                             "🎉 Congratulations!\n\n"+
                             "You have successfully graduated in "+
@@ -705,15 +931,12 @@ public class MainActivity extends Activity {
         }
 
         addDivider();
-
         addText("Education status: "+educationStatus,15,muted);
-
         addButton("BACK TO LIFE", () -> showDashboard());
     }
 
     void takeExam(String exam) {
 
-        // Prevent repeated examinations.
         if (exam.equals("SSLC")) {
 
             if (sslcAttempted) {
@@ -740,8 +963,7 @@ public class MainActivity extends Activity {
             pucAttempted = true;
         }
 
-        examMarks = 40 + (int)(Math.random()*61);
-
+        examMarks = 40+(int)(Math.random()*61);
         boolean passed = examMarks >= 35;
 
         if (exam.equals("SSLC")) {
@@ -763,14 +985,11 @@ public class MainActivity extends Activity {
             happiness = Math.min(100,happiness+10);
 
         } else {
-
             educationStatus = exam+" Failed";
             happiness = Math.max(0,happiness-10);
         }
 
-        // Save the result immediately.
         saveGame();
-
         showEducation();
 
         message(
@@ -785,7 +1004,6 @@ public class MainActivity extends Activity {
     void ageUp() {
 
         age++;
-
         String event = "";
 
         if (age == 1) {
@@ -823,7 +1041,6 @@ public class MainActivity extends Activity {
             educationStatus = "PUC 2nd Year";
         }
 
-        // Never overwrite the passed PUC result or graduation.
         if (age >= 18 && !degreeCourse.isEmpty()
                 && !degreeCompleted && pucPassed) {
             educationStatus = "Degree "+(age-17)+" Year";
@@ -837,7 +1054,7 @@ public class MainActivity extends Activity {
             .setMessage(
                 "You are now "+age+" years old.\n\n"+event
             )
-            .setPositiveButton("Continue", (d,w) -> {
+            .setPositiveButton("Continue",(d,w) -> {
                 if (age == 5 || age == 15 || age == 16 ||
                     age == 17 || age == 18) {
                     showEducation();
