@@ -19,6 +19,7 @@ public class MainActivity extends Activity {
 
     LinearLayout root;
     SharedPreferences save;
+    FinanceManager financeManager;
 
     String playerName, gender, city, family;
     String schoolType = "";
@@ -272,6 +273,8 @@ public class MainActivity extends Activity {
                 money = 5000;
             }
 
+            financeManager = null;
+
             saveGame();
             showDashboard();
         });
@@ -502,6 +505,9 @@ public class MainActivity extends Activity {
 
         addDashboardNav(nav,"•••","Activities",
             () -> openActivities());
+
+        addDashboardNav(nav,"🏦","Finance",
+            () -> openFinance());
 
         LinearLayout.LayoutParams navParams =
                 new LinearLayout.LayoutParams(-1,-2);
@@ -1052,12 +1058,52 @@ public class MainActivity extends Activity {
         assets.open();
     }
 
+    // ---------------- FINANCE CONNECTION ----------------
+
+    FinanceManager createFinanceManager() {
+        return new FinanceManager(
+            this,
+            money,
+            newMoney -> {
+                money = (int)Math.max(0,
+                        Math.min(Integer.MAX_VALUE, newMoney));
+                saveGame();
+            }
+        );
+    }
+
+    void openFinance() {
+        if (financeManager == null) {
+            financeManager = createFinanceManager();
+        } else {
+            financeManager.setCash(money);
+        }
+
+        financeManager.show();
+    }
+
+    // ---------------- AGE UP ----------------
+
     void ageUp() {
 
         age++;
 
-        // Apply 12 months of income/expenses and annual loan interest.
+        // Existing Assets income, expenses and loan processing.
         money = AssetsManager.applyAnnualFinances(save, money);
+
+        // New financial systems begin annual billing at age 18.
+        if (age >= 18) {
+            if (financeManager == null) {
+                financeManager = createFinanceManager();
+            }
+
+            financeManager.setCash(money);
+            financeManager.applyAnnualFinance();
+
+            money = (int)Math.max(0,
+                    Math.min(Integer.MAX_VALUE,
+                            financeManager.getCash()));
+        }
 
         String event = "";
 
