@@ -16,7 +16,6 @@ public class LuxuryManager {
 
     private final Activity activity;
     private final SharedPreferences save;
-
     private int cash;
     private AlertDialog dialog;
 
@@ -45,13 +44,8 @@ public class LuxuryManager {
     };
 
     private final int[] propertyPrices = {
-        4500000,
-        8500000,
-        15000000,
-        25000000,
-        50000000,
-        120000000,
-        500000000
+        4500000,8500000,15000000,25000000,
+        50000000,120000000,500000000
     };
 
     private final int[] propertyRent = {
@@ -60,8 +54,7 @@ public class LuxuryManager {
     };
 
     private final int[] propertyMaintenance = {
-        3000,5000,9000,15000,
-        25000,60000,180000
+        3000,5000,9000,15000,25000,60000,180000
     };
 
     private final String[] vehicleNames = {
@@ -78,9 +71,8 @@ public class LuxuryManager {
     };
 
     private final int[] vehiclePrices = {
-        800000,1600000,2200000,4500000,
-        7500000,9500000,20000000,
-        25000000,40000000,80000000
+        800000,1600000,2200000,4500000,7500000,
+        9500000,20000000,25000000,40000000,80000000
     };
 
     private final int[] vehicleMaintenance = {
@@ -137,9 +129,7 @@ public class LuxuryManager {
         t.setGravity(Gravity.CENTER);
         t.setPadding(10,11,10,11);
 
-        if(bold) {
-            t.setTypeface(null,Typeface.BOLD);
-        }
+        if(bold) t.setTypeface(null,Typeface.BOLD);
 
         return t;
     }
@@ -165,6 +155,16 @@ public class LuxuryManager {
         b.setOnClickListener(v -> action.run());
     }
 
+    private void safePut(
+        JSONObject object,String key,Object value
+    ) {
+        try {
+            object.put(key,value);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private JSONArray getArray(String key) {
         try {
             return new JSONArray(save.getString(key,"[]"));
@@ -178,20 +178,18 @@ public class LuxuryManager {
     }
 
     private JSONObject createAsset(
-        String name,int price,int income,int maintenance,
-        boolean property
+        String name,int price,int income,
+        int maintenance,boolean property
     ) {
         JSONObject item = new JSONObject();
 
-        try {
-            item.put("name",name);
-            item.put("purchasePrice",price);
-            item.put("value",price);
-            item.put("income",income);
-            item.put("maintenance",maintenance);
-            item.put("level",1);
-            item.put("property",property);
-        } catch(Exception ignored) {}
+        safePut(item,"name",name);
+        safePut(item,"purchasePrice",price);
+        safePut(item,"value",price);
+        safePut(item,"income",income);
+        safePut(item,"maintenance",maintenance);
+        safePut(item,"level",1);
+        safePut(item,"property",property);
 
         return item;
     }
@@ -223,8 +221,7 @@ public class LuxuryManager {
         heading(root,"👑 DESILIFE LUXURY EMPIRE");
 
         root.addView(text(
-            "Build your dream lifestyle",
-            14,white,false
+            "Build your dream lifestyle",14,white,false
         ));
 
         LinearLayout balance = new LinearLayout(activity);
@@ -253,9 +250,7 @@ public class LuxuryManager {
 
         for(int i=0;i<properties.length();i++) {
             JSONObject item = properties.optJSONObject(i);
-            if(item==null) continue;
-
-            showAssetCard(root,item,true,i);
+            if(item!=null) showAssetCard(root,item,true,i);
         }
 
         button(root,"🏡 EXPLORE PROPERTY MARKET",
@@ -272,9 +267,7 @@ public class LuxuryManager {
 
         for(int i=0;i<vehicles.length();i++) {
             JSONObject item = vehicles.optJSONObject(i);
-            if(item==null) continue;
-
-            showAssetCard(root,item,false,i);
+            if(item!=null) showAssetCard(root,item,false,i);
         }
 
         button(root,"🚗 EXPLORE VEHICLE SHOWROOM",
@@ -284,7 +277,6 @@ public class LuxuryManager {
 
         long propertyValue = totalValue(properties);
         long vehicleValue = totalValue(vehicles);
-
         long rent = totalIncome(properties);
         long propertyCosts = totalMaintenance(properties);
         long vehicleCosts = totalMaintenance(vehicles);
@@ -324,39 +316,33 @@ public class LuxuryManager {
     }
 
     private long totalValue(JSONArray array) {
-        long total = 0;
+        long total=0;
 
         for(int i=0;i<array.length();i++) {
-            JSONObject item = array.optJSONObject(i);
-            if(item!=null) {
-                total += item.optLong("value",0);
-            }
+            JSONObject item=array.optJSONObject(i);
+            if(item!=null) total+=item.optLong("value",0);
         }
 
         return total;
     }
 
     private long totalIncome(JSONArray array) {
-        long total = 0;
+        long total=0;
 
         for(int i=0;i<array.length();i++) {
-            JSONObject item = array.optJSONObject(i);
-            if(item!=null) {
-                total += item.optLong("income",0);
-            }
+            JSONObject item=array.optJSONObject(i);
+            if(item!=null) total+=item.optLong("income",0);
         }
 
         return total;
     }
 
     private long totalMaintenance(JSONArray array) {
-        long total = 0;
+        long total=0;
 
         for(int i=0;i<array.length();i++) {
-            JSONObject item = array.optJSONObject(i);
-            if(item!=null) {
-                total += item.optLong("maintenance",0);
-            }
+            JSONObject item=array.optJSONObject(i);
+            if(item!=null) total+=item.optLong("maintenance",0);
         }
 
         return total;
@@ -377,23 +363,20 @@ public class LuxuryManager {
         p.setMargins(0,5,0,8);
         root.addView(box,p);
 
-        String name = item.optString("name","Asset");
-        long value = item.optLong("value",0);
-        long income = item.optLong("income",0);
-        long maintenance = item.optLong("maintenance",0);
-        int level = item.optInt("level",1);
+        String name=item.optString("name","Asset");
+        long value=item.optLong("value",0);
+        long income=item.optLong("income",0);
+        long maintenance=item.optLong("maintenance",0);
+        int level=item.optInt("level",1);
 
         box.addView(text(
-            (property?"🏡 ":"🚘 ")+name,
-            17,gold,true
+            (property?"🏡 ":"🚘 ")+name,17,gold,true
         ));
 
         box.addView(text(
             "Current value: "+money(value)+
             "\nLevel: "+level+"/5"+
-            (property?
-                "\nMonthly rent: "+money(income):
-                "")+
+            (property?"\nMonthly rent: "+money(income):"")+
             "\nMonthly maintenance: "+money(maintenance),
             14,white,false
         ));
@@ -401,10 +384,10 @@ public class LuxuryManager {
         LinearLayout actions = new LinearLayout(activity);
         actions.setOrientation(LinearLayout.HORIZONTAL);
 
-        TextView upgrade = text("UPGRADE",12,bg,true);
+        TextView upgrade=text("UPGRADE",12,bg,true);
         upgrade.setBackground(shape(gold,12));
 
-        TextView sell = text("SELL",12,bg,true);
+        TextView sell=text("SELL",12,bg,true);
         sell.setBackground(shape(gold,12));
 
         actions.addView(upgrade,
@@ -415,21 +398,18 @@ public class LuxuryManager {
 
         box.addView(actions);
 
-        upgrade.setOnClickListener(v -> {
-            upgradeAsset(property,index);
-        });
+        upgrade.setOnClickListener(v ->
+            upgradeAsset(property,index));
 
-        sell.setOnClickListener(v -> {
-            sellAsset(property,index);
-        });
+        sell.setOnClickListener(v ->
+            sellAsset(property,index));
     }
 
     private void propertyMarket() {
-        String[] descriptions = new String[propertyNames.length];
+        String[] descriptions=new String[propertyNames.length];
 
         for(int i=0;i<propertyNames.length;i++) {
-            descriptions[i] =
-                propertyNames[i]+
+            descriptions[i]=propertyNames[i]+
                 "\nPrice: "+money(propertyPrices[i])+
                 "\nMonthly rent: "+money(propertyRent[i])+
                 "\nMaintenance: "+money(propertyMaintenance[i]);
@@ -437,25 +417,21 @@ public class LuxuryManager {
 
         new AlertDialog.Builder(activity)
             .setTitle("🏠 Luxury Property Market")
-            .setItems(descriptions,(d,index) -> {
+            .setItems(descriptions,(d,index) ->
                 confirmPurchase(
-                    true,
-                    propertyNames[index],
-                    propertyPrices[index],
-                    propertyRent[index],
+                    true,propertyNames[index],
+                    propertyPrices[index],propertyRent[index],
                     propertyMaintenance[index]
-                );
-            })
+                ))
             .setNegativeButton("CLOSE",null)
             .show();
     }
 
     private void vehicleMarket() {
-        String[] descriptions = new String[vehicleNames.length];
+        String[] descriptions=new String[vehicleNames.length];
 
         for(int i=0;i<vehicleNames.length;i++) {
-            descriptions[i] =
-                vehicleNames[i]+
+            descriptions[i]=vehicleNames[i]+
                 "\nPrice: "+money(vehiclePrices[i])+
                 "\nMonthly maintenance: "+
                 money(vehicleMaintenance[i]);
@@ -463,15 +439,12 @@ public class LuxuryManager {
 
         new AlertDialog.Builder(activity)
             .setTitle("🚘 Luxury Vehicle Showroom")
-            .setItems(descriptions,(d,index) -> {
+            .setItems(descriptions,(d,index) ->
                 confirmPurchase(
-                    false,
-                    vehicleNames[index],
-                    vehiclePrices[index],
-                    0,
+                    false,vehicleNames[index],
+                    vehiclePrices[index],0,
                     vehicleMaintenance[index]
-                );
-            })
+                ))
             .setNegativeButton("CLOSE",null)
             .show();
     }
@@ -500,10 +473,8 @@ public class LuxuryManager {
 
                 cash-=price;
 
-                String key = property?
-                    PROPERTY_KEY:VEHICLE_KEY;
-
-                JSONArray array = getArray(key);
+                String key=property?PROPERTY_KEY:VEHICLE_KEY;
+                JSONArray array=getArray(key);
 
                 array.put(createAsset(
                     name,price,income,maintenance,property
@@ -516,34 +487,32 @@ public class LuxuryManager {
                     "Purchased "+name+" for "+money(price)
                 );
 
-                message("Congratulations!\n\n"+
-                    "You now own "+name+"!");
-
+                message("Congratulations!\n\nYou now own "+name+"!");
                 show();
             })
             .show();
     }
 
     private void upgradeAsset(boolean property,int index) {
-        String key = property?PROPERTY_KEY:VEHICLE_KEY;
-        JSONArray array = getArray(key);
+        String key=property?PROPERTY_KEY:VEHICLE_KEY;
+        JSONArray array=getArray(key);
 
-        JSONObject item = array.optJSONObject(index);
+        JSONObject item=array.optJSONObject(index);
         if(item==null) return;
 
-        int level = item.optInt("level",1);
+        int level=item.optInt("level",1);
 
         if(level>=5) {
             message("This asset has reached maximum level.");
             return;
         }
 
-        long upgradeCost =
-            Math.max(100000L,item.optLong("purchasePrice",0)*
-                (level+1)*15L/100L);
+        long upgradeCost=Math.max(
+            100000L,
+            item.optLong("purchasePrice",0)*(level+1)*15L/100L
+        );
 
-        if(upgradeCost>Integer.MAX_VALUE ||
-            cash<upgradeCost) {
+        if(upgradeCost>Integer.MAX_VALUE || cash<upgradeCost) {
             message("Insufficient funds for this upgrade.\n"+
                 "Required: "+money(upgradeCost));
             return;
@@ -562,24 +531,23 @@ public class LuxuryManager {
             )
             .setNegativeButton("CANCEL",null)
             .setPositiveButton("UPGRADE",(d,w) -> {
-                cash-= (int)upgradeCost;
 
-                item.put("level",level+1);
+                cash-=(int)upgradeCost;
+
+                safePut(item,"level",level+1);
 
                 if(property) {
-                    item.put("income",
+                    safePut(item,"income",
                         Math.round(item.optLong("income")*1.15));
-                    item.put("value",
+
+                    safePut(item,"value",
                         Math.round(item.optLong("value")*1.10));
                 } else {
-                    item.put("value",
+                    safePut(item,"value",
                         Math.round(item.optLong("value")*1.10));
                 }
 
-                try {
-                    array.put(index,item);
-                } catch(Exception ignored) {}
-
+                array.put(index,item);
                 storeArray(key,array);
                 updateMoney();
 
@@ -595,14 +563,14 @@ public class LuxuryManager {
     }
 
     private void sellAsset(boolean property,int index) {
-        String key = property?PROPERTY_KEY:VEHICLE_KEY;
-        JSONArray array = getArray(key);
+        String key=property?PROPERTY_KEY:VEHICLE_KEY;
+        JSONArray array=getArray(key);
 
-        JSONObject item = array.optJSONObject(index);
+        JSONObject item=array.optJSONObject(index);
         if(item==null) return;
 
-        long value = item.optLong("value",0);
-        long resale = Math.round(value*(property?0.90:0.80));
+        long value=item.optLong("value",0);
+        long resale=Math.round(value*(property?0.90:0.80));
 
         new AlertDialog.Builder(activity)
             .setTitle("Sell Asset")
@@ -614,9 +582,10 @@ public class LuxuryManager {
             )
             .setNegativeButton("CANCEL",null)
             .setPositiveButton("SELL",(d,w) -> {
+
                 cash=safeInt((long)cash+resale);
 
-                JSONArray updated = new JSONArray();
+                JSONArray updated=new JSONArray();
 
                 for(int i=0;i<array.length();i++) {
                     if(i!=index) {
@@ -638,27 +607,23 @@ public class LuxuryManager {
             .show();
     }
 
-    // Called once whenever the player ages up by one year.
+    // Call once when the player ages up by one year.
     public int applyAnnualCosts() {
-        JSONArray properties = getArray(PROPERTY_KEY);
-        JSONArray vehicles = getArray(VEHICLE_KEY);
+        JSONArray properties=getArray(PROPERTY_KEY);
+        JSONArray vehicles=getArray(VEHICLE_KEY);
 
-        long annualRent = totalIncome(properties)*12L;
-        long annualPropertyMaintenance =
+        long annualRent=totalIncome(properties)*12L;
+
+        long propertyCosts=
             totalMaintenance(properties)*12L;
 
-        long annualVehicleMaintenance =
+        long vehicleCosts=
             totalMaintenance(vehicles)*12L;
 
-        long net = annualRent-
-            annualPropertyMaintenance-
-            annualVehicleMaintenance;
+        long net=annualRent-propertyCosts-vehicleCosts;
 
-        long newCash=(long)cash+net;
+        cash=safeInt((long)cash+net);
 
-        cash=safeInt(newCash);
-
-        // Property appreciation and vehicle depreciation.
         updateAssetValues(properties,true);
         updateAssetValues(vehicles,false);
 
@@ -671,8 +636,7 @@ public class LuxuryManager {
             addHistory(
                 "Annual luxury finances: income "+
                 money(annualRent)+", expenses "+
-                money(annualPropertyMaintenance+
-                    annualVehicleMaintenance)
+                money(propertyCosts+vehicleCosts)
             );
         }
 
@@ -688,14 +652,10 @@ public class LuxuryManager {
 
             long value=item.optLong("value",0);
 
-            value=Math.round(
-                value*(property?1.025:0.92)
-            );
+            value=Math.round(value*(property?1.025:0.92));
 
-            try {
-                item.put("value",value);
-                array.put(i,item);
-            } catch(Exception ignored) {}
+            safePut(item,"value",value);
+            array.put(i,item);
         }
     }
 
@@ -703,8 +663,7 @@ public class LuxuryManager {
         String old=save.getString("life_events","");
 
         String entry="Age "+
-            save.getInt("age",0)+
-            " • "+event;
+            save.getInt("age",0)+" • "+event;
 
         String updated=old.isEmpty()?
             entry:old+"\n"+entry;
