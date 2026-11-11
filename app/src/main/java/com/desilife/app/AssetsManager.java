@@ -478,7 +478,6 @@ public class AssetsManager {
                 put("loanOriginalAmount",principal);
                 put("loanActive",1);
 
-                // Keep the exact decimal interest rate.
                 save.edit()
                     .putFloat("loanRateExact",(float)rate)
                     .apply();
@@ -760,7 +759,6 @@ public class AssetsManager {
         int debt=save.getInt("loanDebt",0);
 
         // Compatibility with old saves.
-        // Existing old loans are converted into a personal loan.
         if(debt>0 && save.getString("loanType","").isEmpty()) {
             save.edit()
                 .putString("loanType","Personal Loan")
@@ -793,7 +791,6 @@ public class AssetsManager {
 
         for(int month=0;month<12;month++) {
 
-            // Monthly income and expenses.
             cash+=monthlyIncome;
             cash-=monthlyExpenses;
             cash=Math.max(0,cash);
@@ -802,7 +799,6 @@ public class AssetsManager {
                 continue;
             }
 
-            // Monthly reducing-balance interest.
             double monthlyRate=rate/1200.0;
 
             long interest=(long)Math.ceil(debt*monthlyRate);
@@ -827,21 +823,19 @@ public class AssetsManager {
 
             } else {
 
-                // Missed EMI: interest is added to the debt.
-                debt=safeStaticAdd(debt,interest);
+                // FIX: safely convert the long result to int.
+                debt=safeStaticInt(safeStaticAdd(debt,interest));
 
-                // Late fee of 2% of EMI, minimum ₹100.
                 long lateFee=Math.max(100,(long)Math.ceil(emi*0.02));
 
-                debt=safeStaticAdd(debt,lateFee);
+                // FIX: safely convert the long result to int.
+                debt=safeStaticInt(safeStaticAdd(debt,lateFee));
 
                 missed++;
                 consecutive++;
 
                 credit=Math.max(300,credit-25);
 
-                // Secured loans can be repossessed after 6
-                // consecutive missed monthly payments.
                 if(consecutive>=6 &&
                     (loanType.equals("Home Loan") ||
                      loanType.equals("Mortgage Loan") ||
@@ -860,7 +854,6 @@ public class AssetsManager {
                             .apply();
                     }
 
-                    // Repossession does not erase the remaining debt.
                     credit=Math.max(300,credit-50);
                     consecutive=0;
 
@@ -884,7 +877,6 @@ public class AssetsManager {
             }
         }
 
-        // Save all annual financial results.
         save.edit()
             .putInt("loanDebt",debt)
             .putInt("loanMonthsLeft",monthsLeft)
@@ -910,11 +902,11 @@ public class AssetsManager {
 
     static long safeStaticAdd(long a,long b) {
         return Math.min(Integer.MAX_VALUE,
-            Math.max(0,a+b));
+            Math.max(0L,a+b));
     }
 
     static int safeStaticInt(long value) {
         return (int)Math.min(Integer.MAX_VALUE,
-            Math.max(0,value));
+            Math.max(0L,value));
     }
 }
