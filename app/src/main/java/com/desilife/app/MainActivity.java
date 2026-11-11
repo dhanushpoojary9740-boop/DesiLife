@@ -191,7 +191,7 @@ public class MainActivity extends Activity {
 
         addDivider();
         addText("AN INDIAN LIFE SIMULATION",12,gold);
-        addText("Version 1.3",12,muted);
+        addText("Version 1.4",12,muted);
     }
 
     void showCreate() {
@@ -274,6 +274,11 @@ public class MainActivity extends Activity {
             }
 
             financeManager = null;
+
+            // Reset career data for a completely new life.
+            getSharedPreferences(
+                "desilife_career_data", MODE_PRIVATE
+            ).edit().clear().apply();
 
             saveGame();
             showDashboard();
@@ -499,6 +504,9 @@ public class MainActivity extends Activity {
 
         addDashboardNav(nav,"💰","Assets",
             () -> openAssets());
+
+        addDashboardNav(nav,"💼","Career",
+            () -> openCareer());
 
         addDashboardNav(nav,"❤️","Relations",
             () -> openRelations());
@@ -777,7 +785,7 @@ public class MainActivity extends Activity {
             } else if (pucAttempted) {
                 addText("PUC: FAILED",20,white);
                 addText(
-                    "Your PUC examination attempt is completed.",
+                    "Your examination attempt is completed.",
                     16,muted
                 );
 
@@ -1007,6 +1015,50 @@ public class MainActivity extends Activity {
         );
     }
 
+    // CAREER SYSTEM CONNECTION
+
+    void openCareer() {
+        CareerManager career = new CareerManager(
+            this,
+            save,
+            age,
+            intelligence,
+            educationStatus+" "+degreeCourse,
+            degreeCompleted,
+            money,
+            newMoney -> {
+                money = (int)Math.max(
+                    0,Math.min(Integer.MAX_VALUE,newMoney)
+                );
+                saveGame();
+            }
+        );
+
+        career.open();
+    }
+
+    void processCareerSalary() {
+        if (age < 18) return;
+
+        CareerManager career = new CareerManager(
+            this,
+            save,
+            age,
+            intelligence,
+            educationStatus+" "+degreeCourse,
+            degreeCompleted,
+            money,
+            newMoney -> {
+                money = (int)Math.max(
+                    0,Math.min(Integer.MAX_VALUE,newMoney)
+                );
+                saveGame();
+            }
+        );
+
+        career.applyAnnualSalary();
+    }
+
     // RELATIONS AND ACTIVITIES CONNECTION
 
     void openRelations() {
@@ -1058,7 +1110,7 @@ public class MainActivity extends Activity {
         assets.open();
     }
 
-    // ---------------- FINANCE CONNECTION ----------------
+    // FINANCE CONNECTION
 
     FinanceManager createFinanceManager() {
         return new FinanceManager(
@@ -1082,7 +1134,7 @@ public class MainActivity extends Activity {
         financeManager.show();
     }
 
-    // ---------------- AGE UP ----------------
+    // AGE UP
 
     void ageUp() {
 
@@ -1091,7 +1143,7 @@ public class MainActivity extends Activity {
         // Existing Assets income, expenses and loan processing.
         money = AssetsManager.applyAnnualFinances(save, money);
 
-        // New financial systems begin annual billing at age 18.
+        // Existing bank and finance processing.
         if (age >= 18) {
             if (financeManager == null) {
                 financeManager = createFinanceManager();
@@ -1103,6 +1155,9 @@ public class MainActivity extends Activity {
             money = (int)Math.max(0,
                     Math.min(Integer.MAX_VALUE,
                             financeManager.getCash()));
+
+            // Credit career earnings after annual finance processing.
+            processCareerSalary();
         }
 
         String event = "";
