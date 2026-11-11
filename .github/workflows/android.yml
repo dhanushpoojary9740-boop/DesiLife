@@ -1,3 +1,4 @@
+
 name: Build DesiLife APK
 
 on:
@@ -26,8 +27,6 @@ jobs:
       - name: Locate Android SDK
         run: |
           echo "$ANDROID_HOME"
-          echo "$ANDROID_HOME/cmdline-tools"
-
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
             -type f -name sdkmanager | sort -V | tail -n 1)
 
@@ -40,10 +39,9 @@ jobs:
 
       - name: Accept Android licenses
         run: |
-          set +o pipefail
-          yes | "$SDKMANAGER" \
-            --sdk_root="$ANDROID_HOME" --licenses
           set -o pipefail
+          yes | "$SDKMANAGER" \
+            --sdk_root="$ANDROID_HOME" --licenses || true
 
       - name: Install Android SDK packages
         run: |
@@ -55,28 +53,41 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Configure permanent release signing
+      - name: Decode and verify release keystore
         env:
           DESILIFE_KEYSTORE_BASE64: ${{ secrets.DESILIFE_KEYSTORE_BASE64 }}
           DESILIFE_STORE_PASSWORD: ${{ secrets.DESILIFE_STORE_PASSWORD }}
           DESILIFE_KEY_ALIAS: ${{ secrets.DESILIFE_KEY_ALIAS }}
           DESILIFE_KEY_PASSWORD: ${{ secrets.DESILIFE_KEY_PASSWORD }}
         run: |
-          set -e
+          set -euo pipefail
 
-          if [ -z "$DESILIFE_KEYSTORE_BASE64" ] || \
-             [ -z "$DESILIFE_STORE_PASSWORD" ] || \
-             [ -z "$DESILIFE_KEY_ALIAS" ] || \
-             [ -z "$DESILIFE_KEY_PASSWORD" ]; then
-            echo "Release signing secrets are missing"
-            exit 1
-          fi
+          KEYSTORE_FILE="$RUNNER_TEMP/desilife-release.jks"
 
-          echo "$DESILIFE_KEYSTORE_BASE64" | \
-            base64 --decode > "$RUNNER_TEMP/desilife-release.jks"
+          printf '%s' "$DESILIFE_KEYSTORE_BASE64" \
+            | base64 --decode > "$KEYSTORE_FILE"
 
-          echo "DESILIFE_KEYSTORE_PATH=$RUNNER_TEMP/desilife-release.jks" \
+          test -s "$KEYSTORE_FILE"
+
+          echo "Checking keystore password..."
+
+          keytool -list \
+            -keystore "$KEYSTORE_FILE" \
+            -storepass "$DESILIFE_STORE_PASSWORD" \
+            >/dev/null
+
+          echo "Checking key alias..."
+
+          keytool -list \
+            -keystore "$KEYSTORE_FILE" \
+            -storepass "$DESILIFE_STORE_PASSWORD" \
+            -alias "$DESILIFE_KEY_ALIAS" \
+            >/dev/null
+
+          echo "DESILIFE_KEYSTORE_PATH=$KEYSTORE_FILE" \
             >> "$GITHUB_ENV"
+
+          echo "Keystore and alias verification successful."
 
       - name: Build signed DesiLife APK
         env:
