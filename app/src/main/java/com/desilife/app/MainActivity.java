@@ -498,10 +498,10 @@ public class MainActivity extends Activity {
             () -> openAssets());
 
         addDashboardNav(nav,"❤️","Relations",
-            () -> message("Family, friends and relationships are coming soon."));
+            () -> openRelations());
 
         addDashboardNav(nav,"•••","Activities",
-            () -> message("Activities and life events are coming soon."));
+            () -> openActivities());
 
         LinearLayout.LayoutParams navParams =
                 new LinearLayout.LayoutParams(-1,-2);
@@ -999,6 +999,44 @@ public class MainActivity extends Activity {
             "\nMarks: "+examMarks+"/100\n\n"+
             "Examination attempts cannot be repeated."
         );
+    }
+
+    // RELATIONS AND ACTIVITIES CONNECTION
+
+    void openRelations() {
+        SocialManager social = new SocialManager(
+            this,
+            save,
+            money,
+            age,
+            health,
+            happiness,
+            (newMoney, newHealth, newHappiness) -> {
+                money = newMoney;
+                health = newHealth;
+                happiness = newHappiness;
+                saveGame();
+            }
+        );
+        social.open();
+    }
+
+    void openActivities() {
+        SocialManager social = new SocialManager(
+            this,
+            save,
+            money,
+            age,
+            health,
+            happiness,
+            (newMoney, newHealth, newHappiness) -> {
+                money = newMoney;
+                health = newHealth;
+                happiness = newHappiness;
+                saveGame();
+            }
+        );
+        social.showActivities();
     }
 
     void openAssets() {
