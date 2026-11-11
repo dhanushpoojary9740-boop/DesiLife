@@ -243,13 +243,14 @@ public class AssetsManager {
         heading(root,"📊 MONTHLY FINANCES");
 
         int income = get("monthlyIncome",0);
-        int expenses = get("monthlyExpenses",0);
+        int legacyExpenses = get("monthlyExpenses",0);
 
         root.addView(text(
             "Monthly Income: ₹"+income+
-            "\nMonthly Expenses: ₹"+expenses+
-            "\nMonthly Balance: ₹"+((long)income-expenses),
-            16,white
+            "\nPreviously Saved Monthly Expenses: ₹"+legacyExpenses+
+            "\n\nLegacy monthly expenses are no longer deducted here."+
+            "\nManage your actual household bills in Finance > Household Expenses.",
+            14,white
         ));
 
         button(root,"SET MONTHLY INCOME",() ->
@@ -259,15 +260,8 @@ public class AssetsManager {
             })
         );
 
-        button(root,"SET MONTHLY EXPENSES",() ->
-            amountDialog("Monthly expenses",amount -> {
-                put("monthlyExpenses",amount);
-                refresh();
-            })
-        );
-
         root.addView(text(
-            "Your income and expenses are applied over 12 months when you age up.",
+            "Monthly income is credited over 12 months when you age up.",
             13,white
         ));
 
@@ -492,7 +486,7 @@ public class AssetsManager {
             .show();
     }
 
-    // EXTRA REPAYMENT - CORRECTED
+    // EXTRA REPAYMENT
 
     void extraRepayment() {
         final int originalDebt = get("loanDebt",0);
@@ -754,7 +748,6 @@ public class AssetsManager {
         long cash=currentMoney;
 
         int monthlyIncome=save.getInt("monthlyIncome",0);
-        int monthlyExpenses=save.getInt("monthlyExpenses",0);
 
         int debt=save.getInt("loanDebt",0);
 
@@ -790,9 +783,12 @@ public class AssetsManager {
 
         for(int month=0;month<12;month++) {
 
-            cash+=monthlyIncome;
-            cash-=monthlyExpenses;
-            cash=Math.max(0,cash);
+            // Credit monthly income.
+            cash=safeStaticAdd(cash,monthlyIncome);
+
+            // Household expenses are handled separately
+            // by HouseholdManager. Do not deduct the old
+            // generic monthlyExpenses value here.
 
             if(debt<=0 || emi<=0 || monthsLeft<=0) {
                 continue;
