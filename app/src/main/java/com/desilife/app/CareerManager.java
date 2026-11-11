@@ -9,498 +9,873 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.widget.*;
 
-import java.text.NumberFormat;
 import java.util.Locale;
-import java.util.Random;
 
 public class CareerManager {
 
-    public interface MoneyListener {
-        void onMoneyChanged(long amount);
+    public interface MoneyCallback {
+        void onMoneyChanged(long newMoney);
     }
 
     private final Activity activity;
-    private final SharedPreferences prefs;
-    private final MoneyListener listener;
-    private final NumberFormat currency =
-            NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
-    private final Random random = new Random();
+    private final SharedPreferences save;
+    private final SharedPreferences career;
+    private final MoneyCallback callback;
 
-    private long cash;
+    private final int age;
+    private final int intelligence;
+    private final String education;
+    private final boolean degreeCompleted;
+
+    private long money;
+
+    private String jobTitle;
+    private String company;
+    private String sector;
+    private String businessName;
+
     private long monthlySalary;
+    private long businessProfit;
 
-    private String jobTitle = "";
-    private String sector = "";
-    private String qualification = "";
-
-    private int age;
-    private int intelligence;
     private int experience;
-    private int performance = 75;
-    private int lastSalaryAge;
+    private int promotions;
+    private int lastPaidAge;
 
     private boolean employed;
+    private boolean businessActive;
     private boolean retired;
 
-    private final int bg = Color.rgb(12, 25, 23);
-    private final int gold = Color.rgb(226, 184, 105);
+    private final int dark = Color.rgb(12,25,23);
+    private final int gold = Color.rgb(226,184,105);
+    private final int blue = Color.rgb(35,75,120);
     private final int white = Color.WHITE;
-    private final int blue = Color.rgb(55, 91, 145);
-
-    private static class Job {
-        String title;
-        String sector;
-        String qualification;
-        long salary;
-        int minimumIntelligence;
-
-        Job(String title, String sector, String qualification,
-            long salary, int minimumIntelligence) {
-            this.title = title;
-            this.sector = sector;
-            this.qualification = qualification;
-            this.salary = salary;
-            this.minimumIntelligence = minimumIntelligence;
-        }
-    }
-
-    private final Job[] jobs = {
-        new Job("Delivery Partner", "Part-time", "None", 12000, 20),
-        new Job("Retail Sales Executive", "Private", "SSLC", 16000, 25),
-        new Job("Office Assistant", "Private", "PUC", 18000, 30),
-        new Job("Customer Support Executive", "Private", "PUC", 22000, 35),
-        new Job("Data Entry Operator", "Private", "PUC", 20000, 40),
-        new Job("School Teacher", "Private", "Degree", 30000, 50),
-        new Job("Accountant", "Private", "Degree", 35000, 55),
-        new Job("Software Developer", "Private", "Degree", 55000, 65),
-        new Job("Bank Officer", "Private", "Degree", 45000, 60),
-        new Job("Government Clerk", "Government", "PUC", 28000, 45),
-        new Job("Railway Employee", "Government", "PUC", 32000, 45),
-        new Job("Police Sub-Inspector", "Government", "Degree", 42000, 60),
-        new Job("KAS Officer", "Government", "Degree", 65000, 75),
-        new Job("IAS Officer", "Government", "Degree", 80000, 85),
-        new Job("Doctor", "Professional", "Medical Degree", 75000, 75),
-        new Job("Lawyer", "Professional", "Law Degree", 50000, 65)
-    };
 
     public CareerManager(
             Activity activity,
             SharedPreferences save,
             int age,
             int intelligence,
-            String educationStatus,
+            String education,
             boolean degreeCompleted,
-            long currentCash,
-            MoneyListener listener) {
+            int money,
+            MoneyCallback callback) {
 
         this.activity = activity;
+        this.save = save;
         this.age = age;
         this.intelligence = intelligence;
-        this.qualification = educationStatus;
-        this.cash = currentCash;
-        this.listener = listener;
+        this.education = education == null ? "" : education;
+        this.degreeCompleted = degreeCompleted;
+        this.money = Math.max(0,money);
+        this.callback = callback;
 
-        prefs = activity.getSharedPreferences(
+        career = activity.getSharedPreferences(
                 "desilife_career_data",
-                Activity.MODE_PRIVATE);
+                Activity.MODE_PRIVATE
+        );
 
-        loadData();
+        loadCareer();
     }
 
-    private void loadData() {
-        jobTitle = prefs.getString("job_title", "");
-        sector = prefs.getString("sector", "");
+    private void loadCareer() {
+        jobTitle = career.getString("jobTitle","");
+        company = career.getString("company","");
+        sector = career.getString("sector","");
+        businessName = career.getString("businessName","");
 
-        monthlySalary = prefs.getLong("salary", 0);
-        experience = prefs.getInt("experience", 0);
-        performance = prefs.getInt("performance", 75);
-        lastSalaryAge = prefs.getInt("last_salary_age", age);
+        monthlySalary = career.getLong("monthlySalary",0);
+        businessProfit = career.getLong("businessProfit",0);
 
-        employed = prefs.getBoolean("employed", false);
-        retired = prefs.getBoolean("retired", false);
+        experience = career.getInt("experience",0);
+        promotions = career.getInt("promotions",0);
+        lastPaidAge = career.getInt("lastPaidAge",-1);
+
+        employed = career.getBoolean("employed",false);
+        businessActive = career.getBoolean("businessActive",false);
+        retired = career.getBoolean("retired",false);
     }
 
-    private void saveData() {
-        prefs.edit()
-                .putString("job_title", jobTitle)
-                .putString("sector", sector)
-                .putLong("salary", monthlySalary)
-                .putInt("experience", experience)
-                .putInt("performance", performance)
-                .putInt("last_salary_age", lastSalaryAge)
-                .putBoolean("employed", employed)
-                .putBoolean("retired", retired)
+    private void saveCareer() {
+        career.edit()
+                .putString("jobTitle",jobTitle)
+                .putString("company",company)
+                .putString("sector",sector)
+                .putString("businessName",businessName)
+                .putLong("monthlySalary",monthlySalary)
+                .putLong("businessProfit",businessProfit)
+                .putInt("experience",experience)
+                .putInt("promotions",promotions)
+                .putInt("lastPaidAge",lastPaidAge)
+                .putBoolean("employed",employed)
+                .putBoolean("businessActive",businessActive)
+                .putBoolean("retired",retired)
                 .apply();
     }
 
-    private void updateCash(long amount) {
-        cash = Math.max(0, amount);
-
-        if (listener != null) {
-            listener.onMoneyChanged(cash);
-        }
-    }
-
-    private GradientDrawable shape(int color, int radius) {
+    private GradientDrawable shape(int color,int radius) {
         GradientDrawable d = new GradientDrawable();
         d.setColor(color);
         d.setCornerRadius(radius);
         return d;
     }
 
-    private TextView text(String value, int size, int color) {
+    private TextView text(String value,int size,int color) {
         TextView t = new TextView(activity);
         t.setText(value);
         t.setTextSize(size);
         t.setTextColor(color);
-        t.setGravity(Gravity.CENTER);
-        t.setPadding(10, 10, 10, 10);
+        t.setPadding(12,10,12,10);
         return t;
     }
 
-    private void button(LinearLayout layout, String label,
-                        Runnable action) {
-        TextView b = text(label, 15, white);
-        b.setBackground(shape(blue, 18));
-        b.setTypeface(null, Typeface.BOLD);
+    private void button(
+            LinearLayout root,
+            String label,
+            Runnable action) {
+
+        TextView b = text(label,16,dark);
+        b.setGravity(Gravity.CENTER);
+        b.setTypeface(null,Typeface.BOLD);
+        b.setBackground(shape(gold,18));
 
         LinearLayout.LayoutParams p =
-                new LinearLayout.LayoutParams(-1, -2);
-        p.setMargins(0, 7, 0, 7);
+                new LinearLayout.LayoutParams(-1,-2);
 
-        layout.addView(b, p);
+        p.setMargins(0,7,0,7);
+        root.addView(b,p);
+
         b.setOnClickListener(v -> action.run());
     }
 
-    private String money(long amount) {
-        return currency.format(amount);
-    }
-
-    public void open() {
-        LinearLayout layout = new LinearLayout(activity);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(18, 15, 18, 15);
-        layout.setBackgroundColor(bg);
-
-        TextView heading = text("💼 JOBS & CAREER", 23, gold);
-        layout.addView(heading);
-
-        layout.addView(text(
-                "Build your career and financial future.",
-                14, white));
-
-        layout.addView(text(
-                "Available Cash: " + money(cash),
-                17, gold));
-
-        layout.addView(text(
-                "Employment Status: " +
-                (retired ? "Retired" :
-                employed ? "Employed" : "Unemployed"),
-                16, white));
-
-        layout.addView(text(
-                "Current Job: " +
-                (employed ? jobTitle : "No job"),
-                16, white));
-
-        layout.addView(text(
-                "Monthly Salary: " + money(monthlySalary),
-                16, white));
-
-        layout.addView(text(
-                "Work Experience: " + experience + " years",
-                15, white));
-
-        layout.addView(text(
-                "Work Performance: " + performance + "/100",
-                15, white));
-
-        if (employed) {
-            button(layout, "📈 VIEW CAREER DETAILS",
-                    this::careerDetails);
-
-            button(layout, "🔄 CHANGE JOB",
-                    this::showJobs);
-
-            button(layout, "🚪 RESIGN FROM JOB",
-                    this::resign);
-        } else if (!retired) {
-            button(layout, "🔎 FIND A JOB",
-                    this::showJobs);
-        }
-
-        if (age >= 18 && !retired) {
-            button(layout, "💻 FREELANCE PROJECT",
-                    this::freelance);
-        }
-
-        if (age >= 58 && !retired) {
-            button(layout, "🏖 RETIRE",
-                    this::retire);
-        }
-
-        button(layout, "CLOSE", () -> open());
-
-        ScrollView scroll = new ScrollView(activity);
-        scroll.addView(layout);
-
+    private void showMessage(String title,String message) {
         new AlertDialog.Builder(activity)
-                .setView(scroll)
-                .setPositiveButton("DONE", null)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("CONTINUE",null)
                 .show();
     }
 
-    private boolean eligible(Job job) {
-        if (age < 18) return false;
+    private String rupees(long amount) {
+        return "₹"+String.format(
+                Locale.US,"%,d",amount
+        );
+    }
 
-        String q = qualification.toLowerCase();
+    public void open() {
+        LinearLayout root = new LinearLayout(activity);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(18,15,18,20);
+        root.setBackgroundColor(dark);
 
-        if (job.qualification.equals("None")) return true;
+        ScrollView scroll = new ScrollView(activity);
+        scroll.addView(root);
 
-        if (job.qualification.equals("SSLC")) {
-            return q.contains("sslc") ||
-                    q.contains("puc") ||
-                    q.contains("graduated") ||
-                    q.contains("degree");
+        TextView heading = text(
+                "💼 CAREER & PROFESSIONAL LIFE",
+                23,gold
+        );
+        heading.setTypeface(null,Typeface.BOLD);
+        heading.setGravity(Gravity.CENTER);
+        root.addView(heading);
+
+        addDivider(root);
+
+        if (age < 18) {
+            addInfo(root,"Age Requirement",
+                    "Career applications open at age 18.");
+            button(root,"BACK",() -> activity.finish());
+            showScreen(scroll);
+            return;
         }
 
-        if (job.qualification.equals("PUC")) {
-            return q.contains("puc") ||
-                    q.contains("graduated") ||
-                    q.contains("degree");
+        addInfo(root,"Current Status",
+                retired ? "Retired" :
+                employed ? "Employed" :
+                businessActive ? "Self Employed" :
+                "Unemployed");
+
+        addInfo(root,"Current Job",
+                employed ? jobTitle : "No active job");
+
+        addInfo(root,"Company",
+                employed ? company : "Not applicable");
+
+        addInfo(root,"Monthly Salary",
+                rupees(monthlySalary));
+
+        addInfo(root,"Work Experience",
+                experience+" years");
+
+        addInfo(root,"Promotions",
+                String.valueOf(promotions));
+
+        addInfo(root,"Available Cash",rupees(money));
+
+        addDivider(root);
+
+        if (retired) {
+            button(root,"RETIREMENT INFORMATION",
+                    this::showRetirement);
+        } else if (employed) {
+            button(root,"🏆 CAREER DEVELOPMENT",
+                    () -> showCareerDevelopment());
+
+            button(root,"💼 CHANGE JOB",
+                    () -> showJobs());
+
+            button(root,"RESIGN FROM JOB",
+                    () -> resign());
+
+        } else if (businessActive) {
+            button(root,"🏢 MANAGE BUSINESS",
+                    () -> manageBusiness());
+
+            button(root,"APPLY FOR A JOB",
+                    () -> showJobs());
+
+        } else {
+            button(root,"🔎 FIND A JOB",
+                    () -> showJobs());
+
+            button(root,"🏢 START YOUR BUSINESS",
+                    () -> startBusiness());
+
+            button(root,"💻 FREELANCING",
+                    () -> freelancing());
         }
 
-        if (job.qualification.equals("Degree")) {
-            return q.contains("graduated");
+        button(root,"🏛️ GOVERNMENT JOBS",
+                () -> showGovernmentJobs());
+
+        button(root,"📊 CAREER STATISTICS",
+                () -> showStatistics());
+
+        button(root,"🏖️ RETIREMENT",
+                () -> retire());
+
+        button(root,"BACK TO LIFE",
+                () -> showMessage("Career","Return to your life dashboard using the bottom navigation."));
+
+        showScreen(scroll);
+    }
+
+    private void showScreen(ScrollView scroll) {
+        AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setView(scroll)
+                .setNegativeButton("CLOSE",null)
+                .create();
+
+        dialog.show();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                    shape(Color.WHITE,18)
+            );
+
+            dialog.getWindow().setLayout(
+                    (int)(activity.getResources()
+                            .getDisplayMetrics().widthPixels*0.94),
+                    -2
+            );
+        }
+    }
+
+    private void addDivider(LinearLayout root) {
+        android.view.View line = new android.view.View(activity);
+        line.setBackgroundColor(gold);
+
+        LinearLayout.LayoutParams p =
+                new LinearLayout.LayoutParams(-1,2);
+
+        p.setMargins(0,12,0,12);
+        root.addView(line,p);
+    }
+
+    private void addInfo(
+            LinearLayout root,String title,String value) {
+
+        LinearLayout card = new LinearLayout(activity);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(12,8,12,8);
+        card.setBackground(shape(
+                Color.rgb(35,45,62),15
+        ));
+
+        TextView a = text(title,13,Color.LTGRAY);
+        TextView b = text(value,20,white);
+
+        card.addView(a);
+        card.addView(b);
+
+        LinearLayout.LayoutParams p =
+                new LinearLayout.LayoutParams(-1,-2);
+
+        p.setMargins(0,5,0,5);
+        root.addView(card,p);
+    }
+
+    private void showJobs() {
+
+        if (retired || age < 18) {
+            showMessage("Career","You are not eligible to apply.");
+            return;
         }
 
-        if (job.qualification.equals("Medical Degree")) {
-            return q.contains("mbbs") ||
-                    q.contains("medical");
+        String[] jobs = {
+                "Delivery Partner",
+                "Retail Associate",
+                "Office Assistant",
+                "Customer Support Executive",
+                "Sales Executive",
+                "Bank Clerk",
+                "Accountant",
+                "School Teacher",
+                "Software Developer",
+                "Government Officer",
+                "Police Constable",
+                "Business Analyst"
+        };
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Available Job Opportunities")
+                .setItems(jobs,(d,which) -> applyForJob(jobs[which]))
+                .setNegativeButton("CANCEL",null)
+                .show();
+    }
+
+    private void applyForJob(String job) {
+
+        if (employed) {
+            showMessage("Already Employed",
+                    "Resign from your current job before accepting another job.");
+            return;
         }
 
-        if (job.qualification.equals("Law Degree")) {
-            return q.contains("llb") ||
-                    q.contains("law");
+        if (retired) return;
+
+        long salary;
+        String category;
+        String employer = "Private Company";
+
+        switch(job) {
+
+            case "Delivery Partner":
+                salary = 18000;
+                category = "Private";
+                employer = "Delivery Services";
+                break;
+
+            case "Retail Associate":
+                salary = 16000;
+                category = "Private";
+                employer = "Retail Company";
+                break;
+
+            case "Office Assistant":
+                salary = 20000;
+                category = "Private";
+                employer = "Corporate Office";
+                break;
+
+            case "Customer Support Executive":
+                salary = 24000;
+                category = "Private";
+                employer = "Customer Services";
+                break;
+
+            case "Sales Executive":
+                salary = 25000;
+                category = "Private";
+                employer = "Sales Corporation";
+                break;
+
+            case "Bank Clerk":
+                salary = 32000;
+                category = "Banking";
+                employer = "Indian Banking Sector";
+                break;
+
+            case "Accountant":
+                salary = 35000;
+                category = "Finance";
+                employer = "Finance Company";
+                break;
+
+            case "School Teacher":
+                salary = 30000;
+                category = "Education";
+                employer = "Private School";
+                break;
+
+            case "Software Developer":
+                salary = 55000;
+                category = "IT";
+                employer = "Technology Company";
+                break;
+
+            case "Government Officer":
+                salary = 48000;
+                category = "Government";
+                employer = "Government Department";
+                break;
+
+            case "Police Constable":
+                salary = 30000;
+                category = "Government";
+                employer = "State Police Department";
+                break;
+
+            default:
+                salary = 45000;
+                category = "Corporate";
+                employer = "Business Corporation";
+                break;
+        }
+
+        if (!checkEligibility(job)) {
+            showMessage("Qualification Required",
+                    "Your current education or qualification does not meet the requirements for this job.\n\nComplete your education and try again.");
+            return;
+        }
+
+        final long offeredSalary = salary;
+        final String offeredCategory = category;
+        final String offeredEmployer = employer;
+
+        int chance = 45 + intelligence/3;
+        chance = Math.min(95,chance);
+
+        int result = (int)(Math.random()*100);
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Job Interview")
+                .setMessage(
+                        "Position: "+job+
+                        "\nCompany: "+employer+
+                        "\nExpected monthly salary: "+rupees(salary)+
+                        "\n\nInterview performance depends on your intelligence and qualifications.\n\nAttend the interview?"
+                )
+                .setNegativeButton("CANCEL",null)
+                .setPositiveButton("ATTEND",
+                        (d,w) -> {
+
+                    if (result < chance) {
+
+                        employed = true;
+                        jobTitle = job;
+                        company = offeredEmployer;
+                        sector = offeredCategory;
+                        monthlySalary = offeredSalary;
+
+                        experience = 0;
+                        promotions = 0;
+                        lastPaidAge = age;
+
+                        saveCareer();
+
+                        showMessage("🎉 Congratulations!",
+                                "You got the job!\n\n"+
+                                "Position: "+jobTitle+
+                                "\nCompany: "+company+
+                                "\nMonthly salary: "+rupees(monthlySalary)+
+                                "\n\nYour salary will be credited when you age up to the next year.");
+
+                    } else {
+
+                        showMessage("Interview Result",
+                                "Unfortunately, you were not selected.\n\nImprove your intelligence and qualifications and try again.");
+                    }
+
+                })
+                .show();
+    }
+
+    private boolean checkEligibility(String job) {
+
+        String e = education.toLowerCase(Locale.US);
+
+        boolean hasSSLC =
+                e.contains("sslc") ||
+                e.contains("puc") ||
+                e.contains("graduated");
+
+        boolean hasPUC =
+                e.contains("puc") ||
+                e.contains("graduated");
+
+        if (job.equals("Delivery Partner")) {
+            return true;
+        }
+
+        if (job.equals("Police Constable")) {
+            return age <= 27 && hasSSLC;
+        }
+
+        if (job.equals("Retail Associate")) {
+            return hasSSLC;
+        }
+
+        if (job.equals("Office Assistant") ||
+                job.equals("Customer Support Executive") ||
+                job.equals("Sales Executive")) {
+            return hasPUC;
+        }
+
+        if (job.equals("Bank Clerk") ||
+                job.equals("Accountant") ||
+                job.equals("School Teacher") ||
+                job.equals("Software Developer") ||
+                job.equals("Government Officer") ||
+                job.equals("Business Analyst")) {
+            return degreeCompleted;
         }
 
         return false;
     }
 
-    private void showJobs() {
-        if (age < 18) {
-            message("You must be at least 18 years old to apply for these jobs.");
-            return;
-        }
+    private void showGovernmentJobs() {
 
-        String[] names = new String[jobs.length];
-
-        for (int i = 0; i < jobs.length; i++) {
-            Job j = jobs[i];
-            names[i] = j.title + " | " +
-                    money(j.salary) + "/month | " +
-                    j.qualification;
-        }
+        String[] options = {
+                "Government Clerk",
+                "Police Constable",
+                "Government Officer"
+        };
 
         new AlertDialog.Builder(activity)
-                .setTitle("Available Job Vacancies")
-                .setItems(names, (dialog, which) -> {
-                    applyForJob(jobs[which]);
-                })
-                .setNegativeButton("CANCEL", null)
-                .show();
-    }
+                .setTitle("🏛️ Government Careers")
+                .setItems(options,(d,which) -> {
 
-    private void applyForJob(Job job) {
-        if (!eligible(job)) {
-            message("You don't have the required qualification for this job. Complete your education first.");
-            return;
-        }
+                    String job = options[which];
 
-        if (intelligence < job.minimumIntelligence) {
-            message("Your intelligence is not high enough for this position. Improve your skills and try again.");
-            return;
-        }
+                    if (job.equals("Police Constable")) {
+                        applyForJob("Police Constable");
+                    } else if (job.equals("Government Clerk")) {
 
-        new AlertDialog.Builder(activity)
-                .setTitle("Job Application")
-                .setMessage(
-                        "Position: " + job.title +
-                        "\nSector: " + job.sector +
-                        "\nMonthly Salary: " + money(job.salary) +
-                        "\n\nYou must pass an interview to get this job.")
-                .setPositiveButton("ATTEND INTERVIEW",
-                        (d, w) -> interview(job))
-                .setNegativeButton("CANCEL", null)
-                .show();
-    }
+                        if (!degreeCompleted) {
+                            showMessage("Qualification",
+                                    "A completed degree is required in this simulation.");
+                            return;
+                        }
 
-    private void interview(Job job) {
-        int score = random.nextInt(61) +
-                (intelligence / 3) +
-                (performance / 10);
+                        applyForJob("Government Officer");
 
-        if (score >= 45) {
-            employed = true;
-            retired = false;
-
-            jobTitle = job.title;
-            sector = job.sector;
-            monthlySalary = job.salary;
-
-            lastSalaryAge = age;
-            performance = Math.min(100, performance + 5);
-
-            saveData();
-
-            message(
-                    "🎉 Congratulations!\n\n" +
-                    "You got the job as " + jobTitle +
-                    ".\n\nMonthly Salary: " +
-                    money(monthlySalary) +
-                    "\n\nYour salary will be credited when you complete a game year."
-            );
-        } else {
-            performance = Math.max(0, performance - 2);
-            saveData();
-
-            message(
-                    "Unfortunately, you were not selected.\n\n" +
-                    "Improve your skills and try another job."
-            );
-        }
-    }
-
-    public void applyAnnualSalary() {
-        if (!employed || retired || monthlySalary <= 0) return;
-        if (age <= lastSalaryAge) return;
-
-        long annualGross = monthlySalary * 12L;
-
-        long tax = annualGross <= 300000 ? 0 :
-                annualGross <= 700000 ?
-                (annualGross - 300000) * 5 / 100 :
-                (400000 * 5 / 100) +
-                (annualGross - 700000) * 10 / 100;
-
-        long netSalary = Math.max(0, annualGross - tax);
-
-        updateCash(cash + netSalary);
-
-        experience++;
-        performance = Math.min(100,
-                performance + random.nextInt(5));
-
-        String promotion = "";
-
-        if (experience % 3 == 0) {
-            monthlySalary = monthlySalary * 110 / 100;
-            promotion = "\n\n🎉 Promotion! Your salary increased by 10%.";
-        }
-
-        lastSalaryAge = age;
-        saveData();
-
-        message(
-                "💰 Annual Salary Credited!\n\n" +
-                "Job: " + jobTitle +
-                "\nGross Salary: " + money(annualGross) +
-                "\nIncome Tax: " + money(tax) +
-                "\nNet Salary: " + money(netSalary) +
-                "\n\nExperience: " + experience + " years" +
-                promotion
-        );
-    }
-
-    private void freelance() {
-        if (age < 18 || retired) return;
-
-        long earnings = 2000 + random.nextInt(13001);
-
-        new AlertDialog.Builder(activity)
-                .setTitle("Freelance Project")
-                .setMessage(
-                        "Complete a freelance project?\n\n" +
-                        "Possible earnings: ₹2,000 – ₹15,000"
-                )
-                .setPositiveButton("COMPLETE PROJECT", (d, w) -> {
-                    int chance = 40 + intelligence / 2;
-                    boolean success = random.nextInt(100) < chance;
-
-                    if (success) {
-                        updateCash(cash + earnings);
-                        message(
-                                "Project completed successfully!\n\n" +
-                                "You earned " + money(earnings) + "."
-                        );
                     } else {
-                        message(
-                                "The client rejected your work.\n\n" +
-                                "You earned nothing. Improve your skills."
-                        );
+                        applyForJob("Government Officer");
                     }
+
                 })
-                .setNegativeButton("CANCEL", null)
+                .setNegativeButton("CLOSE",null)
                 .show();
     }
 
-    private void careerDetails() {
-        message(
-                "CAREER DETAILS\n\n" +
-                "Job: " + jobTitle +
-                "\nSector: " + sector +
-                "\nMonthly Salary: " + money(monthlySalary) +
-                "\nAnnual Salary: " + money(monthlySalary * 12) +
-                "\nExperience: " + experience + " years" +
-                "\nPerformance: " + performance + "/100"
-        );
+    private void showCareerDevelopment() {
+
+        String info =
+                "Current position: "+jobTitle+
+                "\nCompany: "+company+
+                "\nMonthly salary: "+rupees(monthlySalary)+
+                "\nExperience: "+experience+" years"+
+                "\nPromotions: "+promotions;
+
+        new AlertDialog.Builder(activity)
+                .setTitle("🏆 Career Development")
+                .setMessage(info)
+                .setPositiveButton("TRAINING",
+                        (d,w) -> training())
+                .setNegativeButton("CLOSE",null)
+                .show();
+    }
+
+    private void training() {
+
+        long fee = 5000;
+
+        if (money < fee) {
+            showMessage("Insufficient Funds",
+                    "You need "+rupees(fee)+" for professional training.");
+            return;
+        }
+
+        money -= fee;
+
+        int improvement = 3+(int)(Math.random()*5);
+        long bonus = monthlySalary * improvement / 100;
+
+        monthlySalary += bonus;
+
+        callback.onMoneyChanged(money);
+        saveCareer();
+
+        showMessage("Training Completed",
+                "Your professional skills improved.\n\n"+
+                "Monthly salary increased by "+rupees(bonus)+".");
     }
 
     private void resign() {
+
         new AlertDialog.Builder(activity)
                 .setTitle("Resign from Job?")
-                .setMessage(
-                        "You will stop receiving your salary. " +
-                        "Your previous experience will be preserved."
-                )
-                .setPositiveButton("RESIGN", (d, w) -> {
-                    employed = false;
-                    jobTitle = "";
-                    sector = "";
-                    monthlySalary = 0;
+                .setMessage("You will stop receiving your current salary. Your experience will be retained.")
+                .setNegativeButton("CANCEL",null)
+                .setPositiveButton("RESIGN",(d,w) -> {
 
-                    saveData();
-                    message("You have resigned from your job.");
+                    employed = false;
+                    monthlySalary = 0;
+                    jobTitle = "";
+                    company = "";
+                    sector = "";
+                    lastPaidAge = -1;
+
+                    saveCareer();
+
+                    showMessage("Resignation",
+                            "You have resigned successfully. You can now apply for another job.");
                 })
-                .setNegativeButton("CANCEL", null)
                 .show();
+    }
+
+    private void startBusiness() {
+
+        if (age < 18 || retired) return;
+
+        String[] businesses = {
+                "Small Retail Shop",
+                "Restaurant",
+                "Clothing Store",
+                "Online Business",
+                "Technology Startup",
+                "Real Estate Agency"
+        };
+
+        new AlertDialog.Builder(activity)
+                .setTitle("🏢 Start a Business")
+                .setItems(businesses,(d,which) ->
+                        launchBusiness(businesses[which]))
+                .setNegativeButton("CANCEL",null)
+                .show();
+    }
+
+    private void launchBusiness(String name) {
+
+        long investment;
+
+        switch(name) {
+            case "Small Retail Shop":
+                investment = 100000;
+                break;
+            case "Restaurant":
+                investment = 300000;
+                break;
+            case "Clothing Store":
+                investment = 200000;
+                break;
+            case "Online Business":
+                investment = 50000;
+                break;
+            case "Technology Startup":
+                investment = 500000;
+                break;
+            default:
+                investment = 1000000;
+                break;
+        }
+
+        if (money < investment) {
+            showMessage("Insufficient Capital",
+                    "Required investment: "+rupees(investment)+
+                    "\nYour available money: "+rupees(money));
+            return;
+        }
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Business Investment")
+                .setMessage(
+                        "Business: "+name+
+                        "\nInitial Investment: "+rupees(investment)+
+                        "\n\nDo you want to launch this business?"
+                )
+                .setNegativeButton("CANCEL",null)
+                .setPositiveButton("LAUNCH",(d,w) -> {
+
+                    money -= investment;
+
+                    businessName = name;
+                    businessActive = true;
+                    businessProfit = investment/20;
+
+                    callback.onMoneyChanged(money);
+                    saveCareer();
+
+                    showMessage("Business Launched!",
+                            "Congratulations!\n\n"+
+                            "Your "+name+" is now operational.\n"+
+                            "Estimated yearly operating profit: "+
+                            rupees(businessProfit)+
+                            "\n\nActual profit may vary.");
+                })
+                .show();
+    }
+
+    private void manageBusiness() {
+
+        new AlertDialog.Builder(activity)
+                .setTitle("🏢 Business Management")
+                .setMessage(
+                        "Business: "+businessName+
+                        "\nEstimated annual profit: "+rupees(businessProfit)+
+                        "\n\nManage your business as it grows."
+                )
+                .setPositiveButton("EXPAND BUSINESS",
+                        (d,w) -> expandBusiness())
+                .setNegativeButton("CLOSE",null)
+                .show();
+    }
+
+    private void expandBusiness() {
+
+        long investment = Math.max(10000,businessProfit/2);
+
+        if (money < investment) {
+            showMessage("Insufficient Funds",
+                    "You need "+rupees(investment)+" to expand.");
+            return;
+        }
+
+        money -= investment;
+        businessProfit = Math.min(
+                1000000000L,
+                businessProfit + businessProfit/2
+        );
+
+        callback.onMoneyChanged(money);
+        saveCareer();
+
+        showMessage("Expansion Successful",
+                "Your business has expanded.\n"+
+                "New estimated annual profit: "+
+                rupees(businessProfit));
+    }
+
+    private void freelancing() {
+
+        String[] work = {
+                "Content Writing",
+                "Graphic Design",
+                "Programming",
+                "Digital Marketing"
+        };
+
+        new AlertDialog.Builder(activity)
+                .setTitle("💻 Freelancing")
+                .setItems(work,(d,which) -> {
+
+                    long earning =
+                            5000 + (int)(Math.random()*20000);
+
+                    money += earning;
+
+                    callback.onMoneyChanged(money);
+
+                    showMessage("Freelance Project Completed",
+                            "Work: "+work[which]+
+                            "\nProject income: "+rupees(earning));
+                })
+                .setNegativeButton("CANCEL",null)
+                .show();
+    }
+
+    public void applyAnnualSalary() {
+
+        if (age < 18 || retired) return;
+
+        if (lastPaidAge >= age) return;
+
+        long income = 0;
+
+        if (employed && monthlySalary > 0) {
+
+            income = monthlySalary * 12;
+
+            experience++;
+
+            if (experience % 3 == 0) {
+
+                promotions++;
+
+                long increment =
+                        monthlySalary * 15 / 100;
+
+                monthlySalary += increment;
+            }
+
+        } else if (businessActive) {
+
+            long randomFactor =
+                    75+(int)(Math.random()*51);
+
+            income = businessProfit * randomFactor / 100;
+
+            businessProfit = Math.max(
+                    0,businessProfit + businessProfit/10
+            );
+        }
+
+        lastPaidAge = age;
+
+        if (income > 0) {
+
+            money = Math.min(
+                    Integer.MAX_VALUE,
+                    money + income
+            );
+
+            callback.onMoneyChanged(money);
+        }
+
+        saveCareer();
+    }
+
+    private void showStatistics() {
+
+        showMessage("Career Statistics",
+                "Current job: "+(employed ? jobTitle : "None")+
+                "\nCompany: "+company+
+                "\nMonthly salary: "+rupees(monthlySalary)+
+                "\nWork experience: "+experience+" years"+
+                "\nPromotions: "+promotions+
+                "\nBusiness: "+(businessActive ? businessName : "None")+
+                "\nBusiness annual profit: "+rupees(businessProfit)+
+                "\nRetirement: "+(retired ? "Retired" : "Active"));
     }
 
     private void retire() {
-        new AlertDialog.Builder(activity)
-                .setTitle("Retirement")
-                .setMessage(
-                        "Are you ready to retire from your career?"
-                )
-                .setPositiveButton("RETIRE", (d, w) -> {
-                    employed = false;
-                    retired = true;
-                    monthlySalary = 0;
-                    jobTitle = "";
 
-                    saveData();
-                    message("You have retired. Enjoy your retirement!");
+        if (age < 60) {
+            showMessage("Retirement",
+                    "You can retire at age 60 in this simulation.");
+            return;
+        }
+
+        new AlertDialog.Builder(activity)
+                .setTitle("🏖️ Retirement")
+                .setMessage("Are you sure you want to retire? You will stop receiving your regular employment salary.")
+                .setNegativeButton("CANCEL",null)
+                .setPositiveButton("RETIRE",(d,w) -> {
+
+                    retired = true;
+                    employed = false;
+                    monthlySalary = 0;
+
+                    saveCareer();
+
+                    showMessage("Congratulations!",
+                            "You have officially retired after your career journey.");
                 })
-                .setNegativeButton("CANCEL", null)
                 .show();
     }
 
-    private void message(String value) {
-        new AlertDialog.Builder(activity)
-                .setTitle("DesiLife Career")
-                .setMessage(value)
-                .setPositiveButton("OK", null)
-                .show();
+    private void showRetirement() {
+        showMessage("Retirement",
+                "You are retired.\n\nYour career journey has ended. Your accumulated money and assets remain yours.");
     }
 }
