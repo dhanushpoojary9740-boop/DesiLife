@@ -33,6 +33,15 @@ public class MainActivity extends Activity {
     int money = 5000;
     int examMarks = 0;
 
+    // Permanent examination records
+    boolean sslcAttempted = false;
+    boolean sslcPassed = false;
+
+    boolean pucAttempted = false;
+    boolean pucPassed = false;
+
+    boolean degreeCompleted = false;
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -174,7 +183,6 @@ public class MainActivity extends Activity {
         addDivider();
 
         addText("Your Life. Your Story.",25,white);
-
         addText(
             "Born in India. Raised by choices. Build your own destiny.",
             15,muted
@@ -182,7 +190,7 @@ public class MainActivity extends Activity {
 
         addDivider();
 
-        addButton("✦  START A NEW LIFE", () -> showCreate());
+        addButton("✦ START A NEW LIFE", () -> showCreate());
 
         addButton("CONTINUE GAME", () -> {
             if (save.getBoolean("created",false)) {
@@ -195,7 +203,7 @@ public class MainActivity extends Activity {
 
         addDivider();
         addText("AN INDIAN LIFE SIMULATION",12,gold);
-        addText("Version 1.2",12,muted);
+        addText("Version 1.3",12,muted);
     }
 
     void showCreate() {
@@ -203,11 +211,7 @@ public class MainActivity extends Activity {
 
         addText("🇮🇳",40,gold);
         addText("CREATE YOUR LIFE",27,gold);
-
-        addText(
-            "Every great journey starts with a birth.",
-            15,white
-        );
+        addText("Every great journey starts with a birth.",15,white);
 
         addDivider();
 
@@ -220,7 +224,6 @@ public class MainActivity extends Activity {
         );
 
         addText("Birthplace",16,white);
-
         Spinner citySpinner = addSpinner(new String[]{
             "Bengaluru, Karnataka",
             "Mysuru, Karnataka",
@@ -240,7 +243,6 @@ public class MainActivity extends Activity {
         });
 
         addText("Family background",16,white);
-
         Spinner familySpinner = addSpinner(new String[]{
             "Poor","Middle Class","Rich"
         });
@@ -269,6 +271,12 @@ public class MainActivity extends Activity {
             pucStream = "";
             degreeCourse = "";
             educationStatus = "Not enrolled";
+
+            sslcAttempted = false;
+            sslcPassed = false;
+            pucAttempted = false;
+            pucPassed = false;
+            degreeCompleted = false;
 
             if (family.equals("Poor")) {
                 money = 500;
@@ -302,6 +310,13 @@ public class MainActivity extends Activity {
             .putInt("intelligence",intelligence)
             .putInt("money",money)
             .putInt("examMarks",examMarks)
+
+            .putBoolean("sslcAttempted",sslcAttempted)
+            .putBoolean("sslcPassed",sslcPassed)
+            .putBoolean("pucAttempted",pucAttempted)
+            .putBoolean("pucPassed",pucPassed)
+            .putBoolean("degreeCompleted",degreeCompleted)
+
             .apply();
     }
 
@@ -323,11 +338,40 @@ public class MainActivity extends Activity {
         educationStatus = save.getString(
             "educationStatus","Not enrolled"
         );
+
         examMarks = save.getInt("examMarks",0);
 
-        // Support characters created in earlier versions.
-        if (schoolType.isEmpty() && age >= 6 && age <= 15) {
-            educationStatus = "Class " + (age - 5);
+        // Recover existing progress from earlier game versions.
+        sslcPassed = save.getBoolean(
+            "sslcPassed",
+            educationStatus.equals("SSLC Passed") ||
+            educationStatus.equals("PUC Passed") ||
+            !degreeCourse.isEmpty() ||
+            educationStatus.equals("Graduated")
+        );
+
+        pucPassed = save.getBoolean(
+            "pucPassed",
+            educationStatus.equals("PUC Passed") ||
+            !degreeCourse.isEmpty() ||
+            educationStatus.equals("Graduated")
+        );
+
+        degreeCompleted = save.getBoolean(
+            "degreeCompleted",
+            educationStatus.equals("Graduated")
+        );
+
+        sslcAttempted = save.getBoolean(
+            "sslcAttempted",sslcPassed
+        );
+
+        pucAttempted = save.getBoolean(
+            "pucAttempted",pucPassed
+        );
+
+        if (age >= 6 && age <= 14 && schoolType.isEmpty()) {
+            educationStatus = "Class "+(age-5);
         }
     }
 
@@ -355,27 +399,27 @@ public class MainActivity extends Activity {
 
         addText("YOUR LIFE JOURNEY",20,gold);
 
-        addButton("🎂  AGE UP - NEXT YEAR", () -> ageUp());
+        addButton("🎂 AGE UP - NEXT YEAR", () -> ageUp());
 
-        addButton("👨‍👩‍👧  FAMILY", () ->
+        addButton("👨‍👩‍👧 FAMILY", () ->
             message("Family activities are coming soon.")
         );
 
-        addButton("📚  EDUCATION", () -> showEducation());
+        addButton("📚 EDUCATION", () -> showEducation());
 
-        addButton("💼  CAREER", () ->
+        addButton("💼 CAREER", () ->
             message("Career opportunities are coming soon.")
         );
 
-        addButton("❤️  RELATIONSHIPS", () ->
+        addButton("❤️ RELATIONSHIPS", () ->
             message("Relationships are coming soon.")
         );
 
-        addButton("🏠  PROPERTY", () ->
+        addButton("🏠 PROPERTY", () ->
             message("Houses and vehicles are coming soon.")
         );
 
-        addButton("💾  SAVE GAME", () -> {
+        addButton("💾 SAVE GAME", () -> {
             saveGame();
             message("Your life has been saved!");
         });
@@ -391,8 +435,9 @@ public class MainActivity extends Activity {
         addText("Age: "+age+" years",16,muted);
 
         if (age < 5) {
+
             addText(
-                "You are enjoying your early childhood.\n" +
+                "You are enjoying your early childhood.\n"+
                 "School admission begins at age 5.",
                 17,white
             );
@@ -429,7 +474,7 @@ public class MainActivity extends Activity {
             addText("Currently studying in Class "+currentClass,20,white);
 
             addText(
-                "Study hard to improve your intelligence " +
+                "Study hard to improve your intelligence "+
                 "and prepare for your future exams.",
                 16,muted
             );
@@ -450,25 +495,59 @@ public class MainActivity extends Activity {
                 message("You enjoyed your school activities!");
             });
 
-        } else if (age == 15 && !educationStatus.equals("SSLC Passed")) {
+        } else if (age == 15) {
 
-            addText("🏫 Class 10 – SSLC",21,gold);
-            addText("Your board examination is approaching.",16,white);
+            addText("🏫 CLASS 10 – SSLC",21,gold);
 
-            addButton("📝 TAKE SSLC EXAM", () -> takeExam("SSLC"));
+            if (sslcPassed) {
+                addText("SSLC: PASSED ✓",20,white);
+                addText("Your SSLC examination is completed.",16,muted);
+
+            } else if (sslcAttempted) {
+                addText("SSLC: FAILED",20,white);
+                addText(
+                    "Your examination attempt is completed.",
+                    16,muted
+                );
+
+            } else {
+                addText("Your board examination is approaching.",16,white);
+
+                addButton("📝 TAKE SSLC EXAM", () ->
+                    takeExam("SSLC")
+                );
+            }
 
         } else if (age >= 16 && age <= 17) {
 
             addText("🎓 PRE-UNIVERSITY COURSE",21,gold);
 
-            if (pucStream.isEmpty()) {
+            if (!sslcPassed) {
+
+                addText(
+                    "You must pass SSLC before joining PUC.",
+                    16,white
+                );
+
+            } else if (pucPassed) {
+
+                addText("PUC: PASSED ✓",20,gold);
+                addText("Your PUC examination is completed.",16,white);
+
+            } else if (pucAttempted) {
+
+                addText("PUC: FAILED",20,white);
+                addText(
+                    "Your PUC examination attempt is completed.",
+                    16,muted
+                );
+
+            } else if (pucStream.isEmpty()) {
 
                 addText("Choose your PUC stream",17,white);
 
                 Spinner stream = addSpinner(new String[]{
-                    "Science",
-                    "Commerce",
-                    "Arts"
+                    "Science","Commerce","Arts"
                 });
 
                 addButton("JOIN PUC", () -> {
@@ -486,7 +565,9 @@ public class MainActivity extends Activity {
                 });
 
             } else {
-                addText("Stream: "+pucStream,18,white);
+
+                addText("Stream: "+pucStream,18,gold);
+
                 addText(
                     age == 16 ? "PUC First Year" : "PUC Second Year",
                     18,white
@@ -510,18 +591,58 @@ public class MainActivity extends Activity {
 
             addText("🎓 HIGHER EDUCATION",22,gold);
 
-            if (!educationStatus.equals("PUC Passed")) {
-                addText(
-                    "Complete your PUC qualification to unlock degree courses.",
-                    16,white
-                );
+            // IMPORTANT: Check permanent PUC result,
+            // not the changing educationStatus string.
 
-                addButton("TAKE PUC EXAM", () ->
-                    takeExam("PUC")
-                );
+            if (!pucPassed) {
+
+                if (!sslcPassed) {
+                    addText(
+                        "You must pass SSLC before higher education.",
+                        16,white
+                    );
+
+                } else if (pucAttempted) {
+
+                    addText("PUC: FAILED",20,white);
+                    addText(
+                        "Your PUC examination attempt is completed.",
+                        16,muted
+                    );
+
+                } else if (pucStream.isEmpty()) {
+
+                    addText("Choose your PUC stream",17,white);
+
+                    Spinner stream = addSpinner(new String[]{
+                        "Science","Commerce","Arts"
+                    });
+
+                    addButton("JOIN PUC", () -> {
+                        pucStream = stream.getSelectedItem().toString();
+                        educationStatus = "PUC 1st Year";
+                        saveGame();
+                        showEducation();
+                    });
+
+                } else {
+
+                    addText("PUC Stream: "+pucStream,18,white);
+
+                    addButton("📝 TAKE PUC EXAM", () ->
+                        takeExam("PUC")
+                    );
+                }
+
+            } else if (degreeCompleted) {
+
+                addText("🎓 DEGREE COMPLETED ✓",22,gold);
+                addText("Course: "+degreeCourse,18,white);
+                addText("Congratulations! You are a graduate.",16,muted);
 
             } else if (degreeCourse.isEmpty()) {
 
+                addText("PUC Passed ✓",18,white);
                 addText("Choose your degree course",17,white);
 
                 Spinner course = addSpinner(new String[]{
@@ -538,7 +659,9 @@ public class MainActivity extends Activity {
                 addButton("JOIN COLLEGE", () -> {
                     degreeCourse = course.getSelectedItem().toString();
                     educationStatus = "Degree 1st Year";
+
                     money = Math.max(0,money-10000);
+
                     saveGame();
                     showEducation();
                 });
@@ -546,26 +669,39 @@ public class MainActivity extends Activity {
             } else {
 
                 addText("Course: "+degreeCourse,18,white);
-                addText(educationStatus,17,muted);
+                addText("PUC Passed ✓",16,gold);
+                addText(educationStatus,18,white);
+
+                addText(
+                    "Continue your studies and complete your degree.",
+                    16,muted
+                );
 
                 if (age >= 21) {
                     addButton("🎓 COMPLETE DEGREE", () -> {
-                        educationStatus = "Graduated";
-                        intelligence = Math.min(100,intelligence+10);
-                        saveGame();
+
+                        if (!degreeCompleted) {
+                            degreeCompleted = true;
+                            educationStatus = "Graduated";
+
+                            intelligence =
+                                Math.min(100,intelligence+10);
+
+                            happiness =
+                                Math.min(100,happiness+10);
+
+                            saveGame();
+                        }
+
                         showEducation();
-                        message("Congratulations! You graduated!");
+                        message(
+                            "🎉 Congratulations!\n\n"+
+                            "You have successfully graduated in "+
+                            degreeCourse+"."
+                        );
                     });
-                } else {
-                    addText(
-                        "Continue your studies and complete your degree.",
-                        16,white
-                    );
                 }
             }
-
-        } else {
-            addText("Education details will appear here.",16,white);
         }
 
         addDivider();
@@ -577,9 +713,44 @@ public class MainActivity extends Activity {
 
     void takeExam(String exam) {
 
+        // Prevent repeated examinations.
+        if (exam.equals("SSLC")) {
+
+            if (sslcAttempted) {
+                message("You have already taken your SSLC examination.");
+                showEducation();
+                return;
+            }
+
+            sslcAttempted = true;
+
+        } else if (exam.equals("PUC")) {
+
+            if (pucAttempted || pucPassed) {
+                message("You have already completed your PUC examination.");
+                showEducation();
+                return;
+            }
+
+            if (!sslcPassed) {
+                message("You must pass SSLC first.");
+                return;
+            }
+
+            pucAttempted = true;
+        }
+
         examMarks = 40 + (int)(Math.random()*61);
 
-        if (examMarks >= 35) {
+        boolean passed = examMarks >= 35;
+
+        if (exam.equals("SSLC")) {
+            sslcPassed = passed;
+        } else {
+            pucPassed = passed;
+        }
+
+        if (passed) {
 
             if (exam.equals("SSLC")) {
                 educationStatus = "SSLC Passed";
@@ -591,27 +762,24 @@ public class MainActivity extends Activity {
 
             happiness = Math.min(100,happiness+10);
 
-            saveGame();
-            showEducation();
-
-            message(
-                "🎉 Congratulations!\n\n"+
-                exam+" Result: PASS\n"+
-                "Marks: "+examMarks+"/100"
-            );
-
         } else {
 
+            educationStatus = exam+" Failed";
             happiness = Math.max(0,happiness-10);
-            saveGame();
-            showEducation();
-
-            message(
-                "Unfortunately, you did not pass.\n\n"+
-                exam+" Marks: "+examMarks+"/100\n"+
-                "You can try again."
-            );
         }
+
+        // Save the result immediately.
+        saveGame();
+
+        showEducation();
+
+        message(
+            (passed ? "🎉 Congratulations!\n\n" :
+                "Unfortunately, you did not pass.\n\n")+
+            exam+" Result: "+(passed ? "PASS" : "FAIL")+
+            "\nMarks: "+examMarks+"/100\n\n"+
+            "Examination attempts cannot be repeated."
+        );
     }
 
     void ageUp() {
@@ -643,20 +811,21 @@ public class MainActivity extends Activity {
             event = "Another year has passed. Your life continues.";
         }
 
-        if (age >= 6 && age <= 14) {
+        if (age >= 6 && age <= 14 && !schoolType.isEmpty()) {
             educationStatus = "Class "+(age-5);
         }
 
-        if (age == 16 && educationStatus.equals("SSLC Passed")) {
+        if (age == 16 && sslcPassed && !pucPassed) {
             educationStatus = "PUC admission pending";
         }
 
-        if (age == 17 && !pucStream.isEmpty()) {
+        if (age == 17 && !pucStream.isEmpty() && !pucPassed) {
             educationStatus = "PUC 2nd Year";
         }
 
-        if (age > 18 && !degreeCourse.isEmpty() &&
-            !educationStatus.equals("Graduated")) {
+        // Never overwrite the passed PUC result or graduation.
+        if (age >= 18 && !degreeCourse.isEmpty()
+                && !degreeCompleted && pucPassed) {
             educationStatus = "Degree "+(age-17)+" Year";
         }
 
