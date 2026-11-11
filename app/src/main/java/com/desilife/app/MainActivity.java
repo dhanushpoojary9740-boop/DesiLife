@@ -20,19 +20,18 @@ public class MainActivity extends Activity {
     LinearLayout root;
     SharedPreferences save;
 
-    String playerName;
-    String gender;
-    String city;
-    String family;
+    String playerName, gender, city, family;
+    String schoolType = "";
+    String pucStream = "";
+    String degreeCourse = "";
+    String educationStatus = "Not enrolled";
 
     int age = 0;
     int health = 100;
     int happiness = 100;
     int intelligence = 50;
     int money = 5000;
-
-    TextView ageText;
-    TextView moneyText;
+    int examMarks = 0;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -40,6 +39,7 @@ public class MainActivity extends Activity {
 
         getWindow().setStatusBarColor(bg);
         getWindow().setNavigationBarColor(bg);
+        getWindow().getDecorView().setSystemUiVisibility(0);
 
         save = getSharedPreferences("DesiLifeSave", MODE_PRIVATE);
 
@@ -70,6 +70,8 @@ public class MainActivity extends Activity {
 
     void setup() {
         ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(bg);
 
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -166,11 +168,7 @@ public class MainActivity extends Activity {
         setup();
 
         addText("🇮🇳",55,gold);
-
-        TextView title = text("DESILIFE",38,gold);
-        title.setTypeface(null,Typeface.BOLD);
-        root.addView(title);
-
+        addText("DESILIFE",38,gold);
         addText("APNI ZINDAGI, APNE FAISLE",13,muted);
 
         addDivider();
@@ -196,9 +194,8 @@ public class MainActivity extends Activity {
         });
 
         addDivider();
-
         addText("AN INDIAN LIFE SIMULATION",12,gold);
-        addText("Version 1.1",12,muted);
+        addText("Version 1.2",12,muted);
     }
 
     void showCreate() {
@@ -214,17 +211,15 @@ public class MainActivity extends Activity {
 
         addDivider();
 
-        addText("What is your character's name?",16,white);
-
+        addText("Character name",16,white);
         EditText name = addInput("Enter your name");
 
-        addText("Select gender",16,white);
-
+        addText("Gender",16,white);
         Spinner genderSpinner = addSpinner(
             new String[]{"Male","Female"}
         );
 
-        addText("Choose birthplace",16,white);
+        addText("Birthplace",16,white);
 
         Spinner citySpinner = addSpinner(new String[]{
             "Bengaluru, Karnataka",
@@ -244,15 +239,11 @@ public class MainActivity extends Activity {
             "Bhopal, Madhya Pradesh"
         });
 
-        addText("Choose family background",16,white);
+        addText("Family background",16,white);
 
         Spinner familySpinner = addSpinner(new String[]{
-            "Poor",
-            "Middle Class",
-            "Rich"
+            "Poor","Middle Class","Rich"
         });
-
-        addDivider();
 
         addButton("CREATE MY LIFE", () -> {
 
@@ -272,6 +263,12 @@ public class MainActivity extends Activity {
             health = 100;
             happiness = 100;
             intelligence = 50;
+            examMarks = 0;
+
+            schoolType = "";
+            pucStream = "";
+            degreeCourse = "";
+            educationStatus = "Not enrolled";
 
             if (family.equals("Poor")) {
                 money = 500;
@@ -295,11 +292,16 @@ public class MainActivity extends Activity {
             .putString("gender",gender)
             .putString("city",city)
             .putString("family",family)
+            .putString("schoolType",schoolType)
+            .putString("pucStream",pucStream)
+            .putString("degreeCourse",degreeCourse)
+            .putString("educationStatus",educationStatus)
             .putInt("age",age)
             .putInt("health",health)
             .putInt("happiness",happiness)
             .putInt("intelligence",intelligence)
             .putInt("money",money)
+            .putInt("examMarks",examMarks)
             .apply();
     }
 
@@ -314,19 +316,29 @@ public class MainActivity extends Activity {
         happiness = save.getInt("happiness",100);
         intelligence = save.getInt("intelligence",50);
         money = save.getInt("money",5000);
+
+        schoolType = save.getString("schoolType","");
+        pucStream = save.getString("pucStream","");
+        degreeCourse = save.getString("degreeCourse","");
+        educationStatus = save.getString(
+            "educationStatus","Not enrolled"
+        );
+        examMarks = save.getInt("examMarks",0);
+
+        // Support characters created in earlier versions.
+        if (schoolType.isEmpty() && age >= 6 && age <= 15) {
+            educationStatus = "Class " + (age - 5);
+        }
     }
 
     void showDashboard() {
         setup();
 
         addText("🇮🇳 DESILIFE",25,gold);
-
         addDivider();
 
         addText("Hello, "+playerName+"!",27,white);
-
         addText("Age: "+age+" years",21,gold);
-
         addText(city+" | India",15,muted);
         addText("Family: "+family,15,muted);
         addText("Gender: "+gender,15,muted);
@@ -334,15 +346,10 @@ public class MainActivity extends Activity {
         addDivider();
 
         addText("YOUR LIFE STATS",20,gold);
-
         addText("❤️ Health: "+health+"/100",17,white);
         addText("😊 Happiness: "+happiness+"/100",17,white);
         addText("🧠 Intelligence: "+intelligence+"/100",17,white);
-
-        moneyText = text(
-            "💰 Money: ₹"+money,19,gold
-        );
-        root.addView(moneyText);
+        addText("💰 Money: ₹"+money,19,gold);
 
         addDivider();
 
@@ -351,12 +358,10 @@ public class MainActivity extends Activity {
         addButton("🎂  AGE UP - NEXT YEAR", () -> ageUp());
 
         addButton("👨‍👩‍👧  FAMILY", () ->
-            message("Family activities will be added in the next update.")
+            message("Family activities are coming soon.")
         );
 
-        addButton("📚  EDUCATION", () ->
-            message("Indian schools and colleges are coming soon.")
-        );
+        addButton("📚  EDUCATION", () -> showEducation());
 
         addButton("💼  CAREER", () ->
             message("Career opportunities are coming soon.")
@@ -376,25 +381,283 @@ public class MainActivity extends Activity {
         });
     }
 
+    void showEducation() {
+        setup();
+
+        addText("📚 EDUCATION",28,gold);
+        addDivider();
+
+        addText("Your Education Journey",21,white);
+        addText("Age: "+age+" years",16,muted);
+
+        if (age < 5) {
+            addText(
+                "You are enjoying your early childhood.\n" +
+                "School admission begins at age 5.",
+                17,white
+            );
+
+        } else if (age == 5 && schoolType.isEmpty()) {
+
+            addText("It's time to start school!",19,gold);
+            addText("Choose your school",16,white);
+
+            Spinner school = addSpinner(new String[]{
+                "Government School",
+                "Private School"
+            });
+
+            addButton("ADMIT TO SCHOOL", () -> {
+                schoolType = school.getSelectedItem().toString();
+
+                educationStatus = "School admission completed";
+
+                if (schoolType.equals("Private School")) {
+                    money = Math.max(0,money-5000);
+                }
+
+                happiness = Math.min(100,happiness+5);
+                saveGame();
+                showEducation();
+            });
+
+        } else if (age >= 6 && age <= 14) {
+
+            int currentClass = age - 5;
+
+            addText("🏫 "+schoolType,18,gold);
+            addText("Currently studying in Class "+currentClass,20,white);
+
+            addText(
+                "Study hard to improve your intelligence " +
+                "and prepare for your future exams.",
+                16,muted
+            );
+
+            addButton("📖 STUDY HARD", () -> {
+                intelligence = Math.min(100,intelligence+5);
+                happiness = Math.max(0,happiness-2);
+                educationStatus = "Class "+currentClass;
+                saveGame();
+                showEducation();
+                message("You studied hard! Intelligence increased.");
+            });
+
+            addButton("🎨 SCHOOL ACTIVITIES", () -> {
+                happiness = Math.min(100,happiness+5);
+                saveGame();
+                showEducation();
+                message("You enjoyed your school activities!");
+            });
+
+        } else if (age == 15 && !educationStatus.equals("SSLC Passed")) {
+
+            addText("🏫 Class 10 – SSLC",21,gold);
+            addText("Your board examination is approaching.",16,white);
+
+            addButton("📝 TAKE SSLC EXAM", () -> takeExam("SSLC"));
+
+        } else if (age >= 16 && age <= 17) {
+
+            addText("🎓 PRE-UNIVERSITY COURSE",21,gold);
+
+            if (pucStream.isEmpty()) {
+
+                addText("Choose your PUC stream",17,white);
+
+                Spinner stream = addSpinner(new String[]{
+                    "Science",
+                    "Commerce",
+                    "Arts"
+                });
+
+                addButton("JOIN PUC", () -> {
+                    pucStream = stream.getSelectedItem().toString();
+                    educationStatus = "PUC 1st Year";
+
+                    if (family.equals("Poor")) {
+                        money = Math.max(0,money-500);
+                    } else {
+                        money = Math.max(0,money-3000);
+                    }
+
+                    saveGame();
+                    showEducation();
+                });
+
+            } else {
+                addText("Stream: "+pucStream,18,white);
+                addText(
+                    age == 16 ? "PUC First Year" : "PUC Second Year",
+                    18,white
+                );
+
+                addButton("📖 STUDY HARD", () -> {
+                    intelligence = Math.min(100,intelligence+5);
+                    saveGame();
+                    showEducation();
+                    message("Your intelligence increased!");
+                });
+
+                if (age == 17) {
+                    addButton("📝 TAKE PUC EXAM", () ->
+                        takeExam("PUC")
+                    );
+                }
+            }
+
+        } else if (age >= 18) {
+
+            addText("🎓 HIGHER EDUCATION",22,gold);
+
+            if (!educationStatus.equals("PUC Passed")) {
+                addText(
+                    "Complete your PUC qualification to unlock degree courses.",
+                    16,white
+                );
+
+                addButton("TAKE PUC EXAM", () ->
+                    takeExam("PUC")
+                );
+
+            } else if (degreeCourse.isEmpty()) {
+
+                addText("Choose your degree course",17,white);
+
+                Spinner course = addSpinner(new String[]{
+                    "B.A. – Arts",
+                    "B.Com – Commerce",
+                    "B.Sc – Science",
+                    "BCA – Computer Applications",
+                    "BBA – Business Administration",
+                    "B.E. – Engineering",
+                    "MBBS – Medicine",
+                    "LLB – Law"
+                });
+
+                addButton("JOIN COLLEGE", () -> {
+                    degreeCourse = course.getSelectedItem().toString();
+                    educationStatus = "Degree 1st Year";
+                    money = Math.max(0,money-10000);
+                    saveGame();
+                    showEducation();
+                });
+
+            } else {
+
+                addText("Course: "+degreeCourse,18,white);
+                addText(educationStatus,17,muted);
+
+                if (age >= 21) {
+                    addButton("🎓 COMPLETE DEGREE", () -> {
+                        educationStatus = "Graduated";
+                        intelligence = Math.min(100,intelligence+10);
+                        saveGame();
+                        showEducation();
+                        message("Congratulations! You graduated!");
+                    });
+                } else {
+                    addText(
+                        "Continue your studies and complete your degree.",
+                        16,white
+                    );
+                }
+            }
+
+        } else {
+            addText("Education details will appear here.",16,white);
+        }
+
+        addDivider();
+
+        addText("Education status: "+educationStatus,15,muted);
+
+        addButton("BACK TO LIFE", () -> showDashboard());
+    }
+
+    void takeExam(String exam) {
+
+        examMarks = 40 + (int)(Math.random()*61);
+
+        if (examMarks >= 35) {
+
+            if (exam.equals("SSLC")) {
+                educationStatus = "SSLC Passed";
+                intelligence = Math.min(100,intelligence+5);
+            } else {
+                educationStatus = "PUC Passed";
+                intelligence = Math.min(100,intelligence+10);
+            }
+
+            happiness = Math.min(100,happiness+10);
+
+            saveGame();
+            showEducation();
+
+            message(
+                "🎉 Congratulations!\n\n"+
+                exam+" Result: PASS\n"+
+                "Marks: "+examMarks+"/100"
+            );
+
+        } else {
+
+            happiness = Math.max(0,happiness-10);
+            saveGame();
+            showEducation();
+
+            message(
+                "Unfortunately, you did not pass.\n\n"+
+                exam+" Marks: "+examMarks+"/100\n"+
+                "You can try again."
+            );
+        }
+    }
+
     void ageUp() {
+
         age++;
 
         String event = "";
 
         if (age == 1) {
             event = "You celebrated your first birthday with your family.";
+
         } else if (age == 5) {
-            intelligence = Math.min(100,intelligence+5);
-            event = "You started exploring the world around you.";
+            event = "You are ready to begin your school journey!";
+
         } else if (age == 6) {
-            event = "Your school journey begins!";
+            event = "Your first day at school begins!";
+
+        } else if (age == 15) {
+            event = "You are preparing for your SSLC examination.";
+
+        } else if (age == 16) {
+            event = "A new chapter begins. Choose your PUC stream.";
+
         } else if (age == 18) {
-            event = "You are now an adult. A new chapter begins!";
-        } else if (age == 21) {
-            event = "Your future is in your hands. Make wise decisions.";
+            event = "You are now an adult. Your future awaits.";
+
         } else {
             happiness = Math.max(0,happiness-1);
-            event = "Another year has passed. What will you do next?";
+            event = "Another year has passed. Your life continues.";
+        }
+
+        if (age >= 6 && age <= 14) {
+            educationStatus = "Class "+(age-5);
+        }
+
+        if (age == 16 && educationStatus.equals("SSLC Passed")) {
+            educationStatus = "PUC admission pending";
+        }
+
+        if (age == 17 && !pucStream.isEmpty()) {
+            educationStatus = "PUC 2nd Year";
+        }
+
+        if (age > 18 && !degreeCourse.isEmpty() &&
+            !educationStatus.equals("Graduated")) {
+            educationStatus = "Degree "+(age-17)+" Year";
         }
 
         saveGame();
@@ -405,7 +668,12 @@ public class MainActivity extends Activity {
             .setMessage(
                 "You are now "+age+" years old.\n\n"+event
             )
-            .setPositiveButton("Continue",null)
+            .setPositiveButton("Continue", (d,w) -> {
+                if (age == 5 || age == 15 || age == 16 ||
+                    age == 17 || age == 18) {
+                    showEducation();
+                }
+            })
             .show();
     }
 
