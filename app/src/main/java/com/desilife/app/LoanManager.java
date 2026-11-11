@@ -29,12 +29,10 @@ public class LoanManager {
     private final MoneyListener listener;
 
     private final NumberFormat currency =
-            NumberFormat.getCurrencyInstance(
-                    new Locale("en", "IN"));
+            NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
 
     private long cash;
     private String loanType = "";
-
     private long principal;
     private long outstanding;
     private long scheduledEmi;
@@ -54,11 +52,9 @@ public class LoanManager {
 
     private LinearLayout content;
 
-    private static final String PREF =
-            "desilife_loan_data";
+    private static final String PREF = "desilife_loan_data";
 
-    public LoanManager(Activity activity,
-                       long currentCash,
+    public LoanManager(Activity activity, long currentCash,
                        MoneyListener listener) {
 
         this.activity = activity;
@@ -93,11 +89,9 @@ public class LoanManager {
         creditScore = prefs.getInt("credit_score", 700);
         lateFees = prefs.getLong("late_fees", 0);
 
-        totalInterestPaid =
-                prefs.getLong("interest_paid", 0);
+        totalInterestPaid = prefs.getLong("interest_paid", 0);
 
-        repossessed =
-                prefs.getBoolean("repossessed", false);
+        repossessed = prefs.getBoolean("repossessed", false);
     }
 
     private void saveData() {
@@ -112,8 +106,7 @@ public class LoanManager {
                 .putInt("tenure", tenureMonths)
                 .putInt("months_paid", monthsPaid)
                 .putInt("missed", missedPayments)
-                .putInt("consecutive_missed",
-                        consecutiveMissed)
+                .putInt("consecutive_missed", consecutiveMissed)
                 .putInt("credit_score", creditScore)
                 .putLong("late_fees", lateFees)
                 .putLong("interest_paid", totalInterestPaid)
@@ -123,25 +116,17 @@ public class LoanManager {
 
     private void migrateOldLoan() {
 
-        if (outstanding <= 0 || loanType.isEmpty()) {
-            return;
-        }
+        if (outstanding <= 0 || loanType.isEmpty()) return;
 
         if (scheduledEmi <= 0) {
 
-            int restructuringMonths = 60;
-
             scheduledEmi = calculateInstallment(
-                    outstanding,
-                    interestRate,
-                    restructuringMonths);
+                    outstanding, interestRate, 60);
 
             tenureMonths = Math.max(
-                    tenureMonths,
-                    monthsPaid + restructuringMonths);
+                    tenureMonths, monthsPaid + 60);
 
-            addHistory(
-                    "Existing loan restructured into a fixed 60-month schedule.");
+            addHistory("Existing loan repayment schedule updated.");
 
             saveData();
         }
@@ -185,9 +170,7 @@ public class LoanManager {
                 Toast.LENGTH_SHORT).show();
     }
 
-    private TextView text(String value,
-                          int size,
-                          boolean bold) {
+    private TextView text(String value, int size, boolean bold) {
 
         TextView t = new TextView(activity);
         t.setText(value);
@@ -223,9 +206,7 @@ public class LoanManager {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(18, 16, 18, 16);
-
-        card.setBackground(
-                background(Color.rgb(39, 48, 65)));
+        card.setBackground(background(Color.rgb(39, 48, 65)));
 
         card.addView(text(title, 14, false));
         card.addView(text(value, 22, true));
@@ -242,13 +223,10 @@ public class LoanManager {
                            View.OnClickListener action) {
 
         Button button = new Button(activity);
-
         button.setText(label);
         button.setTextColor(Color.WHITE);
         button.setAllCaps(false);
-
-        button.setBackground(
-                background(Color.rgb(54, 91, 143)));
+        button.setBackground(background(Color.rgb(54, 91, 143)));
 
         LinearLayout.LayoutParams p =
                 new LinearLayout.LayoutParams(-1, -2);
@@ -320,25 +298,18 @@ public class LoanManager {
         addCard("Original Principal", money(principal));
 
         addCard("Interest Rate",
-                String.format(Locale.US,
-                        "%.1f%%", interestRate));
+                String.format(Locale.US, "%.1f%%", interestRate));
 
         addCard("Loan Tenure", tenureMonths + " months");
         addCard("Months Paid", String.valueOf(monthsPaid));
-
-        addCard("Missed Payments",
-                String.valueOf(missedPayments));
-
+        addCard("Missed Payments", String.valueOf(missedPayments));
         addCard("Late Fees", money(lateFees));
 
         addCard("Total Interest Paid",
                 money(totalInterestPaid));
 
-        addCard("Fixed Monthly EMI",
-                money(scheduledEmi));
-
-        addCard("Remaining Principal",
-                money(outstanding));
+        addCard("Fixed Monthly EMI", money(scheduledEmi));
+        addCard("Remaining Principal", money(outstanding));
 
         if (repossessed) {
             addCard("Asset Status", "Repossessed");
@@ -401,8 +372,7 @@ public class LoanManager {
         };
 
         long[] values = {
-                50000, 100000, 250000,
-                500000, 1000000
+                50000, 100000, 250000, 500000, 1000000
         };
 
         new AlertDialog.Builder(activity)
@@ -413,13 +383,10 @@ public class LoanManager {
                 .show();
     }
 
-    // IMPORTANT: amount is LONG, not INT.
-
     private void chooseTenure(long amount, int maxTenure) {
 
         int[] choices = {
-                12, 24, 36, 60, 84,
-                120, 180, 240, 300
+                12, 24, 36, 60, 84, 120, 180, 240, 300
         };
 
         ArrayList<Integer> valid = new ArrayList<>();
@@ -447,25 +414,19 @@ public class LoanManager {
     // EMI CALCULATION
 
     private long calculateInstallment(
-            long amount,
-            double annualRate,
-            int months) {
+            long amount, double annualRate, int months) {
 
-        if (amount <= 0 || months <= 0) {
-            return 0;
-        }
+        if (amount <= 0 || months <= 0) return 0;
 
         double rate = annualRate / 1200.0;
 
         if (rate <= 0) {
-            return (long) Math.ceil(
-                    amount / (double) months);
+            return (long) Math.ceil(amount / (double) months);
         }
 
         double factor = Math.pow(1 + rate, months);
 
-        double emi = amount * rate * factor
-                / (factor - 1);
+        double emi = amount * rate * factor / (factor - 1);
 
         return (long) Math.ceil(emi);
     }
@@ -474,28 +435,31 @@ public class LoanManager {
 
     private void confirmLoan(long amount, int months) {
 
-        double approvedRate = interestRate;
+        double rate = interestRate;
 
         if (creditScore >= 800) {
-            approvedRate -= 1.0;
+            rate -= 1.0;
         } else if (creditScore >= 750) {
-            approvedRate -= 0.5;
+            rate -= 0.5;
         } else if (creditScore < 600) {
-            approvedRate += 2.0;
+            rate += 2.0;
         }
+
+        // FIX: final variable for lambda.
+        final double finalRate = rate;
 
         long processingFee = Math.round(amount * 0.02);
         long gst = Math.round(processingFee * 0.18);
 
         long disbursed = amount - processingFee - gst;
 
-        long emi = calculateInstallment(
-                amount, approvedRate, months);
+        final long emi = calculateInstallment(
+                amount, finalRate, months);
 
         String message =
                 "Loan: " + loanType
                 + "\nPrincipal: " + money(amount)
-                + "\nInterest: " + approvedRate + "%"
+                + "\nInterest: " + finalRate + "%"
                 + "\nTenure: " + months + " months"
                 + "\nFixed EMI: " + money(emi)
                 + "\nProcessing fee: " + money(processingFee)
@@ -506,13 +470,14 @@ public class LoanManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Loan Offer")
                 .setMessage(message)
-                .setPositiveButton("Accept",
-                        (dialog, which) -> {
+                .setPositiveButton("Accept", (dialog, which) -> {
 
                     principal = amount;
                     outstanding = amount;
 
-                    interestRate = approvedRate;
+                    // Use finalRate instead of rate.
+                    interestRate = finalRate;
+
                     tenureMonths = months;
                     scheduledEmi = emi;
 
@@ -522,13 +487,11 @@ public class LoanManager {
 
                     lateFees = 0;
                     totalInterestPaid = 0;
-
                     repossessed = false;
 
                     updateCash(cash + disbursed);
 
-                    addHistory(
-                            "Loan approved: " + loanType
+                    addHistory("Loan approved: " + loanType
                             + ", principal " + money(amount));
 
                     saveData();
@@ -565,54 +528,43 @@ public class LoanManager {
 
             long amountDue = outstanding + interest;
 
-            long payment = Math.min(
-                    scheduledEmi, amountDue);
+            long payment = Math.min(scheduledEmi, amountDue);
 
             if (cash >= payment && payment > 0) {
 
                 updateCash(cash - payment);
 
-                long interestCovered = Math.min(
-                        payment, interest);
+                long interestCovered = Math.min(payment, interest);
 
                 totalInterestPaid += interestCovered;
 
-                outstanding = Math.max(
-                        0, amountDue - payment);
+                outstanding = Math.max(0, amountDue - payment);
 
                 consecutiveMissed = 0;
-
                 monthsPaid++;
 
-                creditScore = Math.min(
-                        900, creditScore + 2);
+                creditScore = Math.min(900, creditScore + 2);
 
                 successfulPayments++;
 
-                addHistory(
-                        "Monthly EMI debited: " + money(payment)
-                        + " | Interest: " + money(interestCovered)
-                );
+                addHistory("Monthly EMI debited: "
+                        + money(payment)
+                        + " | Interest: " + money(interestCovered));
 
                 if (outstanding <= 0) {
                     finishLoan();
                     break;
                 }
 
-                if (monthsPaid >= tenureMonths
-                        && outstanding > 0) {
+                if (monthsPaid >= tenureMonths) {
 
                     tenureMonths += 12;
 
                     scheduledEmi = calculateInstallment(
-                            outstanding,
-                            interestRate,
-                            12
-                    );
+                            outstanding, interestRate, 12);
 
                     addHistory(
-                            "Repayment schedule extended by 12 months."
-                    );
+                            "Repayment schedule extended by 12 months.");
                 }
 
             } else {
@@ -624,25 +576,20 @@ public class LoanManager {
 
                 long penalty = Math.max(
                         100,
-                        Math.min(
-                                5000,
-                                Math.round(scheduledEmi * 0.02)
-                        )
-                );
+                        Math.min(5000,
+                                Math.round(scheduledEmi * 0.02)));
 
                 outstanding += penalty;
                 lateFees += penalty;
 
-                creditScore = Math.max(
-                        300, creditScore - 25);
+                creditScore = Math.max(300, creditScore - 25);
 
                 failedPayments++;
 
-                addHistory(
-                        "EMI missed: " + money(scheduledEmi)
+                addHistory("EMI missed: "
+                        + money(scheduledEmi)
                         + " | Interest: " + money(interest)
-                        + " | Late fee: " + money(penalty)
-                );
+                        + " | Late fee: " + money(penalty));
 
                 if (isSecuredLoan()
                         && consecutiveMissed >= 6
@@ -651,10 +598,19 @@ public class LoanManager {
                     repossessed = true;
 
                     addHistory(
-                            "Secured asset repossessed after six missed payments."
-                    );
+                            "Secured asset repossessed after six missed payments.");
                 }
             }
+        }
+
+        if (successfulPayments > 0) {
+            addHistory(successfulPayments
+                    + " EMI payments automatically debited.");
+        }
+
+        if (failedPayments > 0) {
+            addHistory(failedPayments
+                    + " EMI payments missed due to insufficient cash.");
         }
 
         saveData();
@@ -662,13 +618,6 @@ public class LoanManager {
         if (successfulPayments > 0) {
             toast(successfulPayments
                     + " EMI payments automatically debited.");
-        }
-
-        if (failedPayments > 0) {
-            addHistory(
-                    failedPayments
-                    + " EMI payments missed due to insufficient cash."
-            );
         }
     }
 
@@ -698,8 +647,7 @@ public class LoanManager {
 
         new AlertDialog.Builder(activity)
                 .setTitle("Extra Repayment")
-                .setMessage(
-                        "Outstanding: " + money(outstanding)
+                .setMessage("Outstanding: " + money(outstanding)
                         + "\nAvailable cash: " + money(cash))
                 .setView(input)
                 .setPositiveButton("Pay", (dialog, which) -> {
@@ -717,8 +665,7 @@ public class LoanManager {
 
                     outstanding -= amount;
 
-                    addHistory(
-                            "Extra repayment: " + money(amount));
+                    addHistory("Extra repayment: " + money(amount));
 
                     if (outstanding <= 0) {
                         finishLoan();
@@ -742,12 +689,10 @@ public class LoanManager {
 
         new AlertDialog.Builder(activity)
                 .setTitle("Close Loan Early")
-                .setMessage(
-                        "Pay " + money(amount)
+                .setMessage("Pay " + money(amount)
                         + " to close your remaining loan?"
                         + "\nAvailable cash: " + money(cash))
-                .setPositiveButton("Pay & Close",
-                        (dialog, which) -> {
+                .setPositiveButton("Pay & Close", (dialog, which) -> {
 
                     if (cash < amount) {
                         toast("Not enough cash");
@@ -785,8 +730,7 @@ public class LoanManager {
 
         repossessed = false;
 
-        creditScore = Math.min(
-                900, creditScore + 20);
+        creditScore = Math.min(900, creditScore + 20);
 
         saveData();
 
@@ -827,8 +771,7 @@ public class LoanManager {
                 + "\nTotal missed EMIs: " + missedPayments
                 + "\nConsecutive missed EMIs: " + consecutiveMissed
                 + "\nTotal late fees: " + money(lateFees)
-                + "\nTotal interest paid: "
-                + money(totalInterestPaid)
+                + "\nTotal interest paid: " + money(totalInterestPaid)
                 + "\n\nPaying EMIs on time improves your score."
                 + "\nMissed payments reduce your score.";
 
@@ -860,8 +803,7 @@ public class LoanManager {
                         + "\nMissed payments extend repayment."
                         + "\nSecured assets can be repossessed."
                         + "\nExtra repayments reduce debt."
-                        + "\n\nSimplified game simulation."
-                )
+                        + "\n\nSimplified game simulation.")
                 .setPositiveButton("Close", null)
                 .show();
     }
@@ -870,8 +812,7 @@ public class LoanManager {
 
     private void addHistory(String message) {
 
-        String old = prefs.getString(
-                "loan_history", "");
+        String old = prefs.getString("loan_history", "");
 
         String updated = message + "\n" + old;
 
