@@ -8,7 +8,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
-import android.view.WindowInsets;
 import android.widget.*;
 
 public class MainActivity extends Activity {
@@ -52,7 +51,6 @@ public class MainActivity extends Activity {
             View.SYSTEM_UI_FLAG_VISIBLE
         );
 
-        // Explicitly handle Android system bars.
         if (android.os.Build.VERSION.SDK_INT >= 30) {
             getWindow().setDecorFitsSystemWindows(false);
         }
@@ -104,14 +102,12 @@ public class MainActivity extends Activity {
         dashboardShell.setOrientation(LinearLayout.VERTICAL);
         dashboardShell.setBackgroundColor(bg);
 
-        // Apply Android status-bar and navigation-bar insets.
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             dashboardShell.setOnApplyWindowInsetsListener((v, insets) -> {
                 int top = insets.getSystemWindowInsetTop();
                 int bottom = insets.getSystemWindowInsetBottom();
 
                 v.setPadding(0, top, 0, bottom);
-
                 return insets;
             });
         }
@@ -134,16 +130,13 @@ public class MainActivity extends Activity {
         );
 
         setContentView(dashboardShell);
-
         dashboardShell.requestApplyInsets();
     }
 
     void addText(String value, int size, int color) {
         TextView t = text(value,size,color);
-
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
-
         p.setMargins(0,5,0,5);
         root.addView(t,p);
     }
@@ -156,7 +149,6 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
-
         p.setMargins(0,9,0,9);
         root.addView(b,p);
 
@@ -169,7 +161,6 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,2);
-
         p.setMargins(0,18,0,18);
         root.addView(line,p);
     }
@@ -192,7 +183,6 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,55);
-
         p.setMargins(0,5,0,12);
         root.addView(s,p);
 
@@ -201,7 +191,6 @@ public class MainActivity extends Activity {
 
     EditText addInput(String hint) {
         EditText e = new EditText(this);
-
         e.setHint(hint);
         e.setTextColor(white);
         e.setHintTextColor(muted);
@@ -211,7 +200,6 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,55);
-
         p.setMargins(0,8,0,15);
         root.addView(e,p);
 
@@ -234,7 +222,6 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
-
         p.setMargins(8,0,8,8);
 
         return nav;
@@ -406,7 +393,6 @@ public class MainActivity extends Activity {
                 if (shown < 4 && i > 0) {
                     View line = new View(this);
                     line.setBackgroundColor(Color.rgb(230,230,230));
-
                     panel.addView(line,
                         new LinearLayout.LayoutParams(-1,1));
                 }
@@ -426,7 +412,6 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
-
         p.setMargins(0,0,0,9);
         root.addView(panel,p);
     }
@@ -478,7 +463,6 @@ public class MainActivity extends Activity {
         EditText name = addInput("Enter your name");
 
         addText("Gender",16,white);
-
         Spinner genderSpinner =
             addSpinner(new String[]{"Male","Female"});
 
@@ -546,24 +530,59 @@ public class MainActivity extends Activity {
                 money = 5000;
             }
 
-            financeManager = null;
+            // Reset all data belonging to the previous life.
+            resetNewLifeData();
 
-            save.edit().remove("life_events").apply();
+            financeManager = null;
 
             addLifeEvent(
                 "A new life began in " + city +
                 ". Family background: " + family + "."
             );
 
-            getSharedPreferences(
-                "desilife_career_data",MODE_PRIVATE
-            ).edit().clear().apply();
-
             saveGame();
             showDashboard();
         });
 
         addButton("BACK",() -> showHome());
+    }
+
+    // RESET ALL FINANCIAL DATA FOR A NEW LIFE
+
+    void resetNewLifeData() {
+
+        // Main game save: assets, social data and life events.
+        save.edit().clear().commit();
+
+        // Finance manager.
+        getSharedPreferences("desilife_finance_data", MODE_PRIVATE)
+            .edit().clear().commit();
+
+        // Loan manager.
+        getSharedPreferences("desilife_loan_data", MODE_PRIVATE)
+            .edit().clear().commit();
+
+        // Bank manager.
+        getSharedPreferences("desilife_bank_data", MODE_PRIVATE)
+            .edit().clear().commit();
+
+        // Household expenses.
+        getSharedPreferences("desilife_household_data", MODE_PRIVATE)
+            .edit().clear().commit();
+
+        // Insurance.
+        getSharedPreferences("desilife_insurance_data", MODE_PRIVATE)
+            .edit().clear().commit();
+
+        // Investments.
+        getSharedPreferences("desilife_investment_data", MODE_PRIVATE)
+            .edit().clear().commit();
+
+        // Career.
+        getSharedPreferences("desilife_career_data", MODE_PRIVATE)
+            .edit().clear().commit();
+
+        financeManager = null;
     }
 
     void saveGame() {
@@ -859,7 +878,6 @@ public class MainActivity extends Activity {
             message("Your life has been saved!");
         });
 
-        // Fixed bottom navigation.
         dashboardShell.addView(createBottomNavigation());
     }
 
