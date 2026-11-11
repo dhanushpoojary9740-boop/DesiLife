@@ -495,7 +495,7 @@ public class MainActivity extends Activity {
         addDashboardNav(nav,"👤","Life",() -> showDashboard());
 
         addDashboardNav(nav,"💰","Assets",
-            () -> message("Assets, savings and vehicles are coming soon."));
+            () -> openAssets());
 
         addDashboardNav(nav,"❤️","Relations",
             () -> message("Family, friends and relationships are coming soon."));
@@ -1001,9 +1001,26 @@ public class MainActivity extends Activity {
         );
     }
 
+    void openAssets() {
+        AssetsManager assets = new AssetsManager(
+            this,
+            save,
+            money,
+            amount -> {
+                money = amount;
+                saveGame();
+            }
+        );
+        assets.open();
+    }
+
     void ageUp() {
 
         age++;
+
+        // Apply 12 months of income/expenses and annual loan interest.
+        money = AssetsManager.applyAnnualFinances(save, money);
+
         String event = "";
 
         if (age == 1) {
