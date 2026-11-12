@@ -17,6 +17,7 @@ import android.widget.Toast;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Random;
 
 public class InsuranceManager {
 
@@ -28,7 +29,9 @@ public class InsuranceManager {
         String type;
         long coverage;
         long premium;
+        long claimed;
         boolean active;
+        int years;
 
         Policy(String type, long coverage, long premium,
                boolean active) {
@@ -36,12 +39,19 @@ public class InsuranceManager {
             this.coverage = coverage;
             this.premium = premium;
             this.active = active;
+            this.claimed = 0;
+            this.years = 1;
+        }
+
+        long remainingCoverage() {
+            return Math.max(0, coverage - claimed);
         }
     }
 
     private final Activity activity;
     private final SharedPreferences prefs;
     private final MoneyListener listener;
+    private final Random random = new Random();
 
     private final NumberFormat currency =
             NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
@@ -52,22 +62,24 @@ public class InsuranceManager {
     private long cash;
     private long totalPremiumPaid;
     private long totalClaimsReceived;
+    private long totalClaimsSubmitted;
 
-    private static final String PREF =
-            "desilife_insurance_data";
+    private static final String PREF = "desilife_insurance_data";
 
     private LinearLayout content;
 
-    public InsuranceManager(Activity activity,
-                            long currentCash,
-                            MoneyListener listener) {
-
+    public InsuranceManager(
+            Activity activity,
+            long currentCash,
+            MoneyListener listener
+    ) {
         this.activity = activity;
         this.cash = currentCash;
         this.listener = listener;
 
         prefs = activity.getSharedPreferences(
-                PREF, Activity.MODE_PRIVATE);
+                PREF, Activity.MODE_PRIVATE
+        );
 
         loadData();
     }
@@ -76,42 +88,38 @@ public class InsuranceManager {
 
     private void loadData() {
 
-        totalPremiumPaid =
-                prefs.getLong("total_premium", 0);
-
-        totalClaimsReceived =
-                prefs.getLong("total_claims", 0);
+        totalPremiumPaid = prefs.getLong("total_premium", 0);
+        totalClaimsReceived = prefs.getLong("total_claims", 0);
+        totalClaimsSubmitted = prefs.getLong("total_submitted", 0);
 
         int count = prefs.getInt("policy_count", 0);
 
         for (int i = 0; i < count; i++) {
 
-            String type = prefs.getString(
-                    "policy_type_" + i, "");
-
-            long coverage = prefs.getLong(
-                    "policy_coverage_" + i, 0);
-
-            long premium = prefs.getLong(
-                    "policy_premium_" + i, 0);
-
-            boolean active = prefs.getBoolean(
-                    "policy_active_" + i, false);
+            String type = prefs.getString("policy_type_" + i, "");
+            long coverage = prefs.getLong("policy_coverage_" + i, 0);
+            long premium = prefs.getLong("policy_premium_" + i, 0);
+            boolean active = prefs.getBoolean("policy_active_" + i, false);
 
             if (!type.isEmpty()) {
-                policies.add(new Policy(
-                        type, coverage, premium, active));
+
+                Policy p = new Policy(type, coverage, premium, active);
+
+                p.claimed = prefs.getLong("policy_claimed_" + i, 0);
+                p.years = prefs.getInt("policy_years_" + i, 1);
+
+                policies.add(p);
             }
         }
 
-        int historyCount =
-                prefs.getInt("history_count", 0);
+        int historyCount = prefs.getInt("history_count", 0);
 
         for (int i = 0; i < historyCount; i++) {
-            String item = prefs.getString(
-                    "history_" + i, null);
+            String item = prefs.getString("history_" + i, null);
 
-            if (item != null) history.add(item);
+            if (item != null) {
+                history.add(item);
+            }
         }
     }
 
@@ -121,6 +129,7 @@ public class InsuranceManager {
 
         editor.putLong("total_premium", totalPremiumPaid);
         editor.putLong("total_claims", totalClaimsReceived);
+        editor.putLong("total_submitted", totalClaimsSubmitted);
 
         editor.putInt("policy_count", policies.size());
 
@@ -132,6 +141,8 @@ public class InsuranceManager {
             editor.putLong("policy_coverage_" + i, p.coverage);
             editor.putLong("policy_premium_" + i, p.premium);
             editor.putBoolean("policy_active_" + i, p.active);
+            editor.putLong("policy_claimed_" + i, p.claimed);
+            editor.putInt("policy_years_" + i, p.years);
         }
 
         editor.putInt("history_count", history.size());
@@ -150,7 +161,8 @@ public class InsuranceManager {
     }
 
     private void updateCash(long amount) {
-        cash = amount;
+
+        cash = Math.max(0, amount);
 
         if (listener != null) {
             listener.onMoneyChanged(cash);
@@ -158,7 +170,7 @@ public class InsuranceManager {
     }
 
     public void setCash(long amount) {
-        cash = amount;
+        cash = Math.max(0, amount);
     }
 
     public long getCash() {
@@ -185,14 +197,12 @@ public class InsuranceManager {
     }
 
     private void toast(String message) {
-        Toast.makeText(activity, message,
-                Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
     }
 
     // ---------------- UI HELPERS ----------------
 
-    private TextView text(String value, int size,
-                          boolean bold) {
+    private TextView text(String value, int size, boolean bold) {
 
         TextView t = new TextView(activity);
         t.setText(value);
@@ -211,6 +221,7 @@ public class InsuranceManager {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(color);
         drawable.setCornerRadius(20);
+
         return drawable;
     }
 
@@ -218,8 +229,10 @@ public class InsuranceManager {
 
         View space = new View(activity);
 
-        content.addView(space,
-                new LinearLayout.LayoutParams(1, height));
+        content.addView(
+                space,
+                new LinearLayout.LayoutParams(1, height)
+        );
     }
 
     private void addCard(String title, String value) {
@@ -227,8 +240,7 @@ public class InsuranceManager {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(18, 16, 18, 16);
-        card.setBackground(background(
-                Color.rgb(39, 48, 65)));
+        card.setBackground(background(Color.rgb(39, 48, 65)));
 
         card.addView(text(title, 14, false));
         card.addView(text(value, 21, true));
@@ -237,18 +249,17 @@ public class InsuranceManager {
                 new LinearLayout.LayoutParams(-1, -2);
 
         params.bottomMargin = 10;
+
         content.addView(card, params);
     }
 
-    private void addButton(String label,
-                           View.OnClickListener action) {
+    private void addButton(String label, View.OnClickListener action) {
 
         Button button = new Button(activity);
         button.setText(label);
         button.setTextColor(Color.WHITE);
         button.setAllCaps(false);
-        button.setBackground(background(
-                Color.rgb(54, 91, 143)));
+        button.setBackground(background(Color.rgb(54, 91, 143)));
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
@@ -271,33 +282,28 @@ public class InsuranceManager {
 
         scroll.addView(content);
 
-        content.addView(text("INSURANCE", 25, true));
+        content.addView(text("🛡️ INSURANCE", 25, true));
 
         content.addView(text(
                 "Protect your health, family, vehicle and property",
-                14, false));
+                14, false
+        ));
 
         addSpace(18);
 
         addCard("Available Cash", money(cash));
         addCard("Active Policies", getActivePolicyCount() + "");
         addCard("Total Premium Paid", money(totalPremiumPaid));
-        addCard("Total Claims Received",
-                money(totalClaimsReceived));
+        addCard("Total Claims Received", money(totalClaimsReceived));
+        addCard("Total Claims Submitted", money(totalClaimsSubmitted));
 
         addSpace(12);
 
-        addButton("Explore Insurance Policies",
-                v -> showInsuranceTypes());
-
-        addButton("My Insurance Policies",
-                v -> showPolicies());
-
-        addButton("Make an Insurance Claim",
-                v -> showClaimPolicies());
-
-        addButton("Insurance History",
-                v -> showHistory());
+        addButton("Explore Insurance Policies", v -> showInsuranceTypes());
+        addButton("My Insurance Policies", v -> showPolicies());
+        addButton("Make an Insurance Claim", v -> showClaimPolicies());
+        addButton("Renew an Expired Policy", v -> showRenewalPolicies());
+        addButton("Insurance History", v -> showHistory());
 
         new AlertDialog.Builder(activity)
                 .setTitle("Insurance")
@@ -331,7 +337,6 @@ public class InsuranceManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Choose Insurance")
                 .setItems(types, (dialog, which) -> {
-
                     showCoverageOptions(types[which]);
                 })
                 .setNegativeButton("Cancel", null)
@@ -351,8 +356,7 @@ public class InsuranceManager {
         };
 
         long[] coverage = {
-                200000, 500000, 1000000,
-                2500000, 5000000
+                200000, 500000, 1000000, 2500000, 5000000
         };
 
         new AlertDialog.Builder(activity)
@@ -360,9 +364,7 @@ public class InsuranceManager {
                 .setItems(options, (dialog, which) -> {
 
                     long amount = coverage[which];
-
-                    long premium = calculatePremium(
-                            type, amount);
+                    long premium = calculatePremium(type, amount);
 
                     confirmPolicy(type, amount, premium);
                 })
@@ -372,12 +374,12 @@ public class InsuranceManager {
 
     // ---------------- PREMIUM CALCULATION ----------------
 
-    private long calculatePremium(String type,
-                                  long coverage) {
+    private long calculatePremium(String type, long coverage) {
 
         double rate;
 
         switch (type) {
+
             case "Health Insurance":
                 rate = 0.025;
                 break;
@@ -398,15 +400,16 @@ public class InsuranceManager {
                 rate = 0.02;
         }
 
-        return Math.max(500,
-                Math.round(coverage * rate));
+        return Math.max(500, Math.round(coverage * rate));
     }
 
     // ---------------- BUY POLICY ----------------
 
-    private void confirmPolicy(String type,
-                               long coverage,
-                               long premium) {
+    private void confirmPolicy(
+            String type,
+            long coverage,
+            long premium
+    ) {
 
         for (Policy p : policies) {
 
@@ -418,15 +421,14 @@ public class InsuranceManager {
 
         String message =
                 "Insurance: " + type
-                + "\nCoverage: " + money(coverage)
-                + "\nAnnual Premium: " + money(premium)
-                + "\n\nBuy this policy?";
+                        + "\nCoverage: " + money(coverage)
+                        + "\nAnnual Premium: " + money(premium)
+                        + "\n\nBuy this policy?";
 
         new AlertDialog.Builder(activity)
                 .setTitle("Insurance Offer")
                 .setMessage(message)
-                .setPositiveButton("Buy Policy",
-                        (dialog, which) -> {
+                .setPositiveButton("Buy Policy", (dialog, which) -> {
 
                     if (cash < premium) {
                         toast("Not enough cash to pay premium");
@@ -435,14 +437,16 @@ public class InsuranceManager {
 
                     updateCash(cash - premium);
 
-                    policies.add(new Policy(
-                            type, coverage, premium, true));
+                    Policy p = new Policy(type, coverage, premium, true);
+                    policies.add(p);
 
                     totalPremiumPaid += premium;
 
-                    addHistory("Purchased " + type
-                            + ", coverage " + money(coverage)
-                            + ", premium " + money(premium));
+                    addHistory(
+                            "Purchased " + type
+                                    + ", coverage " + money(coverage)
+                                    + ", annual premium " + money(premium)
+                    );
 
                     saveData();
 
@@ -468,13 +472,12 @@ public class InsuranceManager {
             Policy p = policies.get(i);
 
             names[i] = p.type
-                    + (p.active ? " - Active" : " - Expired");
+                    + (p.active ? " - Active" : " - Inactive");
         }
 
         new AlertDialog.Builder(activity)
                 .setTitle("My Insurance Policies")
                 .setItems(names, (dialog, which) -> {
-
                     showPolicyDetails(which);
                 })
                 .setNegativeButton("Close", null)
@@ -489,10 +492,12 @@ public class InsuranceManager {
 
         String message =
                 "Policy: " + p.type
-                + "\nCoverage: " + money(p.coverage)
-                + "\nAnnual Premium: " + money(p.premium)
-                + "\nStatus: "
-                + (p.active ? "Active" : "Inactive");
+                        + "\nCoverage: " + money(p.coverage)
+                        + "\nUsed Coverage: " + money(p.claimed)
+                        + "\nRemaining Coverage: " + money(p.remainingCoverage())
+                        + "\nAnnual Premium: " + money(p.premium)
+                        + "\nYears Paid: " + p.years
+                        + "\nStatus: " + (p.active ? "Active" : "Inactive");
 
         AlertDialog.Builder builder =
                 new AlertDialog.Builder(activity);
@@ -503,10 +508,10 @@ public class InsuranceManager {
 
         if (p.active) {
 
-            builder.setNeutralButton("Cancel Policy",
-                    (dialog, which) -> {
+            builder.setNeutralButton("Cancel Policy", (dialog, which) -> {
 
                 p.active = false;
+
                 addHistory("Cancelled " + p.type);
                 saveData();
 
@@ -524,32 +529,83 @@ public class InsuranceManager {
         ArrayList<Policy> active = new ArrayList<>();
 
         for (Policy p : policies) {
-            if (p.active) active.add(p);
+            if (p.active && p.remainingCoverage() > 0) {
+                active.add(p);
+            }
         }
 
         if (active.isEmpty()) {
-            toast("You have no active policies");
+            toast("No active policy with remaining coverage");
             return;
         }
 
         String[] names = new String[active.size()];
 
         for (int i = 0; i < active.size(); i++) {
-            names[i] = active.get(i).type
-                    + " - " + money(active.get(i).coverage);
+
+            Policy p = active.get(i);
+
+            names[i] = p.type
+                    + " - Remaining: " + money(p.remainingCoverage());
         }
 
         new AlertDialog.Builder(activity)
                 .setTitle("Select Policy for Claim")
                 .setItems(names, (dialog, which) -> {
-
-                    showClaimAmountDialog(active.get(which));
+                    showClaimTypeDialog(active.get(which));
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    private void showClaimAmountDialog(Policy policy) {
+    private void showClaimTypeDialog(Policy policy) {
+
+        String[] reasons;
+
+        if (policy.type.equals("Health Insurance")) {
+
+            reasons = new String[]{
+                    "Hospitalisation",
+                    "Medical Treatment",
+                    "Emergency Surgery",
+                    "Accident Treatment"
+            };
+
+        } else if (policy.type.equals("Life Insurance")) {
+
+            reasons = new String[]{
+                    "Life Insurance Benefit",
+                    "Eligible Policy Benefit"
+            };
+
+        } else if (policy.type.equals("Vehicle Insurance")) {
+
+            reasons = new String[]{
+                    "Road Accident",
+                    "Vehicle Damage",
+                    "Vehicle Theft"
+            };
+
+        } else {
+
+            reasons = new String[]{
+                    "Fire Damage",
+                    "Natural Disaster",
+                    "Property Damage",
+                    "Theft"
+            };
+        }
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Choose Claim Reason")
+                .setItems(reasons, (dialog, which) -> {
+                    showClaimAmountDialog(policy, reasons[which]);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showClaimAmountDialog(Policy policy, String reason) {
 
         EditText input = new EditText(activity);
         input.setHint("Enter claim amount");
@@ -557,22 +613,24 @@ public class InsuranceManager {
 
         new AlertDialog.Builder(activity)
                 .setTitle(policy.type + " Claim")
-                .setMessage("Maximum coverage: "
-                        + money(policy.coverage))
+                .setMessage(
+                        "Reason: " + reason
+                                + "\nRemaining coverage: "
+                                + money(policy.remainingCoverage())
+                )
                 .setView(input)
-                .setPositiveButton("Submit Claim",
-                        (dialog, which) -> {
+                .setPositiveButton("Submit Claim", (dialog, which) -> {
 
                     long amount = readAmount(input);
 
                     if (amount <= 0
-                            || amount > policy.coverage) {
+                            || amount > policy.remainingCoverage()) {
 
                         toast("Enter a valid claim amount");
                         return;
                     }
 
-                    processClaim(policy, amount);
+                    processClaim(policy, amount, reason);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -580,39 +638,57 @@ public class InsuranceManager {
 
     // ---------------- CLAIM PROCESSING ----------------
 
-    private void processClaim(Policy policy,
-                              long amount) {
+    private void processClaim(
+            Policy policy,
+            long amount,
+            String reason
+    ) {
 
-        // Simplified game claim approval system.
-        // A claim has an 80% chance of approval.
+        totalClaimsSubmitted += amount;
 
-        boolean approved =
-                Math.random() < 0.80;
+        int approvalChance = 80;
+
+        if (policy.type.equals("Life Insurance")) {
+            approvalChance = 70;
+        }
+
+        boolean approved = random.nextInt(100) < approvalChance;
 
         if (approved) {
 
-            updateCash(cash + amount);
+            policy.claimed += amount;
 
-            totalClaimsReceived += amount;
+            updateCash(safeAdd(cash, amount));
 
-            addHistory("Claim approved: "
-                    + policy.type + ", received "
-                    + money(amount));
+            totalClaimsReceived = safeAdd(totalClaimsReceived, amount);
+
+            addHistory(
+                    "Claim approved: " + policy.type
+                            + ", reason: " + reason
+                            + ", received " + money(amount)
+            );
 
             saveData();
 
             new AlertDialog.Builder(activity)
                     .setTitle("Claim Approved")
-                    .setMessage("Claim amount received: "
-                            + money(amount))
+                    .setMessage(
+                            "Your claim was approved!"
+                                    + "\nReason: " + reason
+                                    + "\nAmount received: " + money(amount)
+                                    + "\nRemaining coverage: "
+                                    + money(policy.remainingCoverage())
+                    )
                     .setPositiveButton("OK", null)
                     .show();
 
         } else {
 
-            addHistory("Claim rejected: "
-                    + policy.type + ", amount "
-                    + money(amount));
+            addHistory(
+                    "Claim rejected: " + policy.type
+                            + ", reason: " + reason
+                            + ", amount: " + money(amount)
+            );
 
             saveData();
 
@@ -620,11 +696,85 @@ public class InsuranceManager {
                     .setTitle("Claim Rejected")
                     .setMessage(
                             "Your insurance claim was rejected."
-                            + "\nNo money was credited."
-                            + "\nReview the policy conditions.")
+                                    + "\nReason: " + reason
+                                    + "\nNo money was credited."
+                                    + "\nYour remaining coverage is unchanged."
+                    )
                     .setPositiveButton("OK", null)
                     .show();
         }
+    }
+
+    // ---------------- POLICY RENEWAL ----------------
+
+    private void showRenewalPolicies() {
+
+        ArrayList<Policy> inactive = new ArrayList<>();
+
+        for (Policy p : policies) {
+            if (!p.active) {
+                inactive.add(p);
+            }
+        }
+
+        if (inactive.isEmpty()) {
+            toast("You have no inactive policies to renew");
+            return;
+        }
+
+        String[] names = new String[inactive.size()];
+
+        for (int i = 0; i < inactive.size(); i++) {
+
+            Policy p = inactive.get(i);
+
+            names[i] = p.type + " - Premium " + money(p.premium);
+        }
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Renew Insurance")
+                .setItems(names, (dialog, which) -> {
+                    renewPolicy(inactive.get(which));
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void renewPolicy(Policy policy) {
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Renew " + policy.type)
+                .setMessage(
+                        "Annual premium: " + money(policy.premium)
+                                + "\nCoverage: " + money(policy.coverage)
+                                + "\n\nRenew this policy?"
+                )
+                .setPositiveButton("Renew", (dialog, which) -> {
+
+                    if (cash < policy.premium) {
+                        toast("Not enough cash to renew this policy");
+                        return;
+                    }
+
+                    updateCash(cash - policy.premium);
+
+                    policy.active = true;
+                    policy.years++;
+                    totalPremiumPaid = safeAdd(
+                            totalPremiumPaid, policy.premium
+                    );
+
+                    addHistory(
+                            "Renewed " + policy.type
+                                    + " for another year"
+                    );
+
+                    saveData();
+
+                    toast("Policy renewed successfully");
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     // ---------------- ANNUAL PREMIUM PROCESSING ----------------
@@ -639,17 +789,25 @@ public class InsuranceManager {
 
                 updateCash(cash - p.premium);
 
-                totalPremiumPaid += p.premium;
+                totalPremiumPaid = safeAdd(
+                        totalPremiumPaid, p.premium
+                );
 
-                addHistory("Annual premium paid: "
-                        + p.type + " - " + money(p.premium));
+                p.years++;
+
+                addHistory(
+                        "Annual premium paid: "
+                                + p.type + " - " + money(p.premium)
+                );
 
             } else {
 
                 p.active = false;
 
-                addHistory("Policy expired due to unpaid premium: "
-                        + p.type);
+                addHistory(
+                        "Policy expired due to unpaid premium: "
+                                + p.type
+                );
             }
         }
 
@@ -687,11 +845,50 @@ public class InsuranceManager {
                 .show();
     }
 
+    // ---------------- STATISTICS ----------------
+
+    public int getActivePolicies() {
+        return getActivePolicyCount();
+    }
+
+    public int getTotalPolicies() {
+        return policies.size();
+    }
+
+    public long getTotalCoverage() {
+
+        long total = 0;
+
+        for (Policy p : policies) {
+            if (p.active) {
+                total = safeAdd(total, p.remainingCoverage());
+            }
+        }
+
+        return total;
+    }
+
+    // ---------------- SAFE CALCULATIONS ----------------
+
+    private long safeAdd(long a, long b) {
+
+        if (b > 0 && a > Long.MAX_VALUE - b) {
+            return Long.MAX_VALUE;
+        }
+
+        if (b < 0 && a < Long.MIN_VALUE - b) {
+            return Long.MIN_VALUE;
+        }
+
+        return a + b;
+    }
+
     private long readAmount(EditText input) {
 
         try {
             return Long.parseLong(
-                    input.getText().toString().trim());
+                    input.getText().toString().trim()
+            );
         } catch (Exception e) {
             return 0;
         }
