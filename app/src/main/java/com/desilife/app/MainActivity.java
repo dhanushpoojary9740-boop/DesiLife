@@ -254,6 +254,39 @@ public class MainActivity extends Activity {
         save.edit().putString("life_events",updated).apply();
     }
 
+    void recordFinancialTransaction(String category, long amount, long balance) {
+        if (amount == 0) return;
+
+        String direction = amount > 0 ? "INCOME" : "EXPENSE";
+        String signedAmount = (amount > 0 ? "+₹" : "-₹")
+                + Math.abs(amount);
+        String entry = "Age " + getFormattedAge()
+                + " | " + direction
+                + " | " + category
+                + " | " + signedAmount
+                + " | Balance: ₹" + balance;
+
+        String old = save.getString("transaction_history", "");
+        String updated = old.isEmpty() ? entry : old + "\\n" + entry;
+        String[] entries = updated.split("\\n");
+
+        if (entries.length > 500) {
+            StringBuilder trimmed = new StringBuilder();
+            for (int i = entries.length - 500; i < entries.length; i++) {
+                if (trimmed.length() > 0) trimmed.append("\\n");
+                trimmed.append(entries[i]);
+            }
+            updated = trimmed.toString();
+        }
+
+        save.edit().putString("transaction_history", updated).apply();
+
+        addLifeEvent((amount > 0 ? "Income" : "Expense")
+                + ": " + category + " "
+                + signedAmount + ". Remaining cash: ₹" + balance + ".");
+        saveGame();
+    }
+
     String getFormattedAge() {
         if (ageMonths == 0) return age + (age == 1 ? " year" : " years");
         return age + (age == 1 ? " year, " : " years, ")
@@ -1891,19 +1924,24 @@ public class MainActivity extends Activity {
     // FINANCE
 
     FinanceManager createFinanceManager() {
-        return new FinanceManager(
+        FinanceManager manager = new FinanceManager(
             this,
             money,
             newMoney -> {
                 money = (int)Math.max(
-                    0,Math.min(Integer.MAX_VALUE,newMoney)
+                    0, Math.min(Integer.MAX_VALUE, newMoney)
                 );
-
-                addLifeEvent("You completed a banking or finance transaction.");
-
                 saveGame();
             }
         );
+
+        manager.setTransactionListener((category, amount, balance) -> {
+            money = (int)Math.max(
+                    0, Math.min(Integer.MAX_VALUE, balance));
+            recordFinancialTransaction(category, amount, balance);
+        });
+
+        return manager;
     }
 
     void openFinance() {
@@ -2126,16 +2164,27 @@ public class MainActivity extends Activity {
 
         if (salaryPaid > 0) {
             money = Math.max(0, employment.getMoney());
-            addLifeEvent("Monthly salary received: ₹" + salaryPaid
-                    + " from " + employment.getJobName() + ".");
-            saveGame();
+            recordFinancialTransaction(
+                    "Monthly salary - " + employment.getJobName(),
+                    salaryPaid,
+                    money
+            );
         }
     }
 
     // Annual systems run once when 12 months have been completed.
     void processBirthdayUpdates() {
 
+        int cashBeforeAnnualAssets = money;
         money = AssetsManager.applyAnnualFinances(save, money);
+        long annualAssetDelta = (long) money - cashBeforeAnnualAssets;
+        if (annualAssetDelta != 0) {
+            recordFinancialTransaction(
+                    "Annual asset income and expenses",
+                    annualAssetDelta,
+                    money
+            );
+        }
 
         if (age >= 18) {
             if (financeManager == null) {
