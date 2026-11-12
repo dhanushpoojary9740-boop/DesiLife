@@ -829,6 +829,25 @@ public class MainActivity extends Activity {
         root.addView(stats,
             new LinearLayout.LayoutParams(-1,-2));
 
+        // HEALTH & WELLNESS BUTTON
+        TextView healthButton = dashboardText(
+            "❤️ HEALTH & WELLNESS",16,bg,true
+        );
+
+        healthButton.setBackground(
+            shape(Color.rgb(229,184,105),18)
+        );
+
+        healthButton.setPadding(12,14,12,14);
+
+        LinearLayout.LayoutParams healthParams =
+            new LinearLayout.LayoutParams(-1,-2);
+
+        healthParams.setMargins(0,12,0,4);
+
+        root.addView(healthButton,healthParams);
+        healthButton.setOnClickListener(v -> openHealth());
+
         TextView education = dashboardText(
             "📚 EDUCATION",16,bg,true
         );
@@ -1692,9 +1711,53 @@ public class MainActivity extends Activity {
                 "You are now "+age+" years old.\n\n"+event
             )
             .setPositiveButton("Continue",(d,w) -> {
-                runRandomLifeEvent();
+                runAnnualHealthCheck();
             })
             .show();
+    }
+
+    // HEALTH & WELLNESS SYSTEM
+
+    void openHealth() {
+        HealthManager healthManager = new HealthManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            (newMoney,newHealth,condition,description) -> {
+                money = Math.max(0,newMoney);
+                health = Math.max(0,Math.min(100,newHealth));
+
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+
+        healthManager.open();
+    }
+
+    void runAnnualHealthCheck() {
+        HealthManager healthManager = new HealthManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            (newMoney,newHealth,condition,description) -> {
+                money = Math.max(0,newMoney);
+                health = Math.max(0,Math.min(100,newHealth));
+
+                addLifeEvent(description);
+                saveGame();
+
+                // Random life event begins after the health check is completed.
+                runRandomLifeEvent();
+            }
+        );
+
+        healthManager.applyAnnualHealthUpdate();
     }
 
     // RANDOM LIFE EVENTS 2.0
