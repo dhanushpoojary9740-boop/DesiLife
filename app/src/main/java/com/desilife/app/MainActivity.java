@@ -106,7 +106,6 @@ public class MainActivity extends Activity {
             dashboardShell.setOnApplyWindowInsetsListener((v, insets) -> {
                 int top = insets.getSystemWindowInsetTop();
                 int bottom = insets.getSystemWindowInsetBottom();
-
                 v.setPadding(0, top, 0, bottom);
                 return insets;
             });
@@ -530,7 +529,6 @@ public class MainActivity extends Activity {
                 money = 5000;
             }
 
-            // Reset all data belonging to the previous life.
             resetNewLifeData();
 
             financeManager = null;
@@ -547,38 +545,27 @@ public class MainActivity extends Activity {
         addButton("BACK",() -> showHome());
     }
 
-    // RESET ALL FINANCIAL DATA FOR A NEW LIFE
-
     void resetNewLifeData() {
-
-        // Main game save: assets, social data and life events.
         save.edit().clear().commit();
 
-        // Finance manager.
         getSharedPreferences("desilife_finance_data", MODE_PRIVATE)
             .edit().clear().commit();
 
-        // Loan manager.
         getSharedPreferences("desilife_loan_data", MODE_PRIVATE)
             .edit().clear().commit();
 
-        // Bank manager.
         getSharedPreferences("desilife_bank_data", MODE_PRIVATE)
             .edit().clear().commit();
 
-        // Household expenses.
         getSharedPreferences("desilife_household_data", MODE_PRIVATE)
             .edit().clear().commit();
 
-        // Insurance.
         getSharedPreferences("desilife_insurance_data", MODE_PRIVATE)
             .edit().clear().commit();
 
-        // Investments.
         getSharedPreferences("desilife_investment_data", MODE_PRIVATE)
             .edit().clear().commit();
 
-        // Career.
         getSharedPreferences("desilife_career_data", MODE_PRIVATE)
             .edit().clear().commit();
 
@@ -860,7 +847,6 @@ public class MainActivity extends Activity {
         root.addView(education,educationParams);
         education.setOnClickListener(v -> showEducation());
 
-        // FAMILY & LEGACY BUTTON
         TextView familyButton = dashboardText(
             "👨‍👩‍👧 FAMILY & LEGACY",16,bg,true
         );
@@ -1529,6 +1515,103 @@ public class MainActivity extends Activity {
         familyManager.open();
     }
 
+    // AUTOMATIC FAMILY UPDATE EVERY BIRTHDAY
+
+    void processAnnualFamilyUpdate() {
+
+        boolean married = save.getBoolean("family_married",false);
+        String children = save.getString("family_children","");
+
+        int childCount = 0;
+
+        if (!children.trim().isEmpty()) {
+
+            String[] childList = children.split("\\|");
+            StringBuilder updatedChildren = new StringBuilder();
+
+            for (String child : childList) {
+
+                String updatedChild = child.trim();
+
+                if (updatedChild.isEmpty()) continue;
+
+                int ageStart = updatedChild.lastIndexOf("(Age ");
+                int ageEnd = updatedChild.lastIndexOf(")");
+
+                if (ageStart >= 0 && ageEnd > ageStart) {
+
+                    try {
+                        int childAge = Integer.parseInt(
+                            updatedChild.substring(
+                                ageStart+5,ageEnd
+                            ).trim()
+                        );
+
+                        childAge++;
+
+                        updatedChild =
+                            updatedChild.substring(0,ageStart).trim()+
+                            "(Age "+childAge+")";
+
+                    } catch (Exception ignored) {
+                    }
+                }
+
+                if (updatedChildren.length() > 0) {
+                    updatedChildren.append("|");
+                }
+
+                updatedChildren.append(updatedChild);
+                childCount++;
+            }
+
+            save.edit()
+                .putString("family_children",updatedChildren.toString())
+                .apply();
+        }
+
+        if (married) {
+
+            int yearlyFamilyExpense = 5000 + (childCount * 2000);
+
+            if (money >= yearlyFamilyExpense) {
+
+                money -= yearlyFamilyExpense;
+
+                addLifeEvent(
+                    "Annual family expenses of ₹"+
+                    yearlyFamilyExpense+" were paid."
+                );
+
+            } else {
+
+                happiness = Math.max(0,happiness-3);
+
+                addLifeEvent(
+                    "You struggled to manage annual family expenses of ₹"+
+                    yearlyFamilyExpense+"."
+                );
+            }
+        }
+
+        if (childCount > 0) {
+
+            addLifeEvent(
+                "Your children celebrated another birthday. "+
+                childCount+" child/children are growing up."
+            );
+        }
+
+        if (married && age % 3 == 0) {
+
+            happiness = Math.min(100,happiness+2);
+
+            addLifeEvent(
+                "You spent another year building your married life."
+            );
+        }
+    }
+
     // AGE UP
 
     void ageUp() {
@@ -1552,6 +1635,9 @@ public class MainActivity extends Activity {
 
             processCareerSalary();
         }
+
+        // Process family responsibilities and children's birthdays.
+        processAnnualFamilyUpdate();
 
         String event;
 
