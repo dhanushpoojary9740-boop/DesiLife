@@ -166,9 +166,22 @@ public class InvestmentManager {
         return currency.format(amount);
     }
 
+    private long safeAdd(long first, long second) {
+
+        if (second > 0 && first > Long.MAX_VALUE - second) {
+            return Long.MAX_VALUE;
+        }
+
+        if (second < 0 && first < Long.MIN_VALUE - second) {
+            return Long.MIN_VALUE;
+        }
+
+        return first + second;
+    }
+
     private void updateCash(long amount) {
 
-        cash = amount;
+        cash = Math.max(0, amount);
 
         if (listener != null) {
             listener.onMoneyChanged(cash);
@@ -176,7 +189,7 @@ public class InvestmentManager {
     }
 
     public void setCash(long amount) {
-        cash = amount;
+        cash = Math.max(0, amount);
     }
 
     public long getCash() {
@@ -188,7 +201,7 @@ public class InvestmentManager {
         long total = 0;
 
         for (Investment item : investments) {
-            total += item.value;
+            total = safeAdd(total, item.value);
         }
 
         return total;
@@ -199,7 +212,7 @@ public class InvestmentManager {
         long total = 0;
 
         for (Investment item : investments) {
-            total += item.invested;
+            total = safeAdd(total, item.invested);
         }
 
         return total;
@@ -477,8 +490,8 @@ public class InvestmentManager {
 
         } else {
 
-            existing.invested += amount;
-            existing.value += amount;
+            existing.invested = safeAdd(existing.invested, amount);
+            existing.value = safeAdd(existing.value, amount);
         }
 
         addHistory("Invested " + money(amount)
@@ -605,12 +618,14 @@ public class InvestmentManager {
                         + "\n\nSell this investment?")
                 .setPositiveButton("Sell", (dialog, which) -> {
 
-                    updateCash(cash + saleValue);
+                    updateCash(safeAdd(cash, saleValue));
 
                     if (profit >= 0) {
-                        totalRealizedProfit += profit;
+                        totalRealizedProfit =
+                                safeAdd(totalRealizedProfit, profit);
                     } else {
-                        totalRealizedLoss += Math.abs(profit);
+                        totalRealizedLoss =
+                                safeAdd(totalRealizedLoss, Math.abs(profit));
                     }
 
                     addHistory("Sold " + item.name
@@ -766,81 +781,128 @@ public class InvestmentManager {
                 .show();
     }
 
-    // ---------------- ANNUAL MARKET SIMULATION ----------------
+    // ---------------- MONTHLY INVESTMENT UPDATE ----------------
 
-    public void applyAnnualMarketChanges() {
+    /*
+     * Processes exactly ONE in-game month:
+     *
+     * 1. One SIP installment, if active and affordable.
+     * 2. One month of market movement for every investment.
+     * 3. One month's equivalent of expected annual dividends.
+     *
+     * Annual return assumptions remain unchanged.
+     */
+
+    public void applyMonthlyInvestmentUpdate() {
+
+        // One SIP installment per month.
 
         if (sipActive && sipAmount > 0) {
 
-            for (int month = 0; month < 12; month++) {
+            if (cash >= sipAmount) {
 
-                if (cash >= sipAmount) {
+                updateCash(cash - sipAmount);
 
-                    updateCash(cash - sipAmount);
+                Investment item = findInvestment(sipType);
 
-                    Investment item = findInvestment(sipType);
+                if (item == null) {
 
-                    if (item == null) {
-
-                        investments.add(new Investment(
-                                sipType, sipAmount, sipAmount));
-
-                    } else {
-
-                        item.invested += sipAmount;
-                        item.value += sipAmount;
-                    }
-
-                    addHistory("SIP installment invested: "
-                            + money(sipAmount));
+                    investments.add(new Investment(
+                            sipType, sipAmount, sipAmount));
 
                 } else {
 
-                    addHistory("SIP installment missed: "
-                            + money(sipAmount));
+                    item.invested = safeAdd(
+                            item.invested, sipAmount);
+
+                    item.value = safeAdd(
+                            item.value, sipAmount);
                 }
+
+                addHistory("Monthly SIP installment invested: "
+                        + money(sipAmount)
+                        + " in " + sipType);
+
+            } else {
+
+                addHistory("Monthly SIP installment missed: "
+                        + money(sipAmount));
             }
         }
 
+        // Apply one month's market movement.
+
         for (Investment item : investments) {
 
-            double rate = getAnnualReturn(item.name);
+            double annualRate = getAnnualReturn(item.name);
 
-            // Random annual movement around the asset's
-            // expected return.
-            double movement = rate
-                    + (random.nextDouble() * 0.30 - 0.15);
+            double expectedMonthlyRate =
+                    Math.pow(1.0 + annualRate, 1.0 / 12.0) - 1.0;
+
+            // Annual random volatility is scaled to monthly volatility.
+            double monthlyVolatility = 0.15 / Math.sqrt(12.0);
+
+            double movement = expectedMonthlyRate
+                    + (random.nextDouble() * 2.0 - 1.0)
+                    * monthlyVolatility;
 
             long oldValue = item.value;
 
             item.value = Math.max(0,
-                    Math.round(item.value * (1 + movement)));
+                    Math.round(item.value * (1.0 + movement)));
 
             long change = item.value - oldValue;
 
             addHistory(item.name
-                    + " market change: "
+                    + " monthly market change: "
                     + (change >= 0 ? "+" : "")
                     + money(change));
 
-            // Simplified dividend simulation for stocks.
+            // Monthly equivalent of the existing annual stock dividend range.
             if (item.name.contains("Stocks")
                     && item.value > 0) {
 
+                double annualDividendRate =
+                        0.01 + random.nextDouble() * 0.02;
+
                 long dividend = Math.round(
-                        item.value * (0.01 + random.nextDouble() * 0.02));
+                        item.value * annualDividendRate / 12.0);
 
-                updateCash(cash + dividend);
+                if (dividend > 0) {
 
-                totalDividends += dividend;
+                    updateCash(safeAdd(cash, dividend));
 
-                addHistory("Stock dividend received: "
-                        + money(dividend));
+                    totalDividends = safeAdd(
+                            totalDividends, dividend);
+
+                    addHistory("Monthly stock dividend received: "
+                            + money(dividend));
+                }
             }
         }
 
         saveData();
     }
+
+    // ---------------- ANNUAL MARKET SIMULATION ----------------
+
+    /*
+     * Compatibility method.
+     * Processes 12 separate monthly investment updates.
+     */
+
+    public void applyAnnualMarketChanges() {
+
+        for (int month = 0; month < 12; month++) {
+            applyMonthlyInvestmentUpdate();
+        }
+
+        addHistory("Annual investment simulation completed.");
+
+        saveData();
+    }
+
+    // ---------------- EXPECTED ANNUAL RETURNS ----------------
 
     private double getAnnualReturn(String name) {
 
@@ -944,6 +1006,8 @@ public class InvestmentManager {
                 .setPositiveButton("Close", null)
                 .show();
     }
+
+    // ---------------- INPUT ----------------
 
     private long readAmount(EditText input) {
 
