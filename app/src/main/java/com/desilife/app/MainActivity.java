@@ -909,6 +909,25 @@ public class MainActivity extends Activity {
         root.addView(vehicleButton,vehicleParams);
         vehicleButton.setOnClickListener(v -> openVehicle());
 
+        // REAL ESTATE & PROPERTY BUTTON
+        TextView propertyButton = dashboardText(
+            "🏠 REAL ESTATE & PROPERTY",16,bg,true
+        );
+
+        propertyButton.setBackground(
+            shape(Color.rgb(229,184,105),18)
+        );
+
+        propertyButton.setPadding(12,14,12,14);
+
+        LinearLayout.LayoutParams propertyParams =
+            new LinearLayout.LayoutParams(-1,-2);
+
+        propertyParams.setMargins(0,8,0,4);
+
+        root.addView(propertyButton,propertyParams);
+        propertyButton.setOnClickListener(v -> openProperty());
+
         TextView education = dashboardText(
             "📚 EDUCATION",16,bg,true
         );
@@ -1915,6 +1934,30 @@ public class MainActivity extends Activity {
         );
 
         vehicleManager.open();
+    }
+
+    // REAL ESTATE & PROPERTY SYSTEM
+
+    void openProperty() {
+        PropertyManager propertyManager = new PropertyManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney,newHealth,newHappiness,description) -> {
+                money = Math.max(0,newMoney);
+                health = Math.max(0,Math.min(100,newHealth));
+                happiness = Math.max(0,Math.min(100,newHappiness));
+
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+
+        propertyManager.open();
     }
 
     // RANDOM LIFE EVENTS 2.0
