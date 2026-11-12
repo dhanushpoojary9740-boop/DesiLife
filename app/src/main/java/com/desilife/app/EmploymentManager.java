@@ -247,7 +247,9 @@ public class EmploymentManager {
                 employed ? "Employed" : "Unemployed");
 
         addInfo(root, "Current Job", jobName);
+
         addInfo(root, "Employment Sector", jobSector);
+
         addInfo(root, "Job Level", jobLevel);
 
         addInfo(root, "Monthly Salary",
@@ -274,9 +276,6 @@ public class EmploymentManager {
 
             addButton(root, "📋 Work & Performance",
                     this::workMenu);
-
-            addButton(root, "💰 Collect Monthly Salary",
-                    this::collectSalary);
 
             addButton(root, "🏆 Request Promotion",
                     this::requestPromotion);
@@ -639,7 +638,7 @@ public class EmploymentManager {
 
         chance = clamp(chance, 10, 90);
 
-        final int finalChance = chance;
+        int finalChance = chance;
 
         new AlertDialog.Builder(activity)
                 .setTitle("Job Application")
@@ -692,102 +691,53 @@ public class EmploymentManager {
             String sector
     ) {
 
-        final String[] options = {
+        String[] options = {
                 "Confident and professional",
                 "Nervous but honest",
                 "Unprepared",
                 "Highly experienced and confident"
         };
 
-        final int[] bonusesForOptions = {
-                15, 5, -20, 25
-        };
-
-        // Custom dialog keeps option text visible with custom themes.
-        LinearLayout content = new LinearLayout(activity);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(24, 12, 24, 8);
-        content.setBackgroundColor(Color.WHITE);
-
-        TextView message = new TextView(activity);
-        message.setText(
-                "You have been shortlisted for " + selectedJob
-                        + ". Choose your interview approach."
-        );
-        message.setTextColor(Color.rgb(45, 45, 45));
-        message.setTextSize(16);
-        message.setPadding(4, 8, 4, 18);
-        content.addView(message);
-
-        final AlertDialog dialog = new AlertDialog.Builder(activity)
+        new AlertDialog.Builder(activity)
                 .setTitle("Job Interview")
-                .setView(content)
-                .setNegativeButton("CANCEL", null)
-                .create();
+                .setMessage("You have been shortlisted for "
+                        + selectedJob + ". Choose your interview approach.")
+                .setItems(options, (dialog, which) -> {
 
-        for (int i = 0; i < options.length; i++) {
+                    int bonus = 0;
 
-            final int selectedIndex = i;
+                    if (which == 0) bonus = 15;
+                    if (which == 1) bonus = 5;
+                    if (which == 2) bonus = -20;
+                    if (which == 3) bonus = 25;
 
-            TextView optionButton = new TextView(activity);
-            optionButton.setText(
-                    (i + 1) + ".  " + options[i]
-            );
-            optionButton.setTextColor(Color.rgb(30, 40, 36));
-            optionButton.setTextSize(15);
-            optionButton.setGravity(Gravity.CENTER_VERTICAL);
-            optionButton.setPadding(18, 16, 18, 16);
-
-            GradientDrawable optionBackground =
-                    new GradientDrawable();
-            optionBackground.setColor(Color.rgb(242, 244, 241));
-            optionBackground.setCornerRadius(14);
-            optionBackground.setStroke(
-                    1, Color.rgb(210, 215, 208)
-            );
-            optionButton.setBackground(optionBackground);
-
-            LinearLayout.LayoutParams optionParams =
-                    new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                    );
-            optionParams.setMargins(0, 5, 0, 5);
-
-            content.addView(optionButton, optionParams);
-
-            optionButton.setOnClickListener(v -> {
-                dialog.dismiss();
-
-                int interviewChance = clamp(
-                        50 + bonusesForOptions[selectedIndex]
-                                + performance / 5,
-                        10,
-                        95
-                );
-
-                if (random.nextInt(100) < interviewChance) {
-
-                    acceptJob(
-                            selectedJob,
-                            salary,
-                            sector
+                    int interviewChance = clamp(
+                            50 + bonus + performance / 5,
+                            10,
+                            95
                     );
 
-                } else {
+                    if (random.nextInt(100) < interviewChance) {
 
-                    saveData();
+                        acceptJob(
+                                selectedJob,
+                                salary,
+                                sector
+                        );
 
-                    notifyUpdate(
-                            "You did not pass the interview for "
-                                    + selectedJob
-                                    + ". Keep improving your skills."
-                    );
-                }
-            });
-        }
+                    } else {
 
-        dialog.show();
+                        saveData();
+
+                        notifyUpdate(
+                                "You did not pass the interview for "
+                                        + selectedJob
+                                        + ". Keep improving your skills."
+                        );
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     // ---------------- ACCEPT JOB ----------------
@@ -942,26 +892,38 @@ public class EmploymentManager {
                 .show();
     }
 
-    // ---------------- MONTHLY SALARY ----------------
+    // ---------------- AUTOMATIC MONTHLY SALARY ----------------
 
-    public void collectSalary() {
+    /**
+     * Pays salary once for the supplied absolute in-game month.
+     * The month number is calculated by MainActivity as:
+     * (age in years * 12) + completed age months + 1.
+     * A saved guard prevents duplicate salary if this method is
+     * called again during the same in-game month or after reload.
+     */
+    public int processMonthlySalary(int gameMonth) {
 
-        if (!employed || monthlySalary <= 0) {
-            toast("You are currently unemployed");
-            return;
+        if (!employed || monthlySalary <= 0 || gameMonth <= 0) {
+            return 0;
+        }
+
+        int lastPaidMonth = save.getInt(
+                "employment_last_salary_month", -1);
+
+        if (gameMonth <= lastPaidMonth) {
+            return 0;
         }
 
         money = safeAdd(money, monthlySalary);
+        salaryReceived = safeAdd(salaryReceived, monthlySalary);
 
-        salaryReceived = safeAdd(
-                salaryReceived, monthlySalary);
+        save.edit()
+                .putInt("employment_last_salary_month", gameMonth)
+                .apply();
 
         saveData();
 
-        notifyUpdate(
-                "You received your monthly salary of ₹"
-                        + monthlySalary + "."
-        );
+        return monthlySalary;
     }
 
     // ---------------- PROMOTION ----------------
@@ -983,18 +945,16 @@ public class EmploymentManager {
 
         chance = clamp(chance, 5, 90);
 
-        final int finalChance = chance;
-
         new AlertDialog.Builder(activity)
                 .setTitle("Promotion Request")
                 .setMessage(
                         "Your promotion chance is approximately "
-                                + finalChance + "%."
+                                + chance + "%."
                                 + "\n\nRequest a promotion?"
                 )
                 .setPositiveButton("Request", (dialog, which) -> {
 
-                    if (random.nextInt(100) < finalChance) {
+                    if (random.nextInt(100) < chance) {
 
                         promotions++;
 
@@ -1068,18 +1028,16 @@ public class EmploymentManager {
                 95
         );
 
-        final int finalBonusChance = chance;
-
         new AlertDialog.Builder(activity)
                 .setTitle("Performance Bonus")
                 .setMessage(
                         "Your bonus approval chance is "
-                                + finalBonusChance + "%."
+                                + chance + "%."
                                 + "\n\nRequest a bonus?"
                 )
                 .setPositiveButton("Request", (dialog, which) -> {
 
-                    if (random.nextInt(100) < finalBonusChance) {
+                    if (random.nextInt(100) < chance) {
 
                         int bonus = Math.max(
                                 1000, monthlySalary / 2);
