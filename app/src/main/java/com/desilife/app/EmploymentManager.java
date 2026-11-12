@@ -944,17 +944,18 @@ public class EmploymentManager {
         chance += Math.min(15, experience);
 
         chance = clamp(chance, 5, 90);
+        final int promotionChance = chance;
 
         new AlertDialog.Builder(activity)
                 .setTitle("Promotion Request")
                 .setMessage(
                         "Your promotion chance is approximately "
-                                + chance + "%."
+                                + promotionChance + "%."
                                 + "\n\nRequest a promotion?"
                 )
                 .setPositiveButton("Request", (dialog, which) -> {
 
-                    if (random.nextInt(100) < chance) {
+                    if (random.nextInt(100) < promotionChance) {
 
                         promotions++;
 
