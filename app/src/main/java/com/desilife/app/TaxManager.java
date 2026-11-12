@@ -664,14 +664,18 @@ public class TaxManager {
                                 "Tax refund approved: " + money(refund)
                         );
 
-                        money = safeAdd(money, refund);
+                        // FIX: safely convert long refund total to int money.
+                        money = (int) Math.min(
+                                Integer.MAX_VALUE,
+                                Math.max(0L, safeAdd((long) money, refund))
+                        );
 
                         totalTaxPaid = 0;
                         pendingTax = 0;
 
                         if (callback != null) {
                             callback.onUpdate(
-                                    (int) Math.min(Integer.MAX_VALUE, money),
+                                    money,
                                     health,
                                     happiness,
                                     "Your tax return was filed. You received a refund of " +
