@@ -890,6 +890,25 @@ public class MainActivity extends Activity {
         root.addView(crimeButton,crimeParams);
         crimeButton.setOnClickListener(v -> openCrime());
 
+        // DRIVING & VEHICLES BUTTON
+        TextView vehicleButton = dashboardText(
+            "🚗 DRIVING & VEHICLES",16,bg,true
+        );
+
+        vehicleButton.setBackground(
+            shape(Color.rgb(229,184,105),18)
+        );
+
+        vehicleButton.setPadding(12,14,12,14);
+
+        LinearLayout.LayoutParams vehicleParams =
+            new LinearLayout.LayoutParams(-1,-2);
+
+        vehicleParams.setMargins(0,8,0,4);
+
+        root.addView(vehicleButton,vehicleParams);
+        vehicleButton.setOnClickListener(v -> openVehicle());
+
         TextView education = dashboardText(
             "📚 EDUCATION",16,bg,true
         );
@@ -1872,6 +1891,30 @@ public class MainActivity extends Activity {
         );
 
         crimeManager.open();
+    }
+
+    // DRIVING & VEHICLES SYSTEM
+
+    void openVehicle() {
+        VehicleManager vehicleManager = new VehicleManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney,newHealth,newHappiness,description) -> {
+                money = Math.max(0,newMoney);
+                health = Math.max(0,Math.min(100,newHealth));
+                happiness = Math.max(0,Math.min(100,newHappiness));
+
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+
+        vehicleManager.open();
     }
 
     // RANDOM LIFE EVENTS 2.0
