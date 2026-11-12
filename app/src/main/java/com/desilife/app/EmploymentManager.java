@@ -247,9 +247,7 @@ public class EmploymentManager {
                 employed ? "Employed" : "Unemployed");
 
         addInfo(root, "Current Job", jobName);
-
         addInfo(root, "Employment Sector", jobSector);
-
         addInfo(root, "Job Level", jobLevel);
 
         addInfo(root, "Monthly Salary",
@@ -641,7 +639,7 @@ public class EmploymentManager {
 
         chance = clamp(chance, 10, 90);
 
-        int finalChance = chance;
+        final int finalChance = chance;
 
         new AlertDialog.Builder(activity)
                 .setTitle("Job Application")
@@ -936,16 +934,19 @@ public class EmploymentManager {
 
         chance = clamp(chance, 5, 90);
 
+        // FIX: Use a final copy inside the lambda.
+        final int finalChance = chance;
+
         new AlertDialog.Builder(activity)
                 .setTitle("Promotion Request")
                 .setMessage(
                         "Your promotion chance is approximately "
-                                + chance + "%."
+                                + finalChance + "%."
                                 + "\n\nRequest a promotion?"
                 )
                 .setPositiveButton("Request", (dialog, which) -> {
 
-                    if (random.nextInt(100) < chance) {
+                    if (random.nextInt(100) < finalChance) {
 
                         promotions++;
 
@@ -1019,16 +1020,18 @@ public class EmploymentManager {
                 95
         );
 
+        final int finalBonusChance = chance;
+
         new AlertDialog.Builder(activity)
                 .setTitle("Performance Bonus")
                 .setMessage(
                         "Your bonus approval chance is "
-                                + chance + "%."
+                                + finalBonusChance + "%."
                                 + "\n\nRequest a bonus?"
                 )
                 .setPositiveButton("Request", (dialog, which) -> {
 
-                    if (random.nextInt(100) < chance) {
+                    if (random.nextInt(100) < finalBonusChance) {
 
                         int bonus = Math.max(
                                 1000, monthlySalary / 2);
