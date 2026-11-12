@@ -947,6 +947,25 @@ public class MainActivity extends Activity {
         root.addView(businessButton,businessParams);
         businessButton.setOnClickListener(v -> openBusiness());
 
+        // STOCK MARKET BUTTON
+        TextView stockButton = dashboardText(
+            "📈 STOCK MARKET & INVESTMENTS",16,bg,true
+        );
+
+        stockButton.setBackground(
+            shape(Color.rgb(229,184,105),18)
+        );
+
+        stockButton.setPadding(12,14,12,14);
+
+        LinearLayout.LayoutParams stockParams =
+            new LinearLayout.LayoutParams(-1,-2);
+
+        stockParams.setMargins(0,8,0,4);
+
+        root.addView(stockButton,stockParams);
+        stockButton.setOnClickListener(v -> openStockMarket());
+
         TextView education = dashboardText(
             "📚 EDUCATION",16,bg,true
         );
@@ -2001,6 +2020,30 @@ public class MainActivity extends Activity {
         );
 
         businessManager.open();
+    }
+
+    // STOCK MARKET & INVESTMENTS SYSTEM
+
+    void openStockMarket() {
+        StockMarketManager stockManager = new StockMarketManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney,newHealth,newHappiness,description) -> {
+                money = Math.max(0,newMoney);
+                health = Math.max(0,Math.min(100,newHealth));
+                happiness = Math.max(0,Math.min(100,newHappiness));
+
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+
+        stockManager.open();
     }
 
     // RANDOM LIFE EVENTS 2.0
