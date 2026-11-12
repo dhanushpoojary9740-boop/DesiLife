@@ -1692,12 +1692,49 @@ public class MainActivity extends Activity {
                 "You are now "+age+" years old.\n\n"+event
             )
             .setPositiveButton("Continue",(d,w) -> {
+                runRandomLifeEvent();
+            })
+            .show();
+    }
+
+    // RANDOM LIFE EVENTS 2.0
+
+    void runRandomLifeEvent() {
+
+        // Life events begin at age 5. Younger characters continue normally.
+        if (age < 5) {
+            showDashboard();
+            return;
+        }
+
+        LifeEventsManager eventsManager = new LifeEventsManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            intelligence,
+            (newMoney,newHealth,newHappiness,newIntelligence,description) -> {
+
+                money = Math.max(0,newMoney);
+                health = Math.max(0,Math.min(100,newHealth));
+                happiness = Math.max(0,Math.min(100,newHappiness));
+                intelligence = Math.max(0,Math.min(100,newIntelligence));
+
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+
+                // Continue to education only after the random event is completed.
                 if (age == 5 || age == 15 || age == 16 ||
                     age == 17 || age == 18) {
                     showEducation();
                 }
-            })
-            .show();
+            }
+        );
+
+        eventsManager.triggerRandomEvent();
     }
 
     void message(String msg) {
