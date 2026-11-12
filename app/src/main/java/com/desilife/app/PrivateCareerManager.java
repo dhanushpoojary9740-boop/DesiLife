@@ -715,42 +715,24 @@ public class PrivateCareerManager {
         }
 
         int salary = getInt("salary", 0);
+        int lastPaidAge = getInt("salary_paid_age", -1);
+        String paymentStatus = lastPaidAge == age
+                ? "Already credited for game age " + age
+                : "Credited automatically when you advance the game year";
 
         new AlertDialog.Builder(activity)
                 .setTitle("Salary and Bonuses")
                 .setMessage("Company: " + getString("company", "")
                         + "\nMonthly salary: ₹" + salary
-                        + "\nAnnual salary: ₹" + ((long) salary * 12)
+                        + "\nEstimated annual salary: ₹" + ((long) salary * 12)
+                        + "\nSalary payment: " + paymentStatus
                         + "\nTotal bonuses: ₹" + getInt("bonuses", 0)
-                        + "\nAppraisals: " + getInt("appraisals", 0))
-                .setPositiveButton("Collect Monthly Salary",
-                        (dialog, which) -> collectSalary())
+                        + "\nAppraisals: " + getInt("appraisals", 0)
+                        + "\n\nYour annual salary is credited automatically once per game year.")
+                .setPositiveButton("OK", null)
                 .setNegativeButton("Back",
                         (dialog, which) -> showDashboard())
                 .show();
-    }
-
-    private void collectSalary() {
-        if (!getString("status", "Active").equals("Active")) {
-            message("Your employment is not active.");
-            return;
-        }
-
-        int salary = getInt("salary", 0);
-
-        if (salary <= 0) {
-            message("No salary available.");
-            return;
-        }
-
-        money = (int) Math.min(
-                Integer.MAX_VALUE,
-                (long) money + salary
-        );
-
-        notifyUpdate("Monthly salary received: ₹" + salary);
-
-        showSalary();
     }
 
     private void showBenefits() {
@@ -861,27 +843,42 @@ public class PrivateCareerManager {
             return;
         }
 
+        // Prevent duplicate salary payments and duplicate annual progression
+        // if MainActivity calls this method more than once in the same game year.
+        int lastPaidAge = getInt("salary_paid_age", -1);
+        if (lastPaidAge == age) {
+            return;
+        }
+
+        int monthlySalary = Math.max(0, getInt("salary", 0));
+        long annualSalary = (long) monthlySalary * 12L;
+
+        long updatedMoney = (long) money + annualSalary;
+        money = (int) Math.min(Integer.MAX_VALUE,
+                Math.max(0L, updatedMoney));
+
+        // Record this game age before notifying the main game.
+        putInt("salary_paid_age", age);
+
         putInt("experience", getInt("experience", 0) + 1);
 
-        int salary = getInt("salary", 0);
-        int increment = Math.max(500, salary / 20);
-
-        long updatedSalary = (long) salary + increment;
-
-        putInt("salary", (int) Math.min(
+        int increment = Math.max(500, monthlySalary / 20);
+        long updatedSalary = (long) monthlySalary + increment;
+        int newMonthlySalary = (int) Math.min(
                 Integer.MAX_VALUE, updatedSalary
-        ));
+        );
+        putInt("salary", newMonthlySalary);
 
         int performance = getInt("performance", 50);
-
-        putInt("performance",
-                Math.min(100, performance + 2));
+        putInt("performance", Math.min(100, performance + 2));
 
         if (health > 0 && random.nextInt(100) < 10) {
             health = Math.max(0, health - 1);
         }
 
-        saveAll();
+        notifyUpdate("Annual salary credited: ₹" + annualSalary
+                + " (12 months). Your experience increased by one year."
+                + " New monthly salary: ₹" + newMonthlySalary + ".");
     }
 
     private int getQualificationLevel() {
