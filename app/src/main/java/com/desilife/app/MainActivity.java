@@ -2066,6 +2066,13 @@ public class MainActivity extends Activity {
 
         for (int month = 0; month < monthsToAdvance; month++) {
 
+            // Pay general-employment salary once for this in-game month.
+            // The persistent month guard prevents repeat payments.
+            if (age >= 18) {
+                processMonthlyEmploymentSalary(
+                        age * 12 + ageMonths + 1);
+            }
+
             // Run one monthly finance cycle for adult characters.
             if (age >= 18) {
                 if (financeManager == null) {
@@ -2099,6 +2106,29 @@ public class MainActivity extends Activity {
             showDashboard();
             message("One month has passed.\\n\\nYour age is now "
                     + getFormattedAge() + ".");
+        }
+    }
+
+    // General Employment salary is credited once per in-game month.
+    void processMonthlyEmploymentSalary(int gameMonth) {
+        EmploymentManager employment = new EmploymentManager(
+                this, save, age, money, health, happiness,
+                (newMoney, newHealth, newHappiness, description) -> {
+                    money = Math.max(0, newMoney);
+                    health = Math.max(0, Math.min(100, newHealth));
+                    happiness = Math.max(0, Math.min(100, newHappiness));
+                    addLifeEvent(description);
+                    saveGame();
+                }
+        );
+        employment.setMoney(money);
+        int salaryPaid = employment.processMonthlySalary(gameMonth);
+
+        if (salaryPaid > 0) {
+            money = Math.max(0, employment.getMoney());
+            addLifeEvent("Monthly salary received: ₹" + salaryPaid
+                    + " from " + employment.getJobName() + ".");
+            saveGame();
         }
     }
 
