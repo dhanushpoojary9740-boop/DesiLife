@@ -27,14 +27,18 @@ public class EducationManager {
     private final Random random = new Random();
 
     private int age, money, health, happiness;
-    private String educationLevel, institution, institutionCity,
-            institutionState, stream, course, entranceExam, grade;
-
     private int marks, attendance, academicPerformance, educationYears;
     private int fees, scholarships, entranceScore, examsPassed;
     private int examsFailed, educationLoans, hostelExpenses;
+    private int currentAnnualFee, requiredYears;
+
+    private String educationLevel, institution, institutionCity;
+    private String institutionState, stream, course, entranceExam, grade;
+    private String pendingHigherStudy = "None";
+    private String pendingAdmissionLevel = "None";
 
     private boolean enrolled, graduated, entranceCleared, hostel;
+    private boolean waitingForEntranceAdmission;
 
     private final int gold = Color.rgb(226, 184, 105);
     private final int dark = Color.rgb(12, 25, 23);
@@ -60,6 +64,8 @@ public class EducationManager {
         loadData();
     }
 
+    // ---------------- SAVE / LOAD ----------------
+
     private void loadData() {
         educationLevel = save.getString("edu_level", "Not Started");
         institution = save.getString("edu_institution", "None");
@@ -81,45 +87,60 @@ public class EducationManager {
         examsFailed = save.getInt("edu_exams_failed", 0);
         educationLoans = save.getInt("edu_loans", 0);
         hostelExpenses = save.getInt("edu_hostel_expenses", 0);
+        currentAnnualFee = save.getInt("edu_annual_fee", 0);
+        requiredYears = save.getInt("edu_required_years", 0);
+
+        pendingHigherStudy = save.getString(
+                "edu_pending_higher", "None");
+
+        pendingAdmissionLevel = save.getString(
+                "edu_pending_admission", "None");
 
         enrolled = save.getBoolean("edu_enrolled", false);
         graduated = save.getBoolean("edu_graduated", false);
         entranceCleared = save.getBoolean("edu_entrance_cleared", false);
         hostel = save.getBoolean("edu_hostel", false);
+        waitingForEntranceAdmission = save.getBoolean(
+                "edu_waiting_entrance", false);
 
         normalize();
     }
 
     private void saveData() {
-        SharedPreferences.Editor editor = save.edit();
+        SharedPreferences.Editor e = save.edit();
 
-        editor.putString("edu_level", educationLevel);
-        editor.putString("edu_institution", institution);
-        editor.putString("edu_city", institutionCity);
-        editor.putString("edu_state", institutionState);
-        editor.putString("edu_stream", stream);
-        editor.putString("edu_course", course);
-        editor.putString("edu_entrance_exam", entranceExam);
-        editor.putString("edu_grade", grade);
+        e.putString("edu_level", educationLevel);
+        e.putString("edu_institution", institution);
+        e.putString("edu_city", institutionCity);
+        e.putString("edu_state", institutionState);
+        e.putString("edu_stream", stream);
+        e.putString("edu_course", course);
+        e.putString("edu_entrance_exam", entranceExam);
+        e.putString("edu_grade", grade);
+        e.putString("edu_pending_higher", pendingHigherStudy);
+        e.putString("edu_pending_admission", pendingAdmissionLevel);
 
-        editor.putInt("edu_marks", marks);
-        editor.putInt("edu_attendance", attendance);
-        editor.putInt("edu_performance", academicPerformance);
-        editor.putInt("edu_years", educationYears);
-        editor.putInt("edu_fees", fees);
-        editor.putInt("edu_scholarships", scholarships);
-        editor.putInt("edu_entrance_score", entranceScore);
-        editor.putInt("edu_exams_passed", examsPassed);
-        editor.putInt("edu_exams_failed", examsFailed);
-        editor.putInt("edu_loans", educationLoans);
-        editor.putInt("edu_hostel_expenses", hostelExpenses);
+        e.putInt("edu_marks", marks);
+        e.putInt("edu_attendance", attendance);
+        e.putInt("edu_performance", academicPerformance);
+        e.putInt("edu_years", educationYears);
+        e.putInt("edu_fees", fees);
+        e.putInt("edu_scholarships", scholarships);
+        e.putInt("edu_entrance_score", entranceScore);
+        e.putInt("edu_exams_passed", examsPassed);
+        e.putInt("edu_exams_failed", examsFailed);
+        e.putInt("edu_loans", educationLoans);
+        e.putInt("edu_hostel_expenses", hostelExpenses);
+        e.putInt("edu_annual_fee", currentAnnualFee);
+        e.putInt("edu_required_years", requiredYears);
 
-        editor.putBoolean("edu_enrolled", enrolled);
-        editor.putBoolean("edu_graduated", graduated);
-        editor.putBoolean("edu_entrance_cleared", entranceCleared);
-        editor.putBoolean("edu_hostel", hostel);
+        e.putBoolean("edu_enrolled", enrolled);
+        e.putBoolean("edu_graduated", graduated);
+        e.putBoolean("edu_entrance_cleared", entranceCleared);
+        e.putBoolean("edu_hostel", hostel);
+        e.putBoolean("edu_waiting_entrance", waitingForEntranceAdmission);
 
-        editor.apply();
+        e.apply();
     }
 
     private void normalize() {
@@ -144,6 +165,8 @@ public class EducationManager {
     private void toast(String message) {
         Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
     }
+
+    // ---------------- PUBLIC METHODS ----------------
 
     public void open() {
         showDashboard();
@@ -177,6 +200,8 @@ public class EducationManager {
         return money;
     }
 
+    // ---------------- DASHBOARD ----------------
+
     private void showDashboard() {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -202,7 +227,8 @@ public class EducationManager {
         addInfo(root, "State", institutionState);
         addInfo(root, "Stream", stream);
         addInfo(root, "Course", course);
-        addInfo(root, "Academic Performance", academicPerformance + "/100");
+        addInfo(root, "Academic Performance",
+                academicPerformance + "/100");
         addInfo(root, "Last Exam Marks", marks + "/100");
         addInfo(root, "Attendance", attendance + "%");
         addInfo(root, "Grade", grade);
@@ -212,11 +238,7 @@ public class EducationManager {
 
         addDivider(root);
 
-        if (!enrolled) {
-            addButton(root, "🏫 Find a School / College", this::chooseEducationLevel);
-            addButton(root, "📝 Entrance Examinations", this::chooseEntranceExam);
-            addButton(root, "🎓 Higher Studies", this::higherStudies);
-        } else if (!graduated) {
+        if (enrolled && !graduated) {
             addButton(root, "📚 Attend Classes", this::attendClasses);
             addButton(root, "📝 Write Examination", this::writeExam);
             addButton(root, "💰 Pay Education Fees", this::payFees);
@@ -225,14 +247,24 @@ public class EducationManager {
             addButton(root, "📊 Academic Report", this::academicReport);
             addButton(root, "🚪 Drop Out", this::dropOut);
         } else {
-            addInfo(root, "Graduation Status", "Successfully Graduated");
-            addButton(root, "🎓 Higher Studies", this::higherStudies);
+            addButton(root, "🏫 Find a School / College",
+                    this::chooseEducationLevel);
+
+            addButton(root, "📝 Entrance Examinations",
+                    this::chooseEntranceExam);
+
+            if (graduated) {
+                addButton(root, "🎓 Higher Studies", this::higherStudies);
+            }
+
             addButton(root, "📊 Academic Report", this::academicReport);
         }
 
         addButton(root, "⬅ Back to Game", activity::recreate);
         activity.setContentView(scroll);
     }
+
+    // ---------------- UI HELPERS ----------------
 
     private void addInfo(LinearLayout root, String label, String value) {
         LinearLayout card = new LinearLayout(activity);
@@ -304,7 +336,42 @@ public class EducationManager {
                 .show();
     }
 
-    // ---------------- EDUCATION LEVEL ----------------
+    // ---------------- EDUCATION PROGRESSION ----------------
+
+    private boolean completedLevel(String level) {
+        return educationLevel.equals(level)
+                || educationLevel.equals(level + " - Completed");
+    }
+
+    private boolean hasCompletedPrimary() {
+        return completedLevel("Primary School")
+                || completedLevel("High School")
+                || completedLevel("PUC / Class 11–12")
+                || educationLevel.contains("Degree")
+                || educationLevel.contains("Master")
+                || educationLevel.contains("MBA")
+                || educationLevel.contains("M.Tech")
+                || educationLevel.contains("PhD");
+    }
+
+    private boolean hasCompletedHighSchool() {
+        return completedLevel("High School")
+                || completedLevel("PUC / Class 11–12")
+                || educationLevel.contains("Degree")
+                || educationLevel.contains("Master")
+                || educationLevel.contains("MBA")
+                || educationLevel.contains("M.Tech")
+                || educationLevel.contains("PhD");
+    }
+
+    private boolean hasCompletedPUC() {
+        return completedLevel("PUC / Class 11–12")
+                || educationLevel.contains("Degree")
+                || educationLevel.contains("Master")
+                || educationLevel.contains("MBA")
+                || educationLevel.contains("M.Tech")
+                || educationLevel.contains("PhD");
+    }
 
     private void chooseEducationLevel() {
         String[] options = {
@@ -331,15 +398,20 @@ public class EducationManager {
                 .show();
     }
 
-    // FIX: This method was missing and caused the GitHub Actions build error.
-
     private void chooseCourse() {
+        if (!hasCompletedPUC()) {
+            toast("Complete PUC / Class 11–12 before applying for a degree.");
+            return;
+        }
         chooseInstitution("Undergraduate Degree");
     }
 
-    // ---------------- STREAM ----------------
-
     private void chooseStream() {
+        if (!hasCompletedHighSchool()) {
+            toast("Complete High School before joining PUC.");
+            return;
+        }
+
         String[] streams = {
                 "Science",
                 "Commerce",
@@ -356,7 +428,7 @@ public class EducationManager {
                 .show();
     }
 
-    // ---------------- INSTITUTION LOCATION ----------------
+    // ---------------- STATE SELECTION ----------------
 
     private void chooseInstitution(String level) {
         final String[] states = {
@@ -390,7 +462,9 @@ public class EducationManager {
         String[] cities;
         int[] costs;
 
-        if (level.equals("Primary School") || level.equals("High School")) {
+        if (level.equals("Primary School")
+                || level.equals("High School")) {
+
             if (institutionState.equals("Karnataka")) {
                 names = new String[]{
                         "Bishop Cotton Boys' School",
@@ -441,7 +515,9 @@ public class EducationManager {
                         80000, 60000, 65000, 12000, 5000
                 };
             }
+
         } else if (level.equals("PUC / Class 11–12")) {
+
             if (institutionState.equals("Karnataka")) {
                 names = new String[]{
                         "St. Joseph's PU College",
@@ -486,8 +562,9 @@ public class EducationManager {
                         70000, 50000, 45000, 400000, 100000, 12000
                 };
             }
+
         } else {
-            getUniversityList();
+            getUniversityList(level);
             return;
         }
 
@@ -496,7 +573,7 @@ public class EducationManager {
 
     // ---------------- UNIVERSITY DATABASE ----------------
 
-    private void getUniversityList() {
+    private void getUniversityList(String level) {
         String[] names;
         String[] cities;
         int[] costs;
@@ -718,15 +795,10 @@ public class EducationManager {
             };
         }
 
-        showInstitutionChoices(
-                "Undergraduate Degree",
-                names,
-                cities,
-                costs
-        );
+        showInstitutionChoices(level, names, cities, costs);
     }
 
-    // ---------------- SELECT INSTITUTION ----------------
+    // ---------------- INSTITUTION SELECTION ----------------
 
     private void showInstitutionChoices(
             String level,
@@ -739,8 +811,7 @@ public class EducationManager {
         for (int i = 0; i < names.length; i++) {
             labels[i] = names[i]
                     + "\n" + cities[i]
-                    + " | Estimated annual fee ₹"
-                    + costs[i];
+                    + " | Estimated annual fee ₹" + costs[i];
         }
 
         new AlertDialog.Builder(activity)
@@ -748,14 +819,13 @@ public class EducationManager {
                 .setItems(labels, (dialog, which) -> {
                     institution = names[which];
                     institutionCity = cities[which];
-
                     chooseAdmission(level, costs[which]);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    // ---------------- ADMISSION ----------------
+    // ---------------- ADMISSION VALIDATION ----------------
 
     private void chooseAdmission(String level, int annualFee) {
         if (enrolled && !graduated) {
@@ -763,56 +833,68 @@ public class EducationManager {
             return;
         }
 
-        if (age < 5) {
-            toast("You are too young to start school.");
+        if (level.equals("Primary School")) {
+            if (age < 5) {
+                toast("You are too young to start school.");
+                return;
+            }
+            if (hasCompletedPrimary()) {
+                toast("You have already completed Primary School.");
+                return;
+            }
+            enroll(level, "General Studies", annualFee, 5);
             return;
         }
 
-        if (level.equals("High School") && age < 10) {
-            toast("You need to be at least 10 years old.");
+        if (level.equals("High School")) {
+            if (age < 10) {
+                toast("You need to be at least 10 years old.");
+                return;
+            }
+            if (!completedLevel("Primary School")) {
+                toast("Complete Primary School first.");
+                return;
+            }
+            enroll(level, "General Studies", annualFee, 5);
             return;
         }
 
-        if (level.equals("PUC / Class 11–12") && age < 15) {
-            toast("You need to be at least 15 years old.");
-            return;
-        }
-
-        if (level.equals("Undergraduate Degree") && age < 17) {
-            toast("You need to be at least 17 years old.");
-            return;
-        }
-
-        if (level.equals("High School")
-                && educationLevel.equals("Not Started")) {
-            toast("Complete primary school first.");
-            return;
-        }
-
-        if (level.equals("PUC / Class 11–12")
-                && !educationLevel.equals("High School")) {
-            toast("Complete high school first.");
-            return;
-        }
-
-        if (level.equals("Undergraduate Degree")
-                && !educationLevel.equals("PUC / Class 11–12")) {
-            toast("Complete PUC first.");
+        if (level.equals("PUC / Class 11–12")) {
+            if (age < 15) {
+                toast("You need to be at least 15 years old.");
+                return;
+            }
+            if (!completedLevel("High School")) {
+                toast("Complete High School first.");
+                return;
+            }
+            enroll(level, "General Studies", annualFee, 2);
             return;
         }
 
         if (level.equals("Undergraduate Degree")) {
+            if (age < 17) {
+                toast("You need to be at least 17 years old.");
+                return;
+            }
+            if (!hasCompletedPUC()) {
+                toast("Complete PUC first.");
+                return;
+            }
             chooseDegreeCourse(annualFee);
             return;
         }
 
-        int duration = level.equals("Primary School") ? 5 :
-                level.equals("High School") ? 5 : 2;
-
-        enroll(level, "General Studies", annualFee, duration);
+        if (level.equals("Higher Studies")) {
+            if (!graduated) {
+                toast("Complete your current course first.");
+                return;
+            }
+            chooseHigherAdmission(annualFee);
+        }
     }
 
-    // ---------------- DEGREE COURSES ----------------
+    // ---------------- UNDERGRADUATE COURSES ----------------
 
     private void chooseDegreeCourse(int annualFee) {
         String[] courses = {
@@ -855,6 +937,17 @@ public class EducationManager {
                 .show();
     }
 
+    private int getDegreeDuration(String selectedCourse) {
+        if (selectedCourse.equals("MBBS")) return 5;
+        if (selectedCourse.equals("B.E. / B.Tech")
+                || selectedCourse.equals("B.Arch")) return 4;
+        if (selectedCourse.equals("BDS")) return 5;
+        if (selectedCourse.equals("B.Pharm")) return 4;
+        if (selectedCourse.equals("B.V.Sc")) return 5;
+        if (selectedCourse.equals("B.Ed")) return 2;
+        return 3;
+    }
+
     private void chooseDegreeAdmission(int annualFee) {
         String[] options = {
                 "Merit Admission",
@@ -872,17 +965,96 @@ public class EducationManager {
                                 "Undergraduate Degree",
                                 course,
                                 annualFee,
-                                course.equals("MBBS") ? 5 :
-                                        course.equals("B.E. / B.Tech")
-                                                || course.equals("B.Arch")
-                                                ? 4 : 3
+                                getDegreeDuration(course)
                         );
                     } else {
+                        pendingAdmissionLevel = "Undergraduate Degree";
+                        currentAnnualFee = annualFee;
+                        waitingForEntranceAdmission = true;
                         chooseEntranceExam();
                     }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    // ---------------- HIGHER STUDIES ----------------
+
+    private void higherStudies() {
+        if (!graduated) {
+            toast("Complete your current education before applying for higher studies.");
+            return;
+        }
+
+        String[] options = {
+                "Master's Degree",
+                "MBA",
+                "M.Tech",
+                "LLM",
+                "PhD"
+        };
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Choose Higher Education")
+                .setItems(options, (dialog, which) -> {
+                    pendingHigherStudy = options[which];
+
+                    if (pendingHigherStudy.equals("MBA")) {
+                        entranceExam = "CAT";
+                    } else if (pendingHigherStudy.equals("M.Tech")) {
+                        entranceExam = "GATE";
+                    } else if (pendingHigherStudy.equals("LLM")) {
+                        entranceExam = "CLAT PG / University Entrance";
+                    } else {
+                        entranceExam = "University Entrance";
+                    }
+
+                    saveData();
+                    chooseInstitution("Higher Studies");
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void chooseHigherAdmission(int annualFee) {
+        if (pendingHigherStudy.equals("None")) {
+            pendingHigherStudy = "Master's Degree";
+        }
+
+        String[] options = {
+                "Merit Admission",
+                "Entrance Exam Admission"
+        };
+
+        new AlertDialog.Builder(activity)
+                .setTitle(pendingHigherStudy + " Admission")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        entranceScore = 0;
+                        entranceCleared = false;
+                        enroll(
+                                pendingHigherStudy,
+                                pendingHigherStudy,
+                                annualFee,
+                                getHigherStudyDuration(pendingHigherStudy)
+                        );
+                    } else {
+                        pendingAdmissionLevel = pendingHigherStudy;
+                        currentAnnualFee = annualFee;
+                        waitingForEntranceAdmission = true;
+                        chooseEntranceExam();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private int getHigherStudyDuration(String selected) {
+        if (selected.equals("PhD")) return 4;
+        if (selected.equals("M.Tech")) return 2;
+        if (selected.equals("MBA")) return 2;
+        if (selected.equals("LLM")) return 2;
+        return 2;
     }
 
     // ---------------- ENTRANCE EXAMS ----------------
@@ -897,7 +1069,8 @@ public class EducationManager {
                 "CLAT",
                 "CUET",
                 "CAT",
-                "GATE"
+                "GATE",
+                "University Entrance"
         };
 
         new AlertDialog.Builder(activity)
@@ -913,6 +1086,8 @@ public class EducationManager {
     private void writeEntranceExam() {
         if (age < 16) {
             toast("You are too young for this entrance exam.");
+            waitingForEntranceAdmission = false;
+            saveData();
             return;
         }
 
@@ -925,7 +1100,9 @@ public class EducationManager {
         entranceScore = score;
 
         int cutoff = entranceExam.equals("JEE Advanced")
-                || entranceExam.equals("NEET") ? 70 : 55;
+                || entranceExam.equals("NEET")
+                || entranceExam.equals("CAT")
+                || entranceExam.equals("GATE") ? 70 : 55;
 
         entranceCleared = score >= cutoff;
 
@@ -938,9 +1115,31 @@ public class EducationManager {
                     "Exam: " + entranceExam
                             + "\nScore: " + score + "/100"
                             + "\nResult: QUALIFIED"
-                            + "\n\nYou can now apply for eligible courses."
             );
+
+            if (waitingForEntranceAdmission
+                    && !pendingAdmissionLevel.equals("None")) {
+                String level = pendingAdmissionLevel;
+                int fee = currentAnnualFee;
+                waitingForEntranceAdmission = false;
+                pendingAdmissionLevel = "None";
+
+                saveData();
+
+                int duration = level.equals("Undergraduate Degree")
+                        ? getDegreeDuration(course)
+                        : getHigherStudyDuration(level);
+
+                String selectedCourse = level.equals("Undergraduate Degree")
+                        ? course : level;
+
+                enroll(level, selectedCourse, fee, duration);
+                return;
+            }
         } else {
+            waitingForEntranceAdmission = false;
+            pendingAdmissionLevel = "None";
+
             showMessage(
                     "Entrance Exam Result",
                     "Exam: " + entranceExam
@@ -964,15 +1163,6 @@ public class EducationManager {
     ) {
         if (enrolled && !graduated) {
             toast("You are already studying a course.");
-            return;
-        }
-
-        if (level.equals("Undergraduate Degree")
-                && entranceExam != null
-                && !entranceExam.equals("None")
-                && entranceScore > 0
-                && !entranceCleared) {
-            toast("You have not cleared the entrance examination.");
             return;
         }
 
@@ -1006,15 +1196,23 @@ public class EducationManager {
 
                     educationLevel = level;
                     course = selectedCourse;
+                    currentAnnualFee = annualFee;
+                    requiredYears = duration;
 
                     educationYears = 0;
                     attendance = 0;
                     marks = 0;
-
+                    examsPassed = 0;
+                    examsFailed = 0;
                     grade = "Not Available";
 
                     academicPerformance = Math.max(
                             academicPerformance, 50);
+
+                    entranceScore = 0;
+                    entranceCleared = false;
+                    waitingForEntranceAdmission = false;
+                    pendingAdmissionLevel = "None";
 
                     saveData();
 
@@ -1083,7 +1281,6 @@ public class EducationManager {
 
         if (score >= 40) {
             examsPassed++;
-
             academicPerformance = clamp(
                     academicPerformance + 5, 0, 100);
 
@@ -1093,10 +1290,8 @@ public class EducationManager {
             );
         } else {
             examsFailed++;
-
             academicPerformance = clamp(
                     academicPerformance - 5, 0, 100);
-
             happiness = Math.max(0, happiness - 3);
 
             notifyUpdate(
@@ -1123,58 +1318,72 @@ public class EducationManager {
                     academicPerformance + 3, 0, 100);
         }
 
+        // Annual fee is charged automatically when affordable.
+        if (currentAnnualFee > 0) {
+            if (money >= currentAnnualFee) {
+                money -= currentAnnualFee;
+                fees = safeAdd(fees, currentAnnualFee);
+            } else {
+                academicPerformance = Math.max(
+                        0, academicPerformance - 5);
+            }
+        }
+
         saveData();
         checkGraduation();
     }
 
     private void checkGraduation() {
-        int requiredYears;
+        int duration = requiredYears > 0
+                ? requiredYears
+                : getDefaultDuration();
 
-        if (educationLevel.equals("Primary School")) {
-            requiredYears = 5;
-        } else if (educationLevel.equals("High School")) {
-            requiredYears = 5;
-        } else if (educationLevel.equals("PUC / Class 11–12")) {
-            requiredYears = 2;
-        } else {
-            requiredYears = course.equals("MBBS") ? 5 :
-                    course.equals("B.E. / B.Tech")
-                            || course.equals("B.Arch")
-                            ? 4 : 3;
-        }
+        if (educationYears < duration) return;
 
-        if (educationYears >= requiredYears) {
-            if (marks < 40 && examsFailed > examsPassed) {
-                showMessage(
-                        "Graduation Delayed",
-                        "You need to improve your academic results before completing your education."
-                );
-
-                educationYears = requiredYears - 1;
-                saveData();
-                return;
-            }
-
-            graduated = true;
-            enrolled = false;
-
-            educationLevel = educationLevel + " - Completed";
-
-            if (academicPerformance >= 85) {
-                grade = "Distinction";
-            } else if (academicPerformance >= 60) {
-                grade = "First Class";
-            } else {
-                grade = "Pass";
-            }
-
-            saveData();
-
-            notifyUpdate(
-                    "Congratulations! You completed your education at "
-                            + institution + ". Grade: " + grade
+        // Require at least one passed exam per academic year.
+        if (examsPassed < duration || marks < 40) {
+            showMessage(
+                    "Graduation Delayed",
+                    "You must pass your examinations before graduating."
+                            + "\n\nExams passed: " + examsPassed
+                            + "\nRequired: " + duration
+                            + "\nLast marks: " + marks + "/100"
             );
+
+            educationYears = duration - 1;
+            saveData();
+            return;
         }
+
+        graduated = true;
+        enrolled = false;
+
+        educationLevel = educationLevel + " - Completed";
+
+        if (academicPerformance >= 85) {
+            grade = "Distinction";
+        } else if (academicPerformance >= 60) {
+            grade = "First Class";
+        } else {
+            grade = "Pass";
+        }
+
+        saveData();
+
+        notifyUpdate(
+                "Congratulations! You completed your education at "
+                        + institution + ". Grade: " + grade
+        );
+    }
+
+    private int getDefaultDuration() {
+        if (educationLevel.startsWith("Primary School")) return 5;
+        if (educationLevel.startsWith("High School")) return 5;
+        if (educationLevel.startsWith("PUC / Class 11–12")) return 2;
+        if (course.equals("MBBS")) return 5;
+        if (course.equals("B.E. / B.Tech")
+                || course.equals("B.Arch")) return 4;
+        return 3;
     }
 
     // ---------------- FEES ----------------
@@ -1281,7 +1490,6 @@ public class EducationManager {
 
                         money -= cost;
                         hostel = true;
-
                         hostelExpenses = safeAdd(hostelExpenses, cost);
 
                         notifyUpdate(
@@ -1333,50 +1541,17 @@ public class EducationManager {
                     educationLevel = "Dropped Out";
                     course = "None";
                     stream = "None";
-
                     hostel = false;
+
+                    currentAnnualFee = 0;
+                    requiredYears = 0;
+                    educationYears = 0;
 
                     saveData();
 
                     notifyUpdate(
                             "You left your educational institution."
                     );
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    // ---------------- HIGHER STUDIES ----------------
-
-    private void higherStudies() {
-        if (!graduated) {
-            toast("Complete your current education before applying for higher studies.");
-            return;
-        }
-
-        String[] options = {
-                "Master's Degree",
-                "MBA",
-                "M.Tech",
-                "LLM",
-                "PhD"
-        };
-
-        new AlertDialog.Builder(activity)
-                .setTitle("Higher Education")
-                .setItems(options, (dialog, which) -> {
-                    String selected = options[which];
-
-                    if (selected.equals("MBA")) {
-                        entranceExam = "CAT";
-                    } else if (selected.equals("M.Tech")) {
-                        entranceExam = "GATE";
-                    } else {
-                        entranceExam = "University Entrance";
-                    }
-
-                    institution = "Higher Studies Admission Pending";
-                    chooseInstitution("Higher Studies");
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
