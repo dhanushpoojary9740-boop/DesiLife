@@ -445,7 +445,6 @@ public class LoanManager {
             rate += 2.0;
         }
 
-        // FIX: final variable for lambda.
         final double finalRate = rate;
 
         long processingFee = Math.round(amount * 0.02);
@@ -475,7 +474,6 @@ public class LoanManager {
                     principal = amount;
                     outstanding = amount;
 
-                    // Use finalRate instead of rate.
                     interestRate = finalRate;
 
                     tenureMonths = months;
@@ -506,9 +504,9 @@ public class LoanManager {
         return scheduledEmi;
     }
 
-    // AUTOMATIC MONTHLY EMI
+    // ONE MONTH OF AUTOMATIC EMI
 
-    public void applyAnnualLoanPayments() {
+    public void applyMonthlyLoanPayment() {
 
         if (!hasActiveLoan()) return;
 
@@ -516,90 +514,124 @@ public class LoanManager {
             migrateOldLoan();
         }
 
+        if (scheduledEmi <= 0 || outstanding <= 0) return;
+
+        long interest = Math.round(
+                outstanding * interestRate / 1200.0);
+
+        long amountDue = safeAdd(outstanding, interest);
+
+        long payment = Math.min(scheduledEmi, amountDue);
+
+        if (cash >= payment && payment > 0) {
+
+            updateCash(cash - payment);
+
+            long interestCovered = Math.min(payment, interest);
+
+            totalInterestPaid = safeAdd(
+                    totalInterestPaid, interestCovered);
+
+            outstanding = Math.max(0, amountDue - payment);
+
+            consecutiveMissed = 0;
+            monthsPaid++;
+
+            creditScore = Math.min(900, creditScore + 2);
+
+            addHistory("Monthly EMI debited: "
+                    + money(payment)
+                    + " | Interest: " + money(interestCovered));
+
+            if (outstanding <= 0) {
+                finishLoan();
+                saveData();
+                return;
+            }
+
+            if (monthsPaid >= tenureMonths) {
+
+                tenureMonths += 12;
+
+                scheduledEmi = calculateInstallment(
+                        outstanding, interestRate, 12);
+
+                addHistory(
+                        "Repayment schedule extended by 12 months.");
+            }
+
+        } else {
+
+            outstanding = amountDue;
+
+            missedPayments++;
+            consecutiveMissed++;
+
+            long penalty = Math.max(
+                    100,
+                    Math.min(5000,
+                            Math.round(scheduledEmi * 0.02)));
+
+            outstanding = safeAdd(outstanding, penalty);
+            lateFees = safeAdd(lateFees, penalty);
+
+            creditScore = Math.max(300, creditScore - 25);
+
+            addHistory("EMI missed: "
+                    + money(scheduledEmi)
+                    + " | Interest: " + money(interest)
+                    + " | Late fee: " + money(penalty));
+
+            if (isSecuredLoan()
+                    && consecutiveMissed >= 6
+                    && !repossessed) {
+
+                repossessed = true;
+
+                addHistory(
+                        "Secured asset repossessed after six missed payments.");
+            }
+        }
+
+        saveData();
+    }
+
+    // ANNUAL EMI COMPATIBILITY
+
+    /*
+     * Processes 12 separate monthly EMI cycles.
+     * This method is retained for existing FinanceManager callers.
+     */
+
+    public void applyAnnualLoanPayments() {
+
+        if (!hasActiveLoan()) return;
+
         int successfulPayments = 0;
         int failedPayments = 0;
 
         for (int month = 0; month < 12; month++) {
 
-            if (outstanding <= 0) break;
+            if (!hasActiveLoan()) break;
 
-            long interest = Math.round(
-                    outstanding * interestRate / 1200.0);
+            long oldOutstanding = outstanding;
+            int oldPaid = monthsPaid;
+            int oldMissed = missedPayments;
 
-            long amountDue = outstanding + interest;
+            applyMonthlyLoanPayment();
 
-            long payment = Math.min(scheduledEmi, amountDue);
-
-            if (cash >= payment && payment > 0) {
-
-                updateCash(cash - payment);
-
-                long interestCovered = Math.min(payment, interest);
-
-                totalInterestPaid += interestCovered;
-
-                outstanding = Math.max(0, amountDue - payment);
-
-                consecutiveMissed = 0;
-                monthsPaid++;
-
-                creditScore = Math.min(900, creditScore + 2);
-
+            if (monthsPaid > oldPaid) {
                 successfulPayments++;
+            }
 
-                addHistory("Monthly EMI debited: "
-                        + money(payment)
-                        + " | Interest: " + money(interestCovered));
-
-                if (outstanding <= 0) {
-                    finishLoan();
-                    break;
-                }
-
-                if (monthsPaid >= tenureMonths) {
-
-                    tenureMonths += 12;
-
-                    scheduledEmi = calculateInstallment(
-                            outstanding, interestRate, 12);
-
-                    addHistory(
-                            "Repayment schedule extended by 12 months.");
-                }
-
-            } else {
-
-                outstanding = amountDue;
-
-                missedPayments++;
-                consecutiveMissed++;
-
-                long penalty = Math.max(
-                        100,
-                        Math.min(5000,
-                                Math.round(scheduledEmi * 0.02)));
-
-                outstanding += penalty;
-                lateFees += penalty;
-
-                creditScore = Math.max(300, creditScore - 25);
-
+            if (missedPayments > oldMissed) {
                 failedPayments++;
+            }
 
-                addHistory("EMI missed: "
-                        + money(scheduledEmi)
-                        + " | Interest: " + money(interest)
-                        + " | Late fee: " + money(penalty));
-
-                if (isSecuredLoan()
-                        && consecutiveMissed >= 6
-                        && !repossessed) {
-
-                    repossessed = true;
-
-                    addHistory(
-                            "Secured asset repossessed after six missed payments.");
-                }
+            if (outstanding == oldOutstanding
+                    && monthsPaid == oldPaid
+                    && missedPayments == oldMissed) {
+                break;
             }
         }
 
