@@ -35,6 +35,23 @@ public class FinanceManager {
     private InvestmentManager investmentManager;
 
     private LinearLayout content;
+    private TransactionListener transactionListener;
+    private boolean processingMonthly = false;
+
+    public interface TransactionListener {
+        void onTransaction(String category, long amount, long balance);
+    }
+
+    public void setTransactionListener(TransactionListener listener) {
+        this.transactionListener = listener;
+    }
+
+    private void recordDelta(String category, long before) {
+        long delta = cash - before;
+        if (delta != 0 && transactionListener != null) {
+            transactionListener.onTransaction(category, delta, cash);
+        }
+    }
 
     private final NumberFormat currency =
             NumberFormat.getCurrencyInstance(
@@ -98,6 +115,7 @@ public class FinanceManager {
 
     private void updateCash(long newCash) {
 
+        long previousCash = cash;
         cash = Math.max(0, newCash);
 
         syncCash();
@@ -108,6 +126,16 @@ public class FinanceManager {
 
         if (externalListener != null) {
             externalListener.onMoneyChanged(cash);
+        }
+
+        if (!processingMonthly && transactionListener != null) {
+            // Manual finance actions are recorded as a distinct cash movement.
+            // Monthly systems are recorded below with their own category.
+            long delta = cash - previousCash;
+            if (delta != 0) {
+                transactionListener.onTransaction(
+                        "Manual finance transaction", delta, cash);
+            }
         }
     }
 
@@ -201,6 +229,9 @@ public class FinanceManager {
         addButton("Investments",
                 v -> openInvestments());
 
+        addButton("📒 Transaction History",
+                v -> showTransactionHistory());
+
         addSpace(18);
 
         content.addView(text(
@@ -209,6 +240,30 @@ public class FinanceManager {
 
         new AlertDialog.Builder(activity)
                 .setTitle("Financial Life")
+                .setView(scroll)
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    // ---------------- TRANSACTION HISTORY ----------------
+
+    private void showTransactionHistory() {
+        SharedPreferences gameSave = activity.getSharedPreferences(
+                "DesiLifeSave", Activity.MODE_PRIVATE);
+        String history = gameSave.getString("transaction_history", "");
+
+        TextView body = new TextView(activity);
+        body.setTextColor(Color.WHITE);
+        body.setTextSize(14);
+        body.setPadding(20, 16, 20, 16);
+        body.setText(history.isEmpty()
+                ? "No financial transactions recorded yet. Advance one in-game month to begin tracking."
+                : history);
+        ScrollView scroll = new ScrollView(activity);
+        scroll.addView(body);
+
+        new AlertDialog.Builder(activity)
+                .setTitle("📒 Transaction History")
                 .setView(scroll)
                 .setPositiveButton("Close", null)
                 .show();
@@ -260,31 +315,33 @@ public class FinanceManager {
             boolean chargeAnnualPropertyTax) {
 
         syncCash();
+        processingMonthly = true;
 
-        // 1. Household monthly expenses.
-        householdManager.applyMonthlyExpenses(
-                chargeAnnualPropertyTax);
+        try {
+            long before = cash;
+            householdManager.applyMonthlyExpenses(chargeAnnualPropertyTax);
+            syncCash();
+            recordDelta("Household expenses and property tax", before);
 
-        syncCash();
+            before = cash;
+            loanManager.applyMonthlyLoanPayment();
+            syncCash();
+            recordDelta("Loan EMI, interest and penalties", before);
 
-        // 2. Loan EMI and interest.
-        loanManager.applyMonthlyLoanPayment();
+            before = cash;
+            bankManager.applyMonthlyBanking();
+            syncCash();
+            recordDelta("Bank interest, fees and deposits", before);
 
-        syncCash();
+            before = cash;
+            investmentManager.applyMonthlyInvestmentUpdate();
+            syncCash();
+            recordDelta("Investments and monthly SIP", before);
+        } finally {
+            processingMonthly = false;
+        }
 
-        // 3. Banking interest, charges and deposits.
-        bankManager.applyMonthlyBanking();
-
-        syncCash();
-
-        // 4. Monthly investment and SIP update.
-        investmentManager.applyMonthlyInvestmentUpdate();
-
-        syncCash();
-
-        prefs.edit()
-                .putLong("last_cash", cash)
-                .apply();
+        prefs.edit().putLong("last_cash", cash).apply();
     }
 
     // ---------------- ANNUAL FINANCE PROCESSING ----------------
@@ -310,9 +367,15 @@ public class FinanceManager {
         // Insurance premiums are annual, not monthly.
         syncCash();
 
-        insuranceManager.applyAnnualPremiums();
-
-        syncCash();
+        long beforeInsurance = cash;
+        processingMonthly = true;
+        try {
+            insuranceManager.applyAnnualPremiums();
+            syncCash();
+        } finally {
+            processingMonthly = false;
+        }
+        recordDelta("Annual insurance premiums", beforeInsurance);
 
         prefs.edit()
                 .putLong("last_cash", cash)
