@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
     String educationStatus = "Not enrolled";
 
     int age = 0;
+    int ageMonths = 0;
     int health = 100;
     int happiness = 100;
     int intelligence = 50;
@@ -251,6 +252,12 @@ public class MainActivity extends Activity {
         }
 
         save.edit().putString("life_events",updated).apply();
+    }
+
+    String getFormattedAge() {
+        if (ageMonths == 0) return age + (age == 1 ? " year" : " years");
+        return age + (age == 1 ? " year, " : " years, ")
+                + ageMonths + (ageMonths == 1 ? " month" : " months");
     }
 
     void showFullLifeHistory() {
@@ -505,6 +512,7 @@ public class MainActivity extends Activity {
             family = familySpinner.getSelectedItem().toString();
 
             age = 0;
+            ageMonths = 0;
             health = 100;
             happiness = 100;
             intelligence = 50;
@@ -584,6 +592,7 @@ public class MainActivity extends Activity {
             .putString("degreeCourse",degreeCourse)
             .putString("educationStatus",educationStatus)
             .putInt("age",age)
+            .putInt("age_months",ageMonths)
             .putInt("health",health)
             .putInt("happiness",happiness)
             .putInt("intelligence",intelligence)
@@ -604,6 +613,7 @@ public class MainActivity extends Activity {
         family = save.getString("family","Middle Class");
 
         age = save.getInt("age",0);
+        ageMonths = Math.max(0, Math.min(11, save.getInt("age_months",0)));
         health = save.getInt("health",100);
         happiness = save.getInt("happiness",100);
         intelligence = save.getInt("intelligence",50);
@@ -710,7 +720,7 @@ public class MainActivity extends Activity {
         nameView.setGravity(Gravity.LEFT);
 
         TextView detailView = dashboardText(
-            age+" years • "+gender+" • "+city,
+            getFormattedAge()+" • "+gender+" • "+city,
             12,Color.rgb(55,91,119),false
         );
 
@@ -742,7 +752,7 @@ public class MainActivity extends Activity {
         journal.setBackground(shape(Color.WHITE,14));
 
         TextView ageHeading = dashboardText(
-            "Age: "+age+" years",19,
+            "Age: "+getFormattedAge(),19,
             Color.rgb(17,82,130),true
         );
 
@@ -799,7 +809,7 @@ public class MainActivity extends Activity {
         ageUpParams.setMargins(0,2,0,8);
 
         root.addView(ageUpButton,ageUpParams);
-        ageUpButton.setOnClickListener(v -> ageUp());
+        ageUpButton.setOnClickListener(v -> showAgeUpOptions());
 
         LinearLayout stats = new LinearLayout(this);
         stats.setOrientation(LinearLayout.VERTICAL);
@@ -1161,7 +1171,7 @@ public class MainActivity extends Activity {
         addDivider();
 
         addText("Your Education Journey",21,white);
-        addText("Age: "+age+" years",16,muted);
+        addText("Age: "+getFormattedAge(),16,muted);
 
         if (age < 5) {
 
@@ -1942,62 +1952,122 @@ public class MainActivity extends Activity {
         }
     }
 
-    // AGE UP
+    // AGE UP - MONTHLY AND YEARLY PROGRESSION
+
+    void showAgeUpOptions() {
+        String[] options = {"Age by 1 Month", "Age by 1 Year"};
+
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("How much time should pass?")
+            .setItems(options, (dialog, which) -> {
+                if (which == 0) ageUp();
+                else ageUpOneYear();
+            })
+            .setNegativeButton("CANCEL", null)
+            .show();
+    }
 
     void ageUp() {
+        advanceGameMonths(1);
+    }
 
-        age++;
+    void ageUpOneYear() {
+        advanceGameMonths(12);
+    }
 
-        money = AssetsManager.applyAnnualFinances(save,money);
+    void advanceGameMonths(int monthsToAdvance) {
+        if (monthsToAdvance <= 0) return;
+
+        boolean birthdayReached = false;
+
+        for (int month = 0; month < monthsToAdvance; month++) {
+
+            // Run one monthly finance cycle for adult characters.
+            if (age >= 18) {
+                if (financeManager == null) {
+                    financeManager = createFinanceManager();
+                }
+
+                financeManager.setCash(money);
+                financeManager.applyMonthlyFinance(false);
+
+                money = (int)Math.max(
+                    0, Math.min(Integer.MAX_VALUE, financeManager.getCash())
+                );
+            }
+
+            ageMonths++;
+
+            if (ageMonths >= 12) {
+                ageMonths = 0;
+                age++;
+                birthdayReached = true;
+                processBirthdayUpdates();
+            }
+
+            saveGame();
+        }
+
+        if (birthdayReached) {
+            showBirthdayDialog();
+        } else {
+            saveGame();
+            showDashboard();
+            message("One month has passed.\\n\\nYour age is now "
+                    + getFormattedAge() + ".");
+        }
+    }
+
+    // Annual systems run once when 12 months have been completed.
+    void processBirthdayUpdates() {
+
+        money = AssetsManager.applyAnnualFinances(save, money);
 
         if (age >= 18) {
-
             if (financeManager == null) {
                 financeManager = createFinanceManager();
             }
 
             financeManager.setCash(money);
-            financeManager.applyAnnualFinance();
+
+            // Annual insurance only; the other finance systems have
+            // already completed their 12 individual monthly updates.
+            financeManager.getInsuranceManager().applyAnnualPremiums();
 
             money = (int)Math.max(
-                0,Math.min(Integer.MAX_VALUE,financeManager.getCash())
+                0, Math.min(Integer.MAX_VALUE,
+                    financeManager.getInsuranceManager().getCash())
             );
 
+            financeManager.setCash(money);
             processAnnualCareerProgression();
         }
 
-        // Process family responsibilities and children's birthdays.
         processAnnualFamilyUpdate();
 
         String event;
 
         if (age == 1) {
             event = "You celebrated your first birthday with your family.";
-
         } else if (age == 5) {
             event = "You are ready to begin your school journey!";
-
         } else if (age == 6) {
             event = "Your first day at school begins!";
-
         } else if (age == 15) {
             event = "You are preparing for your SSLC examination.";
-
         } else if (age == 16) {
             event = "A new chapter begins. Choose your PUC stream.";
-
         } else if (age == 18) {
             event = "You are now an adult. Your future awaits.";
-
         } else {
-            happiness = Math.max(0,happiness-1);
+            happiness = Math.max(0, happiness - 1);
             event = "Another year has passed. Your life continues.";
         }
 
         addLifeEvent(event);
 
         if (age >= 6 && age <= 14 && !schoolType.isEmpty()) {
-            educationStatus = "Class "+(age-5);
+            educationStatus = "Class " + (age - 5);
         }
 
         if (age == 16 && sslcPassed && !pucPassed) {
@@ -2010,20 +2080,20 @@ public class MainActivity extends Activity {
 
         if (age >= 18 && !degreeCourse.isEmpty()
                 && !degreeCompleted && pucPassed) {
-            educationStatus = "Degree "+(age-17)+" Year";
+            educationStatus = "Degree " + (age - 17) + " Year";
         }
 
         saveGame();
+    }
+
+    void showBirthdayDialog() {
         showDashboard();
 
         new android.app.AlertDialog.Builder(this)
             .setTitle("🎂 Happy Birthday!")
-            .setMessage(
-                "You are now "+age+" years old.\n\n"+event
-            )
-            .setPositiveButton("Continue",(d,w) -> {
-                runAnnualHealthCheck();
-            })
+            .setMessage("You are now " + getFormattedAge()
+                    + " old.\\n\\nAnother year of your life has been completed.")
+            .setPositiveButton("Continue", (d, w) -> runAnnualHealthCheck())
             .show();
     }
 
