@@ -817,6 +817,10 @@ public class MainActivity extends Activity {
         addDashboardStat(stats,"Happiness","😊",happiness,
             Color.rgb(42,157,75));
 
+        addDashboardStat(stats,"Stress","🧠",
+            save.getInt("mental_stress",20),
+            Color.rgb(220,100,70));
+
         addDashboardStat(stats,"Health","❤️",health,
             Color.rgb(42,157,75));
 
@@ -847,6 +851,25 @@ public class MainActivity extends Activity {
 
         root.addView(healthButton,healthParams);
         healthButton.setOnClickListener(v -> openHealth());
+
+        // MENTAL HEALTH & WELLNESS BUTTON
+        TextView mentalHealthButton = dashboardText(
+            "🧠 MENTAL HEALTH & WELLNESS",16,bg,true
+        );
+
+        mentalHealthButton.setBackground(
+            shape(Color.rgb(229,184,105),18)
+        );
+
+        mentalHealthButton.setPadding(12,14,12,14);
+
+        LinearLayout.LayoutParams mentalHealthParams =
+            new LinearLayout.LayoutParams(-1,-2);
+
+        mentalHealthParams.setMargins(0,8,0,4);
+
+        root.addView(mentalHealthButton,mentalHealthParams);
+        mentalHealthButton.setOnClickListener(v -> openMentalHealth());
 
         TextView education = dashboardText(
             "📚 EDUCATION",16,bg,true
@@ -1752,12 +1775,60 @@ public class MainActivity extends Activity {
                 addLifeEvent(description);
                 saveGame();
 
-                // Random life event begins after the health check is completed.
-                runRandomLifeEvent();
+                // Mental wellness update runs after the annual health check.
+                runAnnualMentalCheck();
             }
         );
 
         healthManager.applyAnnualHealthUpdate();
+    }
+
+    // MENTAL HEALTH & WELLNESS SYSTEM
+
+    void openMentalHealth() {
+        MentalHealthManager mentalManager = new MentalHealthManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney,newHealth,newHappiness,newStress,condition,description) -> {
+                money = Math.max(0,newMoney);
+                health = Math.max(0,Math.min(100,newHealth));
+                happiness = Math.max(0,Math.min(100,newHappiness));
+
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+
+        mentalManager.open();
+    }
+
+    void runAnnualMentalCheck() {
+        MentalHealthManager mentalManager = new MentalHealthManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney,newHealth,newHappiness,newStress,condition,description) -> {
+                money = Math.max(0,newMoney);
+                health = Math.max(0,Math.min(100,newHealth));
+                happiness = Math.max(0,Math.min(100,newHappiness));
+
+                addLifeEvent(description);
+                saveGame();
+
+                // Random life event begins after both annual wellness checks.
+                runRandomLifeEvent();
+            }
+        );
+
+        mentalManager.applyAnnualMentalUpdate();
     }
 
     // RANDOM LIFE EVENTS 2.0
