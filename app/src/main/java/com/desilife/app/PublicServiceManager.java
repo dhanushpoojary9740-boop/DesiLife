@@ -1,3 +1,4 @@
+
 package com.desilife.app;
 
 import android.app.Activity;
@@ -387,21 +388,21 @@ public class PublicServiceManager {
 
         int preparation = getInt("preparation", 0);
 
-        int chance = 25 + preparation / 2
-                + random.nextInt(26);
-
-        chance = Math.min(95, chance);
+        final int finalChance = Math.min(
+                95,
+                25 + preparation / 2 + random.nextInt(26)
+        );
 
         new AlertDialog.Builder(activity)
                 .setTitle("Department Recruitment")
                 .setMessage("Apply for " + d.name + "?\n\n"
                         + "Starting salary: ₹" + d.salary
-                        + "\nSelection probability: " + chance + "%\n\n"
+                        + "\nSelection probability: " + finalChance + "%\n\n"
                         + "Your application will be evaluated immediately.")
                 .setPositiveButton("Apply",
                         (dialog, which) -> {
 
-                            if (random.nextInt(100) < chance) {
+                            if (random.nextInt(100) < finalChance) {
                                 putString("job", d.positions[0]);
                                 putString("department", d.name);
                                 putString("category", d.category);
