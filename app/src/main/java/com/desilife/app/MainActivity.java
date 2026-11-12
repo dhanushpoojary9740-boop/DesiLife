@@ -1630,6 +1630,81 @@ public class MainActivity extends Activity {
         manager.open();
     }
 
+    // ANNUAL PROGRESSION FOR ALL CAREER SYSTEMS
+    // Runs once when the player advances a year. Salary is not credited
+    // by systems that only update salary progression. Private Career keeps
+    // its own once-per-age annual salary guard.
+    void processAnnualCareerProgression() {
+        if (age < 18) return;
+
+        // Government competitive-exam career records use their own
+        // namespaced keys, so they do not collide with other job systems.
+        GovernmentExamManager governmentExams =
+                new GovernmentExamManager(
+                        this, save, age, money, health, happiness,
+                        (newMoney, newHealth, newHappiness, description) -> {
+                            money = Math.max(0, newMoney);
+                            health = Math.max(0, Math.min(100, newHealth));
+                            happiness = Math.max(0, Math.min(100, newHappiness));
+                            addLifeEvent(description);
+                            saveGame();
+                        }
+                );
+        governmentExams.applyAnnualUpdate();
+
+        // Public Service and Private Career share legacy keys such as
+        // job/salary/status. Their department/company markers identify
+        // which record is valid. If both markers exist, skip both safely.
+        String department = save.getString("department", "");
+        String company = save.getString("company", "");
+
+        if (!department.isEmpty() && company.isEmpty()) {
+            PublicServiceManager publicService =
+                    new PublicServiceManager(
+                            this, save, age, money, health, happiness,
+                            (newMoney, newHealth, newHappiness, description) -> {
+                                money = Math.max(0, newMoney);
+                                health = Math.max(0, Math.min(100, newHealth));
+                                happiness = Math.max(0, Math.min(100, newHappiness));
+                                addLifeEvent(description);
+                                saveGame();
+                            }
+                    );
+            publicService.applyAnnualUpdate();
+        } else if (!company.isEmpty() && department.isEmpty()) {
+            PrivateCareerManager privateCareer =
+                    new PrivateCareerManager(
+                            this, save, age, money, health, happiness,
+                            (newMoney, newHealth, newHappiness, description) -> {
+                                money = Math.max(0, newMoney);
+                                health = Math.max(0, Math.min(100, newHealth));
+                                happiness = Math.max(0, Math.min(100, newHappiness));
+                                addLifeEvent(description);
+                                saveGame();
+                            }
+                    );
+            privateCareer.applyAnnualUpdate();
+        }
+
+        // General Employment has independent employment_* keys.
+        // Its annual method updates experience, salary and promotions;
+        // it does not credit salary to cash.
+        EmploymentManager employment = new EmploymentManager(
+                this, save, age, money, health, happiness,
+                (newMoney, newHealth, newHappiness, description) -> {
+                    money = Math.max(0, newMoney);
+                    health = Math.max(0, Math.min(100, newHealth));
+                    happiness = Math.max(0, Math.min(100, newHappiness));
+                    addLifeEvent(description);
+                    saveGame();
+                }
+        );
+        employment.applyAnnualEmploymentUpdate();
+
+        // Preserve the existing General Careers annual processing.
+        processCareerSalary();
+    }
+
     // EXISTING GENERAL CAREER ANNUAL PROCESSING
     // Other career systems are not automatically paid here to prevent
     // duplicate salary credits until their payment schedules are unified.
@@ -1888,7 +1963,7 @@ public class MainActivity extends Activity {
                 0,Math.min(Integer.MAX_VALUE,financeManager.getCash())
             );
 
-            processCareerSalary();
+            processAnnualCareerProgression();
         }
 
         // Process family responsibilities and children's birthdays.
