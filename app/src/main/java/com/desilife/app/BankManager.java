@@ -70,6 +70,8 @@ public class BankManager {
         loadData();
     }
 
+    // LOAD DATA
+
     private void loadData() {
 
         savingsBalance = prefs.getLong("savings", 0);
@@ -104,6 +106,8 @@ public class BankManager {
         }
     }
 
+    // SAVE DATA
+
     private void saveData() {
 
         SharedPreferences.Editor editor = prefs.edit();
@@ -136,8 +140,23 @@ public class BankManager {
         editor.apply();
     }
 
+    // BASIC HELPERS
+
     private String money(long amount) {
         return currency.format(amount);
+    }
+
+    private long safeAdd(long first, long second) {
+
+        if (second > 0 && first > Long.MAX_VALUE - second) {
+            return Long.MAX_VALUE;
+        }
+
+        if (second < 0 && first < Long.MIN_VALUE - second) {
+            return Long.MIN_VALUE;
+        }
+
+        return first + second;
     }
 
     private void addHistory(String message) {
@@ -153,7 +172,7 @@ public class BankManager {
 
     private void updateCash(long newCash) {
 
-        cash = newCash;
+        cash = Math.max(0, newCash);
 
         if (listener != null) {
             listener.onMoneyChanged(cash);
@@ -161,7 +180,7 @@ public class BankManager {
     }
 
     public void setCash(long newCash) {
-        cash = newCash;
+        cash = Math.max(0, newCash);
     }
 
     public long getCash() {
@@ -169,8 +188,11 @@ public class BankManager {
     }
 
     public long getTotalBankBalance() {
-        return savingsBalance + currentBalance
-                + fdPrincipal + rdBalance;
+
+        long total = safeAdd(savingsBalance, currentBalance);
+        total = safeAdd(total, fdPrincipal);
+
+        return safeAdd(total, rdBalance);
     }
 
     public long getSavingsBalance() {
@@ -221,7 +243,10 @@ public class BankManager {
         addButton("Withdraw Money", v -> showWithdrawDialog());
         addButton("Fixed Deposit (FD)", v -> showFDMenu());
         addButton("Recurring Deposit (RD)", v -> showRDMenu());
+        addButton("Transfer Between Accounts", v -> showTransferDialog());
         addButton("Transaction History", v -> showHistory());
+        addButton("Detailed Account Statement", v -> showStatement());
+        addButton("Bank Security & Alerts", v -> showSecurity());
         addButton("Bank Account Settings", v -> showAccountInfo());
 
         addSpace(20);
@@ -398,9 +423,9 @@ public class BankManager {
                 }
 
                 if (account == 0) {
-                    savingsBalance += amount;
+                    savingsBalance = safeAdd(savingsBalance, amount);
                 } else {
-                    currentBalance += amount;
+                    currentBalance = safeAdd(currentBalance, amount);
                 }
 
                 updateCash(cash - amount);
@@ -476,7 +501,7 @@ public class BankManager {
                         currentBalance -= amount;
                     }
 
-                    updateCash(cash + amount);
+                    updateCash(safeAdd(cash, amount));
 
                     addHistory("Withdrawn " + money(amount)
                             + " from "
@@ -598,7 +623,7 @@ public class BankManager {
 
         double estimated = fdPrincipal *
                 Math.pow(1 + fdRate / 1200,
-                        fdMonths);
+                        Math.max(0, fdMonths - fdElapsed));
 
         new AlertDialog.Builder(activity)
                 .setTitle("Your Fixed Deposit")
@@ -721,6 +746,184 @@ public class BankManager {
                 .show();
     }
 
+    // TRANSFER BETWEEN ACCOUNTS
+
+    private void showTransferDialog() {
+
+        String[] options = {
+                "Savings to Current",
+                "Current to Savings"
+        };
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Transfer Money")
+                .setItems(options, (dialog, which) -> {
+                    showTransferAmountDialog(which);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showTransferAmountDialog(int direction) {
+
+        long sourceBalance = direction == 0
+                ? savingsBalance : currentBalance;
+
+        String sourceName = direction == 0
+                ? "Savings Account" : "Current Account";
+
+        String destinationName = direction == 0
+                ? "Current Account" : "Savings Account";
+
+        EditText input = new EditText(activity);
+        input.setHint("Enter transfer amount");
+        input.setInputType(
+                android.text.InputType.TYPE_CLASS_NUMBER);
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Transfer Money")
+                .setMessage(
+                        sourceName + " balance: " + money(sourceBalance)
+                                + "\nDestination: " + destinationName
+                )
+                .setView(input)
+                .setPositiveButton("Transfer", (dialog, which) -> {
+
+                    long amount = readAmount(input);
+
+                    if (amount <= 0) {
+                        toast("Enter a valid amount");
+                        return;
+                    }
+
+                    if (amount > sourceBalance) {
+                        toast("Insufficient account balance");
+                        return;
+                    }
+
+                    if (direction == 0) {
+                        savingsBalance -= amount;
+                        currentBalance = safeAdd(currentBalance, amount);
+                    } else {
+                        currentBalance -= amount;
+                        savingsBalance = safeAdd(savingsBalance, amount);
+                    }
+
+                    addHistory(
+                            "Transferred " + money(amount) + " from "
+                                    + sourceName + " to " + destinationName
+                    );
+
+                    saveData();
+                    toast("Transfer successful");
+                    show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // DETAILED ACCOUNT STATEMENT
+
+    private void showStatement() {
+
+        String details =
+                "AVAILABLE CASH: " + money(cash)
+                        + "\n\nSAVINGS ACCOUNT"
+                        + "\nBalance: " + money(savingsBalance)
+                        + "\nAnnual Interest: 3.5%"
+                        + "\n\nCURRENT ACCOUNT"
+                        + "\nBalance: " + money(currentBalance)
+                        + "\nMinimum Balance: ₹5,000"
+                        + "\nMonthly Charge Below Minimum: ₹100"
+                        + "\n\nFIXED DEPOSIT"
+                        + "\nPrincipal: " + money(fdPrincipal)
+                        + "\nRate: " + fdRate + "%"
+                        + "\nDuration: " + fdMonths + " months"
+                        + "\nCompleted: " + fdElapsed + " months"
+                        + "\n\nRECURRING DEPOSIT"
+                        + "\nMonthly Installment: " + money(rdMonthly)
+                        + "\nDeposited Balance: " + money(rdBalance)
+                        + "\nRate: " + rdRate + "%"
+                        + "\nDuration: " + rdMonths + " months"
+                        + "\nCompleted: " + rdElapsed + " months"
+                        + "\n\nTOTAL BANK BALANCE: "
+                        + money(getTotalBankBalance())
+                        + "\nTotal Interest Earned: "
+                        + money(totalInterest)
+                        + "\nTotal Bank Charges: "
+                        + money(totalCharges);
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Detailed Bank Statement")
+                .setMessage(details)
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    // BANK SECURITY AND ALERTS
+
+    private void showSecurity() {
+
+        String[] options = {
+                "Review Account Security",
+                "Enable Transaction Alerts",
+                "View Recent Transactions"
+        };
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Bank Security")
+                .setItems(options, (dialog, which) -> {
+
+                    if (which == 0) {
+                        showSecurityStatus();
+                    } else if (which == 1) {
+                        toggleTransactionAlerts();
+                    } else {
+                        showHistory();
+                    }
+                })
+                .setNegativeButton("Close", null)
+                .show();
+    }
+
+    private void showSecurityStatus() {
+
+        boolean alerts = prefs.getBoolean(
+                "transaction_alerts_enabled", true);
+
+        String details =
+                "Account Protection: Active"
+                        + "\nTransaction Alerts: "
+                        + (alerts ? "Enabled" : "Disabled")
+                        + "\n\nNever share your account password or OTP."
+                        + "\nReview your transaction history regularly.";
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Security Status")
+                .setMessage(details)
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    private void toggleTransactionAlerts() {
+
+        boolean current = prefs.getBoolean(
+                "transaction_alerts_enabled", true);
+
+        boolean updated = !current;
+
+        prefs.edit()
+                .putBoolean("transaction_alerts_enabled", updated)
+                .apply();
+
+        toast(updated
+                ? "Transaction alerts enabled"
+                : "Transaction alerts disabled");
+
+        addHistory("Transaction alerts " +
+                (updated ? "enabled" : "disabled"));
+    }
+
     // ANNUAL BANK SIMULATION
 
     public void applyAnnualBanking() {
@@ -732,8 +935,8 @@ public class BankManager {
                 long interest = Math.round(
                         savingsBalance * 0.035 / 12.0);
 
-                savingsBalance += interest;
-                totalInterest += interest;
+                savingsBalance = safeAdd(savingsBalance, interest);
+                totalInterest = safeAdd(totalInterest, interest);
             }
 
             if (currentBalance < 5000) {
@@ -742,7 +945,7 @@ public class BankManager {
 
                 if (currentBalance >= charge) {
                     currentBalance -= charge;
-                    totalCharges += charge;
+                    totalCharges = safeAdd(totalCharges, charge);
 
                     addHistory("Current account maintenance charge: "
                             + money(charge));
@@ -754,13 +957,13 @@ public class BankManager {
                 long interest = Math.round(
                         fdPrincipal * fdRate / 1200.0);
 
-                fdPrincipal += interest;
-                totalInterest += interest;
+                fdPrincipal = safeAdd(fdPrincipal, interest);
+                totalInterest = safeAdd(totalInterest, interest);
                 fdElapsed++;
 
                 if (fdElapsed >= fdMonths) {
 
-                    savingsBalance += fdPrincipal;
+                    savingsBalance = safeAdd(savingsBalance, fdPrincipal);
 
                     addHistory("FD matured: "
                             + money(fdPrincipal));
@@ -777,19 +980,19 @@ public class BankManager {
 
                     updateCash(cash - rdMonthly);
 
-                    rdBalance += rdMonthly;
+                    rdBalance = safeAdd(rdBalance, rdMonthly);
 
                     long interest = Math.round(
                             rdBalance * rdRate / 1200.0);
 
-                    rdBalance += interest;
-                    totalInterest += interest;
+                    rdBalance = safeAdd(rdBalance, interest);
+                    totalInterest = safeAdd(totalInterest, interest);
 
                     rdElapsed++;
 
                     if (rdElapsed >= rdMonths) {
 
-                        savingsBalance += rdBalance;
+                        savingsBalance = safeAdd(savingsBalance, rdBalance);
 
                         addHistory("RD matured: "
                                 + money(rdBalance));
