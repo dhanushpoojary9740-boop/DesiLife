@@ -924,94 +924,113 @@ public class BankManager {
                 (updated ? "enabled" : "disabled"));
     }
 
+    // MONTHLY BANK SIMULATION
+
+    /*
+     * Processes exactly ONE in-game month.
+     * Savings interest, current-account charges, FD interest/maturity,
+     * and RD installment/interest/maturity are handled once per call.
+     */
+
+    public void applyMonthlyBanking() {
+
+        if (savingsBalance > 0) {
+
+            long interest = Math.round(
+                    savingsBalance * 0.035 / 12.0);
+
+            savingsBalance = safeAdd(savingsBalance, interest);
+            totalInterest = safeAdd(totalInterest, interest);
+        }
+
+        if (currentBalance < 5000) {
+
+            long charge = 100;
+
+            if (currentBalance >= charge) {
+                currentBalance -= charge;
+                totalCharges = safeAdd(totalCharges, charge);
+
+                addHistory("Current account maintenance charge: "
+                        + money(charge));
+            }
+        }
+
+        if (fdPrincipal > 0 && fdElapsed < fdMonths) {
+
+            long interest = Math.round(
+                    fdPrincipal * fdRate / 1200.0);
+
+            fdPrincipal = safeAdd(fdPrincipal, interest);
+            totalInterest = safeAdd(totalInterest, interest);
+            fdElapsed++;
+
+            if (fdElapsed >= fdMonths) {
+
+                savingsBalance = safeAdd(savingsBalance, fdPrincipal);
+
+                addHistory("FD matured: "
+                        + money(fdPrincipal));
+
+                fdPrincipal = 0;
+                fdElapsed = 0;
+                fdMonths = 0;
+            }
+        }
+
+        if (rdMonthly > 0 && rdElapsed < rdMonths) {
+
+            if (cash >= rdMonthly) {
+
+                updateCash(cash - rdMonthly);
+
+                rdBalance = safeAdd(rdBalance, rdMonthly);
+
+                long interest = Math.round(
+                        rdBalance * rdRate / 1200.0);
+
+                rdBalance = safeAdd(rdBalance, interest);
+                totalInterest = safeAdd(totalInterest, interest);
+
+                rdElapsed++;
+
+                if (rdElapsed >= rdMonths) {
+
+                    savingsBalance = safeAdd(savingsBalance, rdBalance);
+
+                    addHistory("RD matured: "
+                            + money(rdBalance));
+
+                    rdBalance = 0;
+                    rdMonthly = 0;
+                    rdElapsed = 0;
+                    rdMonths = 0;
+                }
+
+            } else {
+                addHistory("RD installment missed: "
+                        + money(rdMonthly));
+            }
+        }
+
+        addHistory("Monthly banking interest and charges processed");
+        saveData();
+    }
+
     // ANNUAL BANK SIMULATION
+
+    /*
+     * Compatibility method for older callers.
+     * Runs 12 separate monthly banking cycles.
+     */
 
     public void applyAnnualBanking() {
 
         for (int month = 0; month < 12; month++) {
-
-            if (savingsBalance > 0) {
-
-                long interest = Math.round(
-                        savingsBalance * 0.035 / 12.0);
-
-                savingsBalance = safeAdd(savingsBalance, interest);
-                totalInterest = safeAdd(totalInterest, interest);
-            }
-
-            if (currentBalance < 5000) {
-
-                long charge = 100;
-
-                if (currentBalance >= charge) {
-                    currentBalance -= charge;
-                    totalCharges = safeAdd(totalCharges, charge);
-
-                    addHistory("Current account maintenance charge: "
-                            + money(charge));
-                }
-            }
-
-            if (fdPrincipal > 0 && fdElapsed < fdMonths) {
-
-                long interest = Math.round(
-                        fdPrincipal * fdRate / 1200.0);
-
-                fdPrincipal = safeAdd(fdPrincipal, interest);
-                totalInterest = safeAdd(totalInterest, interest);
-                fdElapsed++;
-
-                if (fdElapsed >= fdMonths) {
-
-                    savingsBalance = safeAdd(savingsBalance, fdPrincipal);
-
-                    addHistory("FD matured: "
-                            + money(fdPrincipal));
-
-                    fdPrincipal = 0;
-                    fdElapsed = 0;
-                    fdMonths = 0;
-                }
-            }
-
-            if (rdMonthly > 0 && rdElapsed < rdMonths) {
-
-                if (cash >= rdMonthly) {
-
-                    updateCash(cash - rdMonthly);
-
-                    rdBalance = safeAdd(rdBalance, rdMonthly);
-
-                    long interest = Math.round(
-                            rdBalance * rdRate / 1200.0);
-
-                    rdBalance = safeAdd(rdBalance, interest);
-                    totalInterest = safeAdd(totalInterest, interest);
-
-                    rdElapsed++;
-
-                    if (rdElapsed >= rdMonths) {
-
-                        savingsBalance = safeAdd(savingsBalance, rdBalance);
-
-                        addHistory("RD matured: "
-                                + money(rdBalance));
-
-                        rdBalance = 0;
-                        rdMonthly = 0;
-                        rdElapsed = 0;
-                        rdMonths = 0;
-                    }
-
-                } else {
-                    addHistory("RD installment missed: "
-                            + money(rdMonthly));
-                }
-            }
+            applyMonthlyBanking();
         }
 
         addHistory("Annual banking interest and charges processed");
-
         saveData();
     }
 
