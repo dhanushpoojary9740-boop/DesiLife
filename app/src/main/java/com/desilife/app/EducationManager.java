@@ -18,12 +18,7 @@ import java.util.Random;
 public class EducationManager {
 
     public interface EducationCallback {
-        void onUpdate(
-                int money,
-                int health,
-                int happiness,
-                String description
-        );
+        void onUpdate(int money, int health, int happiness, String description);
     }
 
     private final Activity activity;
@@ -31,36 +26,15 @@ public class EducationManager {
     private final EducationCallback callback;
     private final Random random = new Random();
 
-    private int age;
-    private int money;
-    private int health;
-    private int happiness;
+    private int age, money, health, happiness;
+    private String educationLevel, institution, institutionCity,
+            institutionState, stream, course, entranceExam, grade;
 
-    private String educationLevel;
-    private String institution;
-    private String institutionCity;
-    private String institutionState;
-    private String stream;
-    private String course;
-    private String entranceExam;
-    private String grade;
+    private int marks, attendance, academicPerformance, educationYears;
+    private int fees, scholarships, entranceScore, examsPassed;
+    private int examsFailed, educationLoans, hostelExpenses;
 
-    private int marks;
-    private int attendance;
-    private int academicPerformance;
-    private int educationYears;
-    private int fees;
-    private int scholarships;
-    private int entranceScore;
-    private int examsPassed;
-    private int examsFailed;
-    private int educationLoans;
-    private int hostelExpenses;
-
-    private boolean enrolled;
-    private boolean graduated;
-    private boolean entranceCleared;
-    private boolean hostel;
+    private boolean enrolled, graduated, entranceCleared, hostel;
 
     private final int gold = Color.rgb(226, 184, 105);
     private final int dark = Color.rgb(12, 25, 23);
@@ -83,86 +57,40 @@ public class EducationManager {
         this.health = health;
         this.happiness = happiness;
         this.callback = callback;
-
         loadData();
     }
 
-    // ---------------- LOAD DATA ----------------
-
     private void loadData() {
-
-        educationLevel = save.getString(
-                "edu_level", "Not Started");
-
-        institution = save.getString(
-                "edu_institution", "None");
-
-        institutionCity = save.getString(
-                "edu_city", "None");
-
-        institutionState = save.getString(
-                "edu_state", "None");
-
-        stream = save.getString(
-                "edu_stream", "None");
-
-        course = save.getString(
-                "edu_course", "None");
-
-        entranceExam = save.getString(
-                "edu_entrance_exam", "None");
-
-        grade = save.getString(
-                "edu_grade", "Not Available");
+        educationLevel = save.getString("edu_level", "Not Started");
+        institution = save.getString("edu_institution", "None");
+        institutionCity = save.getString("edu_city", "None");
+        institutionState = save.getString("edu_state", "None");
+        stream = save.getString("edu_stream", "None");
+        course = save.getString("edu_course", "None");
+        entranceExam = save.getString("edu_entrance_exam", "None");
+        grade = save.getString("edu_grade", "Not Available");
 
         marks = save.getInt("edu_marks", 0);
         attendance = save.getInt("edu_attendance", 0);
-
-        academicPerformance = save.getInt(
-                "edu_performance", 50);
-
-        educationYears = save.getInt(
-                "edu_years", 0);
-
+        academicPerformance = save.getInt("edu_performance", 50);
+        educationYears = save.getInt("edu_years", 0);
         fees = save.getInt("edu_fees", 0);
+        scholarships = save.getInt("edu_scholarships", 0);
+        entranceScore = save.getInt("edu_entrance_score", 0);
+        examsPassed = save.getInt("edu_exams_passed", 0);
+        examsFailed = save.getInt("edu_exams_failed", 0);
+        educationLoans = save.getInt("edu_loans", 0);
+        hostelExpenses = save.getInt("edu_hostel_expenses", 0);
 
-        scholarships = save.getInt(
-                "edu_scholarships", 0);
-
-        entranceScore = save.getInt(
-                "edu_entrance_score", 0);
-
-        examsPassed = save.getInt(
-                "edu_exams_passed", 0);
-
-        examsFailed = save.getInt(
-                "edu_exams_failed", 0);
-
-        educationLoans = save.getInt(
-                "edu_loans", 0);
-
-        hostelExpenses = save.getInt(
-                "edu_hostel_expenses", 0);
-
-        enrolled = save.getBoolean(
-                "edu_enrolled", false);
-
-        graduated = save.getBoolean(
-                "edu_graduated", false);
-
-        entranceCleared = save.getBoolean(
-                "edu_entrance_cleared", false);
-
-        hostel = save.getBoolean(
-                "edu_hostel", false);
+        enrolled = save.getBoolean("edu_enrolled", false);
+        graduated = save.getBoolean("edu_graduated", false);
+        entranceCleared = save.getBoolean("edu_entrance_cleared", false);
+        hostel = save.getBoolean("edu_hostel", false);
 
         normalize();
     }
 
-    // ---------------- SAVE DATA ----------------
-
     private void saveData() {
-
         SharedPreferences.Editor editor = save.edit();
 
         editor.putString("edu_level", educationLevel);
@@ -195,12 +123,9 @@ public class EducationManager {
     }
 
     private void normalize() {
-
         marks = clamp(marks, 0, 100);
         attendance = clamp(attendance, 0, 100);
-        academicPerformance = clamp(
-                academicPerformance, 0, 100);
-
+        academicPerformance = clamp(academicPerformance, 0, 100);
         fees = Math.max(0, fees);
         scholarships = Math.max(0, scholarships);
     }
@@ -217,14 +142,8 @@ public class EducationManager {
     }
 
     private void toast(String message) {
-        Toast.makeText(
-                activity,
-                message,
-                Toast.LENGTH_SHORT
-        ).show();
+        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
     }
-
-    // ---------------- PUBLIC METHODS ----------------
 
     public void open() {
         showDashboard();
@@ -258,10 +177,7 @@ public class EducationManager {
         return money;
     }
 
-    // ---------------- DASHBOARD ----------------
-
     private void showDashboard() {
-
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(24, 25, 24, 30);
@@ -278,7 +194,6 @@ public class EducationManager {
         title.setTypeface(null, Typeface.BOLD);
         title.setGravity(Gravity.CENTER);
         title.setPadding(0, 10, 0, 20);
-
         root.addView(title);
 
         addInfo(root, "Education Level", educationLevel);
@@ -287,87 +202,43 @@ public class EducationManager {
         addInfo(root, "State", institutionState);
         addInfo(root, "Stream", stream);
         addInfo(root, "Course", course);
-        addInfo(root, "Academic Performance",
-                academicPerformance + "/100");
+        addInfo(root, "Academic Performance", academicPerformance + "/100");
         addInfo(root, "Last Exam Marks", marks + "/100");
         addInfo(root, "Attendance", attendance + "%");
         addInfo(root, "Grade", grade);
-        addInfo(root, "Years Studied",
-                String.valueOf(educationYears));
-
-        addInfo(root, "Scholarships Received",
-                "₹" + scholarships);
-
-        addInfo(root, "Total Education Fees",
-                "₹" + fees);
+        addInfo(root, "Years Studied", String.valueOf(educationYears));
+        addInfo(root, "Scholarships Received", "₹" + scholarships);
+        addInfo(root, "Total Education Fees", "₹" + fees);
 
         addDivider(root);
 
         if (!enrolled) {
-
-            addButton(root, "🏫 Find a School / College",
-                    this::chooseEducationLevel);
-
-            addButton(root, "📝 Entrance Examinations",
-                    this::chooseEntranceExam);
-
-            addButton(root, "🎓 Higher Studies",
-                    this::higherStudies);
-
+            addButton(root, "🏫 Find a School / College", this::chooseEducationLevel);
+            addButton(root, "📝 Entrance Examinations", this::chooseEntranceExam);
+            addButton(root, "🎓 Higher Studies", this::higherStudies);
         } else if (!graduated) {
-
-            addButton(root, "📚 Attend Classes",
-                    this::attendClasses);
-
-            addButton(root, "📝 Write Examination",
-                    this::writeExam);
-
-            addButton(root, "💰 Pay Education Fees",
-                    this::payFees);
-
-            addButton(root, "🏠 Hostel & Accommodation",
-                    this::hostelMenu);
-
-            addButton(root, "🎖 Apply for Scholarship",
-                    this::applyScholarship);
-
-            addButton(root, "📊 Academic Report",
-                    this::academicReport);
-
-            addButton(root, "🚪 Drop Out",
-                    this::dropOut);
-
+            addButton(root, "📚 Attend Classes", this::attendClasses);
+            addButton(root, "📝 Write Examination", this::writeExam);
+            addButton(root, "💰 Pay Education Fees", this::payFees);
+            addButton(root, "🏠 Hostel & Accommodation", this::hostelMenu);
+            addButton(root, "🎖 Apply for Scholarship", this::applyScholarship);
+            addButton(root, "📊 Academic Report", this::academicReport);
+            addButton(root, "🚪 Drop Out", this::dropOut);
         } else {
-
-            addInfo(root, "Graduation Status",
-                    "Successfully Graduated");
-
-            addButton(root, "🎓 Higher Studies",
-                    this::higherStudies);
-
-            addButton(root, "📊 Academic Report",
-                    this::academicReport);
+            addInfo(root, "Graduation Status", "Successfully Graduated");
+            addButton(root, "🎓 Higher Studies", this::higherStudies);
+            addButton(root, "📊 Academic Report", this::academicReport);
         }
 
-        addButton(root, "⬅ Back to Game",
-                activity::recreate);
-
+        addButton(root, "⬅ Back to Game", activity::recreate);
         activity.setContentView(scroll);
     }
 
-    // ---------------- UI HELPERS ----------------
-
-    private void addInfo(
-            LinearLayout root,
-            String label,
-            String value
-    ) {
-
+    private void addInfo(LinearLayout root, String label, String value) {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(16, 12, 16, 12);
-        card.setBackground(background(
-                Color.rgb(23, 39, 35), 14));
+        card.setBackground(background(Color.rgb(23, 39, 35), 14));
 
         TextView heading = new TextView(activity);
         heading.setText(label);
@@ -386,20 +257,12 @@ public class EducationManager {
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
-
         params.setMargins(0, 4, 0, 4);
-
         root.addView(card, params);
     }
 
-    private void addButton(
-            LinearLayout root,
-            String label,
-            Runnable action
-    ) {
-
+    private void addButton(LinearLayout root, String label, Runnable action) {
         TextView button = new TextView(activity);
-
         button.setText(label);
         button.setTextColor(dark);
         button.setTextSize(16);
@@ -410,44 +273,30 @@ public class EducationManager {
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
-
         params.setMargins(0, 7, 0, 7);
 
         root.addView(button, params);
-
         button.setOnClickListener(v -> action.run());
     }
 
     private void addDivider(LinearLayout root) {
-
         TextView divider = new TextView(activity);
-        divider.setBackgroundColor(
-                Color.rgb(65, 75, 68));
+        divider.setBackgroundColor(Color.rgb(65, 75, 68));
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, 1);
-
         params.setMargins(0, 18, 0, 12);
-
         root.addView(divider, params);
     }
 
-    private GradientDrawable background(
-            int color,
-            int radius
-    ) {
-
-        GradientDrawable drawable =
-                new GradientDrawable();
-
+    private GradientDrawable background(int color, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(color);
         drawable.setCornerRadius(radius);
-
         return drawable;
     }
 
     private void showMessage(String title, String message) {
-
         new AlertDialog.Builder(activity)
                 .setTitle(title)
                 .setMessage(message)
@@ -458,7 +307,6 @@ public class EducationManager {
     // ---------------- EDUCATION LEVEL ----------------
 
     private void chooseEducationLevel() {
-
         String[] options = {
                 "Primary School",
                 "High School",
@@ -469,7 +317,6 @@ public class EducationManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Choose Education Level")
                 .setItems(options, (dialog, which) -> {
-
                     if (which == 0) {
                         chooseInstitution("Primary School");
                     } else if (which == 1) {
@@ -484,10 +331,15 @@ public class EducationManager {
                 .show();
     }
 
+    // FIX: This method was missing and caused the GitHub Actions build error.
+
+    private void chooseCourse() {
+        chooseInstitution("Undergraduate Degree");
+    }
+
     // ---------------- STREAM ----------------
 
     private void chooseStream() {
-
         String[] streams = {
                 "Science",
                 "Commerce",
@@ -497,9 +349,7 @@ public class EducationManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Choose PUC Stream")
                 .setItems(streams, (dialog, which) -> {
-
                     stream = streams[which];
-
                     chooseInstitution("PUC / Class 11–12");
                 })
                 .setNegativeButton("Cancel", null)
@@ -509,7 +359,6 @@ public class EducationManager {
     // ---------------- INSTITUTION LOCATION ----------------
 
     private void chooseInstitution(String level) {
-
         final String[] states = {
                 "Karnataka",
                 "Tamil Nadu",
@@ -527,9 +376,7 @@ public class EducationManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Choose State")
                 .setItems(states, (dialog, which) -> {
-
                     institutionState = states[which];
-
                     showInstitutions(level);
                 })
                 .setNegativeButton("Cancel", null)
@@ -539,16 +386,12 @@ public class EducationManager {
     // ---------------- INSTITUTION DATABASE ----------------
 
     private void showInstitutions(String level) {
-
         String[] names;
         String[] cities;
         int[] costs;
 
-        if (level.equals("Primary School")
-                || level.equals("High School")) {
-
+        if (level.equals("Primary School") || level.equals("High School")) {
             if (institutionState.equals("Karnataka")) {
-
                 names = new String[]{
                         "Bishop Cotton Boys' School",
                         "Bishop Cotton Girls' School",
@@ -563,21 +406,17 @@ public class EducationManager {
                 };
 
                 cities = new String[]{
-                        "Bengaluru", "Bengaluru",
-                        "Bengaluru", "Bengaluru",
-                        "Bengaluru", "Bengaluru",
-                        "Mysuru", "Mysuru",
-                        "Various Cities", "Various Districts"
+                        "Bengaluru", "Bengaluru", "Bengaluru",
+                        "Bengaluru", "Bengaluru", "Bengaluru",
+                        "Mysuru", "Mysuru", "Various Cities",
+                        "Various Districts"
                 };
 
                 costs = new int[]{
-                        80000, 80000, 65000, 50000,
-                        90000, 55000, 30000, 15000,
-                        12000, 5000
+                        80000, 80000, 65000, 50000, 90000,
+                        55000, 30000, 15000, 12000, 5000
                 };
-
             } else {
-
                 names = new String[]{
                         "The Doon School",
                         "Mayo College",
@@ -602,11 +441,8 @@ public class EducationManager {
                         80000, 60000, 65000, 12000, 5000
                 };
             }
-
         } else if (level.equals("PUC / Class 11–12")) {
-
             if (institutionState.equals("Karnataka")) {
-
                 names = new String[]{
                         "St. Joseph's PU College",
                         "Christ Junior College",
@@ -628,13 +464,10 @@ public class EducationManager {
                 };
 
                 costs = new int[]{
-                        30000, 35000, 25000, 40000,
-                        50000, 55000, 25000, 18000,
-                        5000, 12000
+                        30000, 35000, 25000, 40000, 50000,
+                        55000, 25000, 18000, 5000, 12000
                 };
-
             } else {
-
                 names = new String[]{
                         "Delhi Public School",
                         "St. Xavier's College",
@@ -645,37 +478,30 @@ public class EducationManager {
                 };
 
                 cities = new String[]{
-                        "Multiple Cities", "Mumbai",
-                        "Chennai", "Ajmer",
-                        "New Delhi", "Various Cities"
+                        "Multiple Cities", "Mumbai", "Chennai",
+                        "Ajmer", "New Delhi", "Various Cities"
                 };
 
                 costs = new int[]{
-                        70000, 50000, 45000,
-                        400000, 100000, 12000
+                        70000, 50000, 45000, 400000, 100000, 12000
                 };
             }
-
         } else {
-
             getUniversityList();
             return;
         }
 
-        showInstitutionChoices(
-                level, names, cities, costs);
+        showInstitutionChoices(level, names, cities, costs);
     }
 
     // ---------------- UNIVERSITY DATABASE ----------------
 
     private void getUniversityList() {
-
         String[] names;
         String[] cities;
         int[] costs;
 
         if (institutionState.equals("Karnataka")) {
-
             names = new String[]{
                     "Indian Institute of Science (IISc)",
                     "IIM Bangalore",
@@ -707,16 +533,13 @@ public class EducationManager {
             };
 
             costs = new int[]{
-                    100000, 1500000, 250000,
-                    150000, 180000, 200000,
-                    150000, 30000, 150000,
-                    250000, 100000, 120000,
-                    50000, 40000, 180000,
+                    100000, 1500000, 250000, 150000, 180000,
+                    200000, 150000, 30000, 150000, 250000,
+                    100000, 120000, 50000, 40000, 180000,
                     50000, 50000, 80000
             };
 
         } else if (institutionState.equals("Tamil Nadu")) {
-
             names = new String[]{
                     "IIT Madras",
                     "Anna University",
@@ -732,12 +555,10 @@ public class EducationManager {
             };
 
             costs = new int[]{
-                    50000, 60000, 40000,
-                    200000, 250000, 50000
+                    50000, 60000, 40000, 200000, 250000, 50000
             };
 
         } else if (institutionState.equals("Maharashtra")) {
-
             names = new String[]{
                     "IIT Bombay",
                     "University of Mumbai",
@@ -753,12 +574,10 @@ public class EducationManager {
             };
 
             costs = new int[]{
-                    50000, 40000, 100000,
-                    35000, 100000, 80000
+                    50000, 40000, 100000, 35000, 100000, 80000
             };
 
         } else if (institutionState.equals("Delhi")) {
-
             names = new String[]{
                     "University of Delhi",
                     "Jawaharlal Nehru University",
@@ -774,12 +593,10 @@ public class EducationManager {
             };
 
             costs = new int[]{
-                    30000, 20000, 10000,
-                    50000, 30000, 25000
+                    30000, 20000, 10000, 50000, 30000, 25000
             };
 
         } else if (institutionState.equals("Uttar Pradesh")) {
-
             names = new String[]{
                     "Banaras Hindu University",
                     "IIT Kanpur",
@@ -794,12 +611,10 @@ public class EducationManager {
             };
 
             costs = new int[]{
-                    30000, 50000, 25000,
-                    800000, 25000
+                    30000, 50000, 25000, 800000, 25000
             };
 
         } else if (institutionState.equals("West Bengal")) {
-
             names = new String[]{
                     "IIT Kharagpur",
                     "Jadavpur University",
@@ -818,7 +633,6 @@ public class EducationManager {
             };
 
         } else if (institutionState.equals("Rajasthan")) {
-
             names = new String[]{
                     "BITS Pilani",
                     "IIM Udaipur",
@@ -835,7 +649,6 @@ public class EducationManager {
             };
 
         } else if (institutionState.equals("Kerala")) {
-
             names = new String[]{
                     "Cochin University of Science and Technology",
                     "University of Kerala",
@@ -854,7 +667,6 @@ public class EducationManager {
             };
 
         } else if (institutionState.equals("Telangana")) {
-
             names = new String[]{
                     "IIT Hyderabad",
                     "University of Hyderabad",
@@ -873,7 +685,6 @@ public class EducationManager {
             };
 
         } else if (institutionState.equals("Gujarat")) {
-
             names = new String[]{
                     "IIM Ahmedabad",
                     "IIT Gandhinagar",
@@ -891,7 +702,6 @@ public class EducationManager {
             };
 
         } else {
-
             names = new String[]{
                     "Panjab University",
                     "Thapar Institute of Engineering and Technology",
@@ -924,11 +734,9 @@ public class EducationManager {
             String[] cities,
             int[] costs
     ) {
-
         String[] labels = new String[names.length];
 
         for (int i = 0; i < names.length; i++) {
-
             labels[i] = names[i]
                     + "\n" + cities[i]
                     + " | Estimated annual fee ₹"
@@ -938,14 +746,10 @@ public class EducationManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Select Institution")
                 .setItems(labels, (dialog, which) -> {
-
                     institution = names[which];
                     institutionCity = cities[which];
 
-                    chooseAdmission(
-                            level,
-                            costs[which]
-                    );
+                    chooseAdmission(level, costs[which]);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -953,11 +757,7 @@ public class EducationManager {
 
     // ---------------- ADMISSION ----------------
 
-    private void chooseAdmission(
-            String level,
-            int annualFee
-    ) {
-
+    private void chooseAdmission(String level, int annualFee) {
         if (enrolled && !graduated) {
             toast("Complete or leave your current course first.");
             return;
@@ -1009,14 +809,12 @@ public class EducationManager {
         int duration = level.equals("Primary School") ? 5 :
                 level.equals("High School") ? 5 : 2;
 
-        enroll(level, "General Studies",
-                annualFee, duration);
+        enroll(level, "General Studies", annualFee, duration);
     }
 
     // ---------------- DEGREE COURSES ----------------
 
     private void chooseDegreeCourse(int annualFee) {
-
         String[] courses = {
                 "B.E. / B.Tech",
                 "MBBS",
@@ -1037,7 +835,6 @@ public class EducationManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Choose Degree Course")
                 .setItems(courses, (dialog, which) -> {
-
                     course = courses[which];
 
                     if (course.equals("B.E. / B.Tech")) {
@@ -1059,7 +856,6 @@ public class EducationManager {
     }
 
     private void chooseDegreeAdmission(int annualFee) {
-
         String[] options = {
                 "Merit Admission",
                 "Entrance Exam Admission"
@@ -1068,9 +864,7 @@ public class EducationManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Admission Method")
                 .setItems(options, (dialog, which) -> {
-
                     if (which == 0) {
-
                         entranceCleared = false;
                         entranceScore = 0;
 
@@ -1083,9 +877,7 @@ public class EducationManager {
                                                 || course.equals("B.Arch")
                                                 ? 4 : 3
                         );
-
                     } else {
-
                         chooseEntranceExam();
                     }
                 })
@@ -1096,7 +888,6 @@ public class EducationManager {
     // ---------------- ENTRANCE EXAMS ----------------
 
     private void chooseEntranceExam() {
-
         String[] exams = {
                 "KCET",
                 "COMEDK",
@@ -1112,9 +903,7 @@ public class EducationManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Entrance Examination")
                 .setItems(exams, (dialog, which) -> {
-
                     entranceExam = exams[which];
-
                     writeEntranceExam();
                 })
                 .setNegativeButton("Cancel", null)
@@ -1122,7 +911,6 @@ public class EducationManager {
     }
 
     private void writeEntranceExam() {
-
         if (age < 16) {
             toast("You are too young for this entrance exam.");
             return;
@@ -1142,7 +930,6 @@ public class EducationManager {
         entranceCleared = score >= cutoff;
 
         if (entranceCleared) {
-
             academicPerformance = clamp(
                     academicPerformance + 5, 0, 100);
 
@@ -1153,9 +940,7 @@ public class EducationManager {
                             + "\nResult: QUALIFIED"
                             + "\n\nYou can now apply for eligible courses."
             );
-
         } else {
-
             showMessage(
                     "Entrance Exam Result",
                     "Exam: " + entranceExam
@@ -1177,7 +962,6 @@ public class EducationManager {
             int annualFee,
             int duration
     ) {
-
         if (enrolled && !graduated) {
             toast("You are already studying a course.");
             return;
@@ -1188,16 +972,12 @@ public class EducationManager {
                 && !entranceExam.equals("None")
                 && entranceScore > 0
                 && !entranceCleared) {
-
             toast("You have not cleared the entrance examination.");
             return;
         }
 
-        int admissionFee = Math.max(
-                1000, annualFee / 10);
-
-        int firstPayment = safeAdd(
-                annualFee, admissionFee);
+        int admissionFee = Math.max(1000, annualFee / 10);
+        int firstPayment = safeAdd(annualFee, admissionFee);
 
         new AlertDialog.Builder(activity)
                 .setTitle("Admission Offer")
@@ -1212,16 +992,13 @@ public class EducationManager {
                                 + "\nAdmission Fee: ₹" + admissionFee
                                 + "\n\nInitial payment: ₹" + firstPayment
                 )
-                .setPositiveButton("Pay & Enroll",
-                        (dialog, which) -> {
-
+                .setPositiveButton("Pay & Enroll", (dialog, which) -> {
                     if (money < firstPayment) {
                         toast("Insufficient money. Apply for a scholarship or arrange funds.");
                         return;
                     }
 
                     money -= firstPayment;
-
                     fees = safeAdd(fees, firstPayment);
 
                     enrolled = true;
@@ -1243,8 +1020,7 @@ public class EducationManager {
 
                     notifyUpdate(
                             "Congratulations! You enrolled in "
-                                    + institution
-                                    + " for " + course + "."
+                                    + institution + " for " + course + "."
                     );
                 })
                 .setNegativeButton("Cancel", null)
@@ -1254,7 +1030,6 @@ public class EducationManager {
     // ---------------- ATTENDANCE ----------------
 
     private void attendClasses() {
-
         if (!enrolled || graduated) return;
 
         attendance = clamp(
@@ -1273,15 +1048,13 @@ public class EducationManager {
 
         notifyUpdate(
                 "You attended classes at " + institution
-                        + ". Attendance is now "
-                        + attendance + "%."
+                        + ". Attendance is now " + attendance + "%."
         );
     }
 
     // ---------------- EXAM ----------------
 
     private void writeExam() {
-
         if (!enrolled || graduated) return;
 
         int score = clamp(
@@ -1309,7 +1082,6 @@ public class EducationManager {
         }
 
         if (score >= 40) {
-
             examsPassed++;
 
             academicPerformance = clamp(
@@ -1319,9 +1091,7 @@ public class EducationManager {
                     "You passed your examination with "
                             + score + "/100. Grade: " + grade
             );
-
         } else {
-
             examsFailed++;
 
             academicPerformance = clamp(
@@ -1339,7 +1109,6 @@ public class EducationManager {
     // ---------------- ANNUAL UPDATE ----------------
 
     public void applyAnnualEducationUpdate() {
-
         if (!enrolled || graduated) return;
 
         educationYears++;
@@ -1347,23 +1116,18 @@ public class EducationManager {
         attendance = Math.max(0, attendance - 20);
 
         if (attendance < 50) {
-
             academicPerformance = Math.max(
                     0, academicPerformance - 8);
-
         } else if (attendance >= 75) {
-
             academicPerformance = clamp(
                     academicPerformance + 3, 0, 100);
         }
 
         saveData();
-
         checkGraduation();
     }
 
     private void checkGraduation() {
-
         int requiredYears;
 
         if (educationLevel.equals("Primary School")) {
@@ -1380,9 +1144,7 @@ public class EducationManager {
         }
 
         if (educationYears >= requiredYears) {
-
             if (marks < 40 && examsFailed > examsPassed) {
-
                 showMessage(
                         "Graduation Delayed",
                         "You need to improve your academic results before completing your education."
@@ -1418,10 +1180,7 @@ public class EducationManager {
     // ---------------- FEES ----------------
 
     private void payFees() {
-
         if (!enrolled || graduated) return;
-
-        int amount = Math.max(1000, fees / 2);
 
         EditText input = new EditText(activity);
         input.setHint("Enter fee amount");
@@ -1435,7 +1194,6 @@ public class EducationManager {
                 )
                 .setView(input)
                 .setPositiveButton("Pay", (dialog, which) -> {
-
                     int payment = readAmount(input);
 
                     if (payment <= 0 || payment > money) {
@@ -1458,7 +1216,6 @@ public class EducationManager {
     // ---------------- SCHOLARSHIP ----------------
 
     private void applyScholarship() {
-
         if (!enrolled || graduated) return;
 
         int chance = clamp(
@@ -1477,24 +1234,17 @@ public class EducationManager {
                                 + "\n\nApply now?"
                 )
                 .setPositiveButton("Apply", (dialog, which) -> {
-
                     if (random.nextInt(100) < finalChance) {
+                        int award = 10000 + random.nextInt(40001);
 
-                        int award = 10000
-                                + random.nextInt(40001);
-
-                        scholarships = safeAdd(
-                                scholarships, award);
-
+                        scholarships = safeAdd(scholarships, award);
                         money = safeAdd(money, award);
 
                         notifyUpdate(
                                 "Congratulations! You received a scholarship of ₹"
                                         + award + "."
                         );
-
                     } else {
-
                         notifyUpdate(
                                 "Your scholarship application was unsuccessful."
                         );
@@ -1507,7 +1257,6 @@ public class EducationManager {
     // ---------------- HOSTEL ----------------
 
     private void hostelMenu() {
-
         String[] options = {
                 "Join Hostel",
                 "Leave Hostel",
@@ -1517,9 +1266,7 @@ public class EducationManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Accommodation")
                 .setItems(options, (dialog, which) -> {
-
                     if (which == 0) {
-
                         if (hostel) {
                             toast("You are already staying in a hostel.");
                             return;
@@ -1535,15 +1282,13 @@ public class EducationManager {
                         money -= cost;
                         hostel = true;
 
-                        hostelExpenses = safeAdd(
-                                hostelExpenses, cost);
+                        hostelExpenses = safeAdd(hostelExpenses, cost);
 
                         notifyUpdate(
                                 "You joined the college hostel. Initial fee: ₹20,000."
                         );
 
                     } else if (which == 1) {
-
                         if (!hostel) {
                             toast("You are not staying in a hostel.");
                             return;
@@ -1556,7 +1301,6 @@ public class EducationManager {
                         );
 
                     } else {
-
                         showMessage(
                                 "Hostel Details",
                                 "Hostel Status: "
@@ -1573,14 +1317,12 @@ public class EducationManager {
     // ---------------- DROPOUT ----------------
 
     private void dropOut() {
-
         new AlertDialog.Builder(activity)
                 .setTitle("Drop Out")
                 .setMessage(
                         "Are you sure you want to leave your current institution?"
                 )
                 .setPositiveButton("Drop Out", (dialog, which) -> {
-
                     enrolled = false;
                     graduated = false;
 
@@ -1607,7 +1349,6 @@ public class EducationManager {
     // ---------------- HIGHER STUDIES ----------------
 
     private void higherStudies() {
-
         if (!graduated) {
             toast("Complete your current education before applying for higher studies.");
             return;
@@ -1624,7 +1365,6 @@ public class EducationManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Higher Education")
                 .setItems(options, (dialog, which) -> {
-
                     String selected = options[which];
 
                     if (selected.equals("MBA")) {
@@ -1636,7 +1376,6 @@ public class EducationManager {
                     }
 
                     institution = "Higher Studies Admission Pending";
-
                     chooseInstitution("Higher Studies");
                 })
                 .setNegativeButton("Cancel", null)
@@ -1646,7 +1385,6 @@ public class EducationManager {
     // ---------------- ACADEMIC REPORT ----------------
 
     private void academicReport() {
-
         String report =
                 "DESILIFE ACADEMIC REPORT"
                         + "\n\nEducation: " + educationLevel
@@ -1674,7 +1412,6 @@ public class EducationManager {
     // ---------------- HELPERS ----------------
 
     private int readAmount(EditText input) {
-
         try {
             return Integer.parseInt(
                     input.getText().toString().trim()
@@ -1687,7 +1424,6 @@ public class EducationManager {
     // ---------------- CALLBACK ----------------
 
     private void notifyUpdate(String description) {
-
         saveData();
 
         if (callback != null) {
