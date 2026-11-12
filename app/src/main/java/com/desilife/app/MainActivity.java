@@ -928,6 +928,25 @@ public class MainActivity extends Activity {
         root.addView(propertyButton,propertyParams);
         propertyButton.setOnClickListener(v -> openProperty());
 
+        // BUSINESS & ENTREPRENEURSHIP BUTTON
+        TextView businessButton = dashboardText(
+            "🏢 BUSINESS & ENTREPRENEURSHIP",16,bg,true
+        );
+
+        businessButton.setBackground(
+            shape(Color.rgb(229,184,105),18)
+        );
+
+        businessButton.setPadding(12,14,12,14);
+
+        LinearLayout.LayoutParams businessParams =
+            new LinearLayout.LayoutParams(-1,-2);
+
+        businessParams.setMargins(0,8,0,4);
+
+        root.addView(businessButton,businessParams);
+        businessButton.setOnClickListener(v -> openBusiness());
+
         TextView education = dashboardText(
             "📚 EDUCATION",16,bg,true
         );
@@ -1958,6 +1977,30 @@ public class MainActivity extends Activity {
         );
 
         propertyManager.open();
+    }
+
+    // BUSINESS & ENTREPRENEURSHIP SYSTEM
+
+    void openBusiness() {
+        BusinessManager businessManager = new BusinessManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney,newHealth,newHappiness,description) -> {
+                money = Math.max(0,newMoney);
+                health = Math.max(0,Math.min(100,newHealth));
+                happiness = Math.max(0,Math.min(100,newHappiness));
+
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+
+        businessManager.open();
     }
 
     // RANDOM LIFE EVENTS 2.0
