@@ -11,7 +11,6 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -48,6 +47,7 @@ public class FinanceManager {
 
     private void recordDelta(String category, long before) {
         long delta = cash - before;
+
         if (delta != 0 && transactionListener != null) {
             transactionListener.onTransaction(category, delta, cash);
         }
@@ -129,12 +129,14 @@ public class FinanceManager {
         }
 
         if (!processingMonthly && transactionListener != null) {
-            // Manual finance actions are recorded as a distinct cash movement.
-            // Monthly systems are recorded below with their own category.
+
             long delta = cash - previousCash;
+
             if (delta != 0) {
                 transactionListener.onTransaction(
-                        "Manual finance transaction", delta, cash);
+                        "Manual finance transaction",
+                        delta,
+                        cash);
             }
         }
     }
@@ -248,24 +250,90 @@ public class FinanceManager {
     // ---------------- TRANSACTION HISTORY ----------------
 
     private void showTransactionHistory() {
-        SharedPreferences gameSave = activity.getSharedPreferences(
-                "DesiLifeSave", Activity.MODE_PRIVATE);
-        String history = gameSave.getString("transaction_history", "");
 
-        TextView body = new TextView(activity);
-        body.setTextColor(Color.WHITE);
-        body.setTextSize(14);
-        body.setPadding(20, 16, 20, 16);
-        body.setText(history.isEmpty()
-                ? "No financial transactions recorded yet. Advance one in-game month to begin tracking."
-                : history);
+        SharedPreferences gameSave =
+                activity.getSharedPreferences(
+                        "DesiLifeSave",
+                        Activity.MODE_PRIVATE);
+
+        String history =
+                gameSave.getString("transaction_history", "");
+
+        // Support both actual newlines and older literal \n separators.
+        history = history.replace("\\n", "\n").trim();
+
+        LinearLayout historyLayout = new LinearLayout(activity);
+        historyLayout.setOrientation(LinearLayout.VERTICAL);
+        historyLayout.setPadding(16, 12, 16, 12);
+        historyLayout.setBackgroundColor(Color.WHITE);
+
+        if (history.isEmpty()) {
+
+            TextView empty = new TextView(activity);
+            empty.setText(
+                    "No financial transactions recorded yet.\n\n" +
+                    "Advance one in-game month to begin tracking."
+            );
+            empty.setTextColor(Color.rgb(75, 75, 75));
+            empty.setTextSize(15);
+            empty.setPadding(12, 20, 12, 20);
+
+            historyLayout.addView(empty);
+
+        } else {
+
+            String[] entries = history.split("\n");
+
+            // Display newest transaction first.
+            for (int i = entries.length - 1; i >= 0; i--) {
+
+                String entry = entries[i].trim();
+
+                if (entry.isEmpty()) {
+                    continue;
+                }
+
+                TextView transaction = new TextView(activity);
+
+                transaction.setText(entry);
+                transaction.setTextSize(14);
+                transaction.setTextColor(Color.rgb(40, 48, 55));
+                transaction.setPadding(10, 12, 10, 12);
+
+                historyLayout.addView(
+                        transaction,
+                        new LinearLayout.LayoutParams(-1, -2)
+                );
+
+                View divider = new View(activity);
+                divider.setBackgroundColor(
+                        Color.rgb(225, 225, 225));
+
+                historyLayout.addView(
+                        divider,
+                        new LinearLayout.LayoutParams(-1, 1)
+                );
+            }
+        }
+
         ScrollView scroll = new ScrollView(activity);
-        scroll.addView(body);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(Color.WHITE);
+        scroll.addView(historyLayout);
+
+        int maxHeight = (int) (
+                activity.getResources()
+                        .getDisplayMetrics().heightPixels * 0.68f
+        );
+
+        scroll.setLayoutParams(
+                new LinearLayout.LayoutParams(-1, maxHeight)
+        );
 
         new AlertDialog.Builder(activity)
                 .setTitle("📒 Transaction History")
                 .setView(scroll)
-                .setPositiveButton("Close", null)
+                .setPositiveButton("CLOSE", null)
                 .show();
     }
 
@@ -318,30 +386,55 @@ public class FinanceManager {
         processingMonthly = true;
 
         try {
+
             long before = cash;
-            householdManager.applyMonthlyExpenses(chargeAnnualPropertyTax);
+
+            householdManager.applyMonthlyExpenses(
+                    chargeAnnualPropertyTax);
+
             syncCash();
-            recordDelta("Household expenses and property tax", before);
+
+            recordDelta(
+                    "Household expenses and property tax",
+                    before);
 
             before = cash;
+
             loanManager.applyMonthlyLoanPayment();
+
             syncCash();
-            recordDelta("Loan EMI, interest and penalties", before);
+
+            recordDelta(
+                    "Loan EMI, interest and penalties",
+                    before);
 
             before = cash;
+
             bankManager.applyMonthlyBanking();
+
             syncCash();
-            recordDelta("Bank interest, fees and deposits", before);
+
+            recordDelta(
+                    "Bank interest, fees and deposits",
+                    before);
 
             before = cash;
+
             investmentManager.applyMonthlyInvestmentUpdate();
+
             syncCash();
-            recordDelta("Investments and monthly SIP", before);
+
+            recordDelta(
+                    "Investments and monthly SIP",
+                    before);
+
         } finally {
             processingMonthly = false;
         }
 
-        prefs.edit().putLong("last_cash", cash).apply();
+        prefs.edit()
+                .putLong("last_cash", cash)
+                .apply();
     }
 
     // ---------------- ANNUAL FINANCE PROCESSING ----------------
@@ -368,14 +461,22 @@ public class FinanceManager {
         syncCash();
 
         long beforeInsurance = cash;
+
         processingMonthly = true;
+
         try {
+
             insuranceManager.applyAnnualPremiums();
+
             syncCash();
+
         } finally {
             processingMonthly = false;
         }
-        recordDelta("Annual insurance premiums", beforeInsurance);
+
+        recordDelta(
+                "Annual insurance premiums",
+                beforeInsurance);
 
         prefs.edit()
                 .putLong("last_cash", cash)
@@ -442,7 +543,8 @@ public class FinanceManager {
 
         View space = new View(activity);
 
-        content.addView(space,
+        content.addView(
+                space,
                 new LinearLayout.LayoutParams(1, height));
     }
 
