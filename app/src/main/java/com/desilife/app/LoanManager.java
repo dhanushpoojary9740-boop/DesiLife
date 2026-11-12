@@ -132,8 +132,23 @@ public class LoanManager {
         }
     }
 
+    // BASIC HELPERS
+
     private String money(long amount) {
         return currency.format(amount);
+    }
+
+    private long safeAdd(long first, long second) {
+
+        if (second > 0 && first > Long.MAX_VALUE - second) {
+            return Long.MAX_VALUE;
+        }
+
+        if (second < 0 && first < Long.MIN_VALUE - second) {
+            return Long.MIN_VALUE;
+        }
+
+        return first + second;
     }
 
     private void updateCash(long amount) {
@@ -598,11 +613,6 @@ public class LoanManager {
 
     // ANNUAL EMI COMPATIBILITY
 
-    /*
-     * Processes 12 separate monthly EMI cycles.
-     * This method is retained for existing FinanceManager callers.
-     */
-
     public void applyAnnualLoanPayments() {
 
         if (!hasActiveLoan()) return;
@@ -614,7 +624,6 @@ public class LoanManager {
 
             if (!hasActiveLoan()) break;
 
-            long oldOutstanding = outstanding;
             int oldPaid = monthsPaid;
             int oldMissed = missedPayments;
 
@@ -628,11 +637,7 @@ public class LoanManager {
                 failedPayments++;
             }
 
-            if (outstanding == oldOutstanding
-                    && monthsPaid == oldPaid
-                    && missedPayments == oldMissed) {
-                break;
-            }
+            if (!hasActiveLoan()) break;
         }
 
         if (successfulPayments > 0) {
