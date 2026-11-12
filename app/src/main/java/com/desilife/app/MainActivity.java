@@ -459,22 +459,34 @@ public class MainActivity extends Activity {
     void showCreate() {
         setup();
 
-        addText("🇮🇳",40,gold);
-        addText("CREATE YOUR LIFE",27,gold);
-        addText("Every great journey starts with a birth.",15,white);
+        root.setPadding(18, 24, 18, 32);
+
+        addText("🇮🇳", 42, gold);
+        addText("CREATE YOUR LIFE", 29, gold);
+        addText("Every great journey starts with a birth.", 15, muted);
 
         addDivider();
 
-        addText("Character name",16,white);
+        addCreateSectionTitle("PERSONAL DETAILS", "Tell us who you are");
+
+        addCreateLabel("CHARACTER NAME");
         EditText name = addInput("Enter your name");
+        name.setTextSize(17);
+        name.setTextColor(Color.WHITE);
+        name.setHintTextColor(Color.rgb(185, 194, 190));
+        name.setBackground(shape(Color.rgb(35, 52, 47), 16));
+        name.setPadding(18, 12, 18, 12);
 
-        addText("Gender",16,white);
-        Spinner genderSpinner =
-            addSpinner(new String[]{"Male","Female"});
+        addCreateLabel("GENDER");
+        Spinner genderSpinner = addCreateSpinner(
+            new String[]{"Male", "Female"}
+        );
 
-        addText("Birthplace",16,white);
+        addDivider();
+        addCreateSectionTitle("YOUR ORIGIN", "Choose where your life begins");
 
-        Spinner citySpinner = addSpinner(new String[]{
+        addCreateLabel("BIRTHPLACE");
+        Spinner citySpinner = addCreateSpinner(new String[]{
             "Bengaluru, Karnataka",
             "Mysuru, Karnataka",
             "Mangaluru, Karnataka",
@@ -492,17 +504,21 @@ public class MainActivity extends Activity {
             "Bhopal, Madhya Pradesh"
         });
 
-        addText("Family background",16,white);
+        addCreateLabel("FAMILY BACKGROUND");
+        Spinner familySpinner = addCreateSpinner(
+            new String[]{"Poor", "Middle Class", "Rich"}
+        );
 
-        Spinner familySpinner =
-            addSpinner(new String[]{"Poor","Middle Class","Rich"});
+        addDivider();
+        addText("Your choices shape your journey. You can build your future from here.",
+            14, muted);
 
-        addButton("CREATE MY LIFE",() -> {
-
+        addButton("CREATE MY LIFE  →", () -> {
             String n = name.getText().toString().trim();
 
             if (n.isEmpty()) {
                 name.setError("Please enter your name");
+                name.requestFocus();
                 return;
             }
 
@@ -538,7 +554,6 @@ public class MainActivity extends Activity {
             }
 
             resetNewLifeData();
-
             financeManager = null;
 
             addLifeEvent(
@@ -550,7 +565,76 @@ public class MainActivity extends Activity {
             showDashboard();
         });
 
-        addButton("BACK",() -> showHome());
+        addButton("← BACK", () -> showHome());
+    }
+
+    void addCreateSectionTitle(String title, String subtitle) {
+        TextView heading = text(title, 15, gold);
+        heading.setTypeface(null, Typeface.BOLD);
+        heading.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+        heading.setPadding(4, 8, 4, 2);
+        root.addView(heading, new LinearLayout.LayoutParams(-1, -2));
+
+        TextView description = text(subtitle, 13, muted);
+        description.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+        description.setPadding(4, 0, 4, 12);
+        root.addView(description, new LinearLayout.LayoutParams(-1, -2));
+    }
+
+    void addCreateLabel(String label) {
+        TextView heading = text(label, 13, Color.rgb(235, 221, 190));
+        heading.setTypeface(null, Typeface.BOLD);
+        heading.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+        heading.setPadding(4, 10, 4, 5);
+        root.addView(heading, new LinearLayout.LayoutParams(-1, -2));
+    }
+
+    Spinner addCreateSpinner(String[] items) {
+        Spinner spinner = new Spinner(this);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+            this,
+            android.R.layout.simple_spinner_item,
+            items
+        ) {
+            @Override
+            public View getView(int position, View convertView,
+                                android.view.ViewGroup parent) {
+                TextView value = new TextView(MainActivity.this);
+                value.setText(getItem(position));
+                value.setTextColor(Color.WHITE);
+                value.setTextSize(16);
+                value.setGravity(Gravity.CENTER_VERTICAL);
+                value.setPadding(16, 0, 16, 0);
+                return value;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView,
+                                        android.view.ViewGroup parent) {
+                TextView value = new TextView(MainActivity.this);
+                value.setText(getItem(position));
+                value.setTextColor(Color.WHITE);
+                value.setTextSize(16);
+                value.setGravity(Gravity.CENTER_VERTICAL);
+                value.setPadding(20, 15, 20, 15);
+                value.setBackgroundColor(Color.rgb(35, 52, 47));
+                return value;
+            }
+        };
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setBackground(shape(Color.rgb(35, 52, 47), 16));
+        spinner.setPadding(10, 4, 12, 4);
+        spinner.setPopupBackgroundDrawable(shape(Color.rgb(25, 39, 35), 12));
+
+        LinearLayout.LayoutParams params =
+            new LinearLayout.LayoutParams(-1, 58);
+        params.setMargins(0, 2, 0, 12);
+        root.addView(spinner, params);
+
+        return spinner;
     }
 
     void resetNewLifeData() {
