@@ -241,30 +241,77 @@ public class FinanceManager {
         investmentManager.show();
     }
 
+    // ---------------- MONTHLY FINANCE PROCESSING ----------------
+
+    /*
+     * Processes exactly ONE in-game month.
+     *
+     * Order:
+     * 1. Household monthly expenses.
+     * 2. Loan EMI and monthly interest.
+     * 3. Bank interest, charges, FD and RD.
+     * 4. Investment market movement and SIP.
+     *
+     * Annual property tax is charged only when
+     * chargeAnnualPropertyTax is true.
+     */
+
+    public void applyMonthlyFinance(
+            boolean chargeAnnualPropertyTax) {
+
+        syncCash();
+
+        // 1. Household monthly expenses.
+        householdManager.applyMonthlyExpenses(
+                chargeAnnualPropertyTax);
+
+        syncCash();
+
+        // 2. Loan EMI and interest.
+        loanManager.applyMonthlyLoanPayment();
+
+        syncCash();
+
+        // 3. Banking interest, charges and deposits.
+        bankManager.applyMonthlyBanking();
+
+        syncCash();
+
+        // 4. Monthly investment and SIP update.
+        investmentManager.applyMonthlyInvestmentUpdate();
+
+        syncCash();
+
+        prefs.edit()
+                .putLong("last_cash", cash)
+                .apply();
+    }
+
     // ---------------- ANNUAL FINANCE PROCESSING ----------------
+
+    /*
+     * Compatibility method for existing callers.
+     *
+     * Processes 12 individual monthly cycles.
+     * Annual property tax is charged in the first month.
+     * Annual insurance premiums are charged once after
+     * all 12 monthly cycles.
+     */
 
     public void applyAnnualFinance() {
 
         syncCash();
 
-        // 1. Pay household expenses.
-        householdManager.applyAnnualExpenses();
+        for (int month = 0; month < 12; month++) {
+
+            applyMonthlyFinance(month == 0);
+        }
+
+        // Insurance premiums are annual, not monthly.
         syncCash();
 
-        // 2. Pay insurance premiums.
         insuranceManager.applyAnnualPremiums();
-        syncCash();
 
-        // 3. Process loan EMIs.
-        loanManager.applyAnnualLoanPayments();
-        syncCash();
-
-        // 4. Apply banking interest, charges and deposits.
-        bankManager.applyAnnualBanking();
-        syncCash();
-
-        // 5. Process SIP installments and market changes.
-        investmentManager.applyAnnualMarketChanges();
         syncCash();
 
         prefs.edit()
