@@ -860,6 +860,25 @@ public class MainActivity extends Activity {
         root.addView(education,educationParams);
         education.setOnClickListener(v -> showEducation());
 
+        // FAMILY & LEGACY BUTTON
+        TextView familyButton = dashboardText(
+            "👨‍👩‍👧 FAMILY & LEGACY",16,bg,true
+        );
+
+        familyButton.setBackground(
+            shape(Color.rgb(229,184,105),18)
+        );
+
+        familyButton.setPadding(12,14,12,14);
+
+        LinearLayout.LayoutParams familyParams =
+            new LinearLayout.LayoutParams(-1,-2);
+
+        familyParams.setMargins(0,8,0,4);
+
+        root.addView(familyButton,familyParams);
+        familyButton.setOnClickListener(v -> openFamily());
+
         TextView saveButton = dashboardText(
             "💾 SAVE GAME",15,white,true
         );
@@ -1485,6 +1504,29 @@ public class MainActivity extends Activity {
         }
 
         financeManager.show();
+    }
+
+    // FAMILY & GENERATIONAL LEGACY
+
+    void openFamily() {
+        FamilyManager familyManager = new FamilyManager(
+            this,
+            save,
+            money,
+            age,
+            happiness,
+            (newMoney,newHappiness) -> {
+                money = Math.max(0,newMoney);
+                happiness = Math.max(0,Math.min(100,newHappiness));
+
+                addLifeEvent("You made a family decision.");
+
+                saveGame();
+                showDashboard();
+            }
+        );
+
+        familyManager.open();
     }
 
     // AGE UP
