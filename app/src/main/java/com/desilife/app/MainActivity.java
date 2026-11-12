@@ -1488,31 +1488,151 @@ public class MainActivity extends Activity {
         );
     }
 
-    // CAREER
+    // CAREER HUB - CONNECTS ALL EXISTING CAREER SYSTEMS
 
     void openCareer() {
+
+        String[] careerOptions = {
+            "💼 General Careers",
+            "🏛️ Government Competitive Exams",
+            "🇮🇳 Karnataka & Central Government Service",
+            "🏢 Private Company Careers",
+            "👔 General Employment"
+        };
+
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("💼 CAREER CENTRE")
+            .setItems(careerOptions, (dialog, which) -> {
+                switch (which) {
+                    case 0:
+                        openGeneralCareer();
+                        break;
+                    case 1:
+                        openGovernmentExams();
+                        break;
+                    case 2:
+                        openPublicServiceCareer();
+                        break;
+                    case 3:
+                        openPrivateCareer();
+                        break;
+                    case 4:
+                        openGeneralEmployment();
+                        break;
+                }
+            })
+            .setNegativeButton("BACK", null)
+            .show();
+    }
+
+    // 1. GENERAL CAREERS
+    void openGeneralCareer() {
         CareerManager career = new CareerManager(
             this,
             save,
             age,
             intelligence,
-            educationStatus+" "+degreeCourse,
+            educationStatus + " " + degreeCourse,
             degreeCompleted,
             money,
             newMoney -> {
-                money = (int)Math.max(
-                    0,Math.min(Integer.MAX_VALUE,newMoney)
+                money = (int) Math.max(
+                    0, Math.min(Integer.MAX_VALUE, newMoney)
                 );
-
-                addLifeEvent("You made a career decision or received career income.");
-
+                addLifeEvent("You made a general career decision or received career income.");
                 saveGame();
             }
         );
-
         career.open();
     }
 
+    // 2. GOVERNMENT COMPETITIVE EXAMS
+    void openGovernmentExams() {
+        GovernmentExamManager manager = new GovernmentExamManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney, newHealth, newHappiness, description) -> {
+                money = Math.max(0, newMoney);
+                health = Math.max(0, Math.min(100, newHealth));
+                happiness = Math.max(0, Math.min(100, newHappiness));
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+        manager.open();
+    }
+
+    // 3. KARNATAKA & CENTRAL GOVERNMENT SERVICE
+    void openPublicServiceCareer() {
+        PublicServiceManager manager = new PublicServiceManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney, newHealth, newHappiness, description) -> {
+                money = Math.max(0, newMoney);
+                health = Math.max(0, Math.min(100, newHealth));
+                happiness = Math.max(0, Math.min(100, newHappiness));
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+        manager.open();
+    }
+
+    // 4. PRIVATE COMPANY CAREERS
+    void openPrivateCareer() {
+        PrivateCareerManager manager = new PrivateCareerManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney, newHealth, newHappiness, description) -> {
+                money = Math.max(0, newMoney);
+                health = Math.max(0, Math.min(100, newHealth));
+                happiness = Math.max(0, Math.min(100, newHappiness));
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+        manager.open();
+    }
+
+    // 5. GENERAL EMPLOYMENT
+    void openGeneralEmployment() {
+        EmploymentManager manager = new EmploymentManager(
+            this,
+            save,
+            age,
+            money,
+            health,
+            happiness,
+            (newMoney, newHealth, newHappiness, description) -> {
+                money = Math.max(0, newMoney);
+                health = Math.max(0, Math.min(100, newHealth));
+                happiness = Math.max(0, Math.min(100, newHappiness));
+                addLifeEvent(description);
+                saveGame();
+                showDashboard();
+            }
+        );
+        manager.open();
+    }
+
+    // EXISTING GENERAL CAREER ANNUAL PROCESSING
+    // Other career systems are not automatically paid here to prevent
+    // duplicate salary credits until their payment schedules are unified.
     void processCareerSalary() {
         if (age < 18) return;
 
@@ -1521,18 +1641,16 @@ public class MainActivity extends Activity {
             save,
             age,
             intelligence,
-            educationStatus+" "+degreeCourse,
+            educationStatus + " " + degreeCourse,
             degreeCompleted,
             money,
             newMoney -> {
-                money = (int)Math.max(
-                    0,Math.min(Integer.MAX_VALUE,newMoney)
+                money = (int) Math.max(
+                    0, Math.min(Integer.MAX_VALUE, newMoney)
                 );
-
                 saveGame();
             }
         );
-
         career.applyAnnualSalary();
     }
 
