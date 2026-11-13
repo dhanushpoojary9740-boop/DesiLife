@@ -55,6 +55,14 @@ public class FinanceManager {
         }
     }
 
+    private void recordExpense(String category, long amount) {
+        if (amount <= 0 || transactionListener == null) return;
+        long actual = Math.min(amount, cash);
+        // The caller updates cash first; reconstruct the balance immediately
+        // before this item so each ledger entry has its own running balance.
+        transactionListener.onTransaction(category, -actual, cash);
+    }
+
     private final NumberFormat currency =
             NumberFormat.getCurrencyInstance(
                     new Locale("en", "IN"));
@@ -363,7 +371,7 @@ public class FinanceManager {
 
         } else {
 
-            ArrayList<Map.Entry<String, long[]>> monthEntries =
+            ArrayList> monthEntries =
                     new ArrayList<>(monthlyTotals.entrySet());
 
             for (int i = monthEntries.size() - 1; i >= 0; i--) {
@@ -673,28 +681,64 @@ public class FinanceManager {
 
         try {
 
-            long before = cash;
-
+            // HOUSEHOLD: record each bill separately, allocating the actual
+            // cash paid in the same order used by HouseholdManager.
+            long householdCashBefore = cash;
+            LinkedHashMap<String, Long> householdItems =
+                    householdManager.getMonthlyExpenseBreakdown(
+                            chargeAnnualPropertyTax);
             householdManager.applyMonthlyExpenses(
                     chargeAnnualPropertyTax);
-
             syncCash();
 
-            recordDelta(
-                    "Household expenses and property tax",
-                    before);
+            long householdPaid = Math.max(
+                    0, householdCashBefore - cash);
+            long remainingHouseholdPaid = householdPaid;
+            long runningHouseholdBalance = householdCashBefore;
 
-            before = cash;
+            for (Map.Entry<String, Long> item : householdItems.entrySet()) {
+                long due = Math.max(0, item.getValue());
+                long paid = Math.min(remainingHouseholdPaid, due);
+                if (paid > 0) {
+                    remainingHouseholdPaid -= paid;
+                    runningHouseholdBalance -= paid;
+                    if (transactionListener != null) {
+                        transactionListener.onTransaction(
+                                item.getKey(), -paid, runningHouseholdBalance);
+                    }
+                }
+            }
 
+            // LOAN: split the actual EMI into principal and interest.
+            long loanCashBefore = cash;
             loanManager.applyMonthlyLoanPayment();
-
             syncCash();
 
-            recordDelta(
-                    "Loan EMI, interest and penalties",
-                    before);
+            long principalPaid = loanManager.getLastMonthPrincipalPaid();
+            long interestPaid = loanManager.getLastMonthInterestPaid();
+            long actualLoanDebit = Math.max(0, loanCashBefore - cash);
+            long loanBalance = loanCashBefore;
 
-            before = cash;
+            long recordedInterest = Math.min(interestPaid, actualLoanDebit);
+            if (recordedInterest > 0) {
+                loanBalance -= recordedInterest;
+                if (transactionListener != null) {
+                    transactionListener.onTransaction(
+                            "Loan interest", -recordedInterest, loanBalance);
+                }
+            }
+
+            long recordedPrincipal = Math.min(
+                    principalPaid, Math.max(0, actualLoanDebit - recordedInterest));
+            if (recordedPrincipal > 0) {
+                loanBalance -= recordedPrincipal;
+                if (transactionListener != null) {
+                    transactionListener.onTransaction(
+                            "Loan principal repayment", -recordedPrincipal, loanBalance);
+                }
+            }
+
+            long before = cash;
 
             bankManager.applyMonthlyBanking();
 
