@@ -314,6 +314,8 @@ public class PrivateCareerManager {
 
         addButton(root, "Promotion History",
                 this::showPromotionHistory);
+        addButton(root, "Performance Appraisals",
+                this::showAppraisalHistory);
 
         addButton(root, "Workplace and Performance",
                 this::showWorkplace);
@@ -898,6 +900,54 @@ public class PrivateCareerManager {
                 .show();
     }
 
+    private void recordAnnualAppraisal(int score, int salary, String role) {
+        String rating;
+        int rewardRate;
+        if (score >= 90) {
+            rating = "Excellent";
+            rewardRate = 25;
+        } else if (score >= 75) {
+            rating = "Good";
+            rewardRate = 10;
+        } else if (score >= 55) {
+            rating = "Satisfactory";
+            rewardRate = 0;
+        } else if (score >= 35) {
+            rating = "Needs Improvement";
+            rewardRate = 0;
+        } else {
+            rating = "Unsatisfactory";
+            rewardRate = 0;
+        }
+
+        int reward = (int) Math.min(Integer.MAX_VALUE,
+                (long) Math.max(0, salary) * rewardRate / 100);
+        if (reward > 0) {
+            money = (int) Math.min(Integer.MAX_VALUE,
+                    (long) money + reward);
+        }
+
+        String entry = "Age " + age + " — " + rating + " (" + score
+                + "/100), " + role
+                + (reward > 0 ? ", reward ₹" + reward : "")
+                + (score < 55 ? ", performance warning issued" : "");
+        String history = getString("appraisal_history", "");
+        history = entry + (history.isEmpty() ? "" : "\\n\\n" + history);
+        if (history.length() > 5000) history = history.substring(0, 5000);
+        putString("appraisal_history", history);
+        putString("last_appraisal", rating);
+        putInt("last_appraisal_score", score);
+        saveAll();
+    }
+
+    private void showAppraisalHistory() {
+        String history = getString("appraisal_history", "");
+        if (history.isEmpty()) {
+            history = "No performance appraisals recorded yet. Your first review will appear after an annual career update.";
+        }
+        message("PERFORMANCE APPRAISALS\\n\\n" + history);
+    }
+
     public void applyAnnualUpdate() {
         String job = getString("job", "");
 
@@ -935,6 +985,7 @@ public class PrivateCareerManager {
         putInt("salary", newMonthlySalary);
 
         int performance = getInt("performance", 50);
+        recordAnnualAppraisal(performance, monthlySalary, job);
         putInt("performance", Math.min(100, performance + 2));
 
         if (health > 0 && random.nextInt(100) < 10) {
