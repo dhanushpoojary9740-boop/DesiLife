@@ -1328,6 +1328,19 @@ public class EmploymentManager {
 
     public void applyAnnualEmploymentUpdate() {
 
+        // The annual game tick can be reached through multiple flows.
+        // Count each player's age only once to avoid duplicate promotions,
+        // experience, salary raises, or unemployment years.
+        int lastUpdatedAge = save.getInt(
+                "employment_last_annual_update_age", -1
+        );
+        if (lastUpdatedAge == age) {
+            return;
+        }
+        save.edit()
+                .putInt("employment_last_annual_update_age", age)
+                .apply();
+
         if (employed) {
 
             yearsInJob++;
