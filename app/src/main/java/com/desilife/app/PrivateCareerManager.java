@@ -317,6 +317,9 @@ public class PrivateCareerManager {
         addButton(root, "Performance Appraisals",
                 this::showAppraisalHistory);
 
+        addButton(root, "Career Awards & Recognition",
+                this::showAwardHistory);
+
         addButton(root, "Workplace and Performance",
                 this::showWorkplace);
 
@@ -927,10 +930,32 @@ public class PrivateCareerManager {
                     (long) money + reward);
         }
 
+        int streak = score >= 75 ? getInt("high_rating_streak", 0) + 1 : 0;
+        putInt("high_rating_streak", streak);
+        String award = "";
+        if (streak >= 3) {
+            int awardBonus = (int) Math.min(Integer.MAX_VALUE,
+                    (long) Math.max(0, salary) * 2L);
+            money = (int) Math.min(Integer.MAX_VALUE,
+                    (long) money + awardBonus);
+            int awards = getInt("awards_count", 0) + 1;
+            String awardEntry = "Age " + age
+                    + " — Consistent Excellence Award (3+ strong annual reviews)"
+                    + ", bonus ₹" + awardBonus;
+            String awardHistory = getString("award_history", "");
+            awardHistory = awardEntry + (awardHistory.isEmpty()
+                    ? "" : "\\n\\n" + awardHistory);
+            if (awardHistory.length() > 5000) awardHistory = awardHistory.substring(0, 5000);
+            putInt("awards_count", awards);
+            putString("award_history", awardHistory);
+            putInt("high_rating_streak", 0);
+            award = ", Consistent Excellence Award earned (₹" + awardBonus + ")";
+        }
+
         String entry = "Age " + age + " — " + rating + " (" + score
                 + "/100), " + role
                 + (reward > 0 ? ", reward ₹" + reward : "")
-                + (score < 55 ? ", performance warning issued" : "");
+                + (score < 55 ? ", performance warning issued" : "") + award;
         String history = getString("appraisal_history", "");
         history = entry + (history.isEmpty() ? "" : "\\n\\n" + history);
         if (history.length() > 5000) history = history.substring(0, 5000);
@@ -938,6 +963,13 @@ public class PrivateCareerManager {
         putString("last_appraisal", rating);
         putInt("last_appraisal_score", score);
         saveAll();
+    }
+
+    private void showAwardHistory() {
+        String history = getString("award_history", "");
+        if (history.isEmpty()) history = "No career awards earned yet. Receive Good or Excellent ratings for three consecutive annual reviews to earn the Consistent Excellence Award.";
+        message("CAREER AWARDS & RECOGNITION\\n\\nAwards earned: "
+                + getInt("awards_count", 0) + "\\n\\n" + history);
     }
 
     private void showAppraisalHistory() {

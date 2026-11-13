@@ -285,6 +285,9 @@ public class EmploymentManager {
             addButton(root, "⭐ Performance Appraisals",
                     this::showAppraisalHistory);
 
+            addButton(root, "🏅 Career Awards & Recognition",
+                    this::showAwardHistory);
+
             addButton(root, "🎁 Request Performance Bonus",
                     this::requestBonus);
 
@@ -1463,18 +1466,48 @@ public class EmploymentManager {
                     (long) money + reward);
         }
 
+        int streak = (score >= 75)
+                ? save.getInt("employment_high_rating_streak", 0) + 1 : 0;
+        save.edit().putInt("employment_high_rating_streak", streak).apply();
+        String award = "";
+        if (streak >= 3) {
+            int awardBonus = (int) Math.min(Integer.MAX_VALUE,
+                    (long) Math.max(0, salary) * 2L);
+            money = (int) Math.min(Integer.MAX_VALUE,
+                    (long) money + awardBonus);
+            int awards = save.getInt("employment_awards_count", 0) + 1;
+            String awardEntry = "Age " + age
+                    + " — Consistent Excellence Award (3+ strong annual reviews)"
+                    + ", bonus ₹" + awardBonus;
+            String awardHistory = save.getString("employment_award_history", "");
+            awardHistory = awardEntry + (awardHistory.isEmpty()
+                    ? "" : "\\n\\n" + awardHistory);
+            if (awardHistory.length() > 5000) awardHistory = awardHistory.substring(0, 5000);
+            save.edit().putInt("employment_awards_count", awards)
+                    .putString("employment_award_history", awardHistory)
+                    .putInt("employment_high_rating_streak", 0).apply();
+            award = ", Consistent Excellence Award earned (₹" + awardBonus + ")";
+        }
+
         String entry = "Age " + age + " — " + rating + " (" + score
                 + "/100), " + role
                 + (reward > 0 ? ", reward ₹" + reward : "")
-                + (score < 55 ? ", performance warning issued" : "");
+                + (score < 55 ? ", performance warning issued" : "") + award;
         String history = save.getString("employment_appraisal_history", "");
         history = entry + (history.isEmpty() ? "" : "\\n\\n" + history);
         if (history.length() > 5000) history = history.substring(0, 5000);
         save.edit().putString("employment_appraisal_history", history)
                 .putString("employment_last_appraisal", rating)
-                .putInt("employment_last_appraisal_score", score)
-                .apply();
+                .putInt("employment_last_appraisal_score", score).apply();
         saveData();
+    }
+
+    private void showAwardHistory() {
+        String history = save.getString("employment_award_history", "");
+        if (history.isEmpty()) history = "No career awards earned yet. Receive Good or Excellent ratings for three consecutive annual reviews to earn the Consistent Excellence Award.";
+        showMessage("Career Awards & Recognition",
+                "Awards earned: " + save.getInt("employment_awards_count", 0)
+                        + "\\n\\n" + history);
     }
 
     private void showAppraisalHistory() {
