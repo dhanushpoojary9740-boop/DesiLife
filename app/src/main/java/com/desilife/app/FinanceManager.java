@@ -11,7 +11,6 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -132,9 +131,9 @@ public class FinanceManager {
         }
 
         if (!processingMonthly && transactionListener != null) {
-            // Manual finance actions are recorded as a distinct cash movement.
-            // Monthly systems are recorded below with their own category.
+
             long delta = cash - previousCash;
+
             if (delta != 0) {
                 transactionListener.onTransaction(
                         "Manual finance transaction", delta, cash);
@@ -257,8 +256,9 @@ public class FinanceManager {
 
         String history = gameSave.getString("transaction_history", "");
 
-        // Support both real line breaks and the older literal \\n format.
-        history = history.replace("\\\\n", "\n").replace("\\n", "\n").trim();
+        history = history.replace("\\\\n", "\n")
+                .replace("\\n", "\n")
+                .trim();
 
         final ArrayList<String> entries = new ArrayList<>();
 
@@ -275,10 +275,11 @@ public class FinanceManager {
         long totalIncome = 0;
         long totalExpense = 0;
 
-        // Group totals by the age/month stored in each transaction.
-        LinkedHashMap<String, long[]> monthlyTotals = new LinkedHashMap<>();
+        LinkedHashMap<String, long[]> monthlyTotals =
+                new LinkedHashMap<>();
 
         for (String entry : entries) {
+
             String[] parts = entry.split("\\|");
 
             if (parts.length < 4) {
@@ -286,10 +287,13 @@ public class FinanceManager {
             }
 
             String ageLabel = parts[0].trim();
-            String direction = parts[1].trim().toUpperCase(Locale.ROOT);
+            String direction = parts[1].trim()
+                    .toUpperCase(Locale.ROOT);
+
             long amount = extractTransactionAmount(parts[3]);
 
             long[] totals = monthlyTotals.get(ageLabel);
+
             if (totals == null) {
                 totals = new long[]{0, 0};
                 monthlyTotals.put(ageLabel, totals);
@@ -298,6 +302,7 @@ public class FinanceManager {
             if (direction.contains("INCOME")) {
                 totalIncome += amount;
                 totals[0] += amount;
+
             } else if (direction.contains("EXPENSE")) {
                 totalExpense += amount;
                 totals[1] += amount;
@@ -318,7 +323,9 @@ public class FinanceManager {
         screen.addView(summaryTitle);
 
         TextView summary = new TextView(activity);
+
         long net = totalIncome - totalExpense;
+
         summary.setText(
                 "Total Income: +" + money(totalIncome) +
                 "\nTotal Expenses: -" + money(totalExpense) +
@@ -326,6 +333,7 @@ public class FinanceManager {
                 money(Math.abs(net)) +
                 "\nTransactions recorded: " + entries.size()
         );
+
         summary.setTextColor(Color.rgb(45, 55, 65));
         summary.setTextSize(14);
         summary.setLineSpacing(3, 1.0f);
@@ -345,21 +353,26 @@ public class FinanceManager {
         monthlyList.setOrientation(LinearLayout.VERTICAL);
 
         if (monthlyTotals.isEmpty()) {
+
             TextView noMonths = new TextView(activity);
             noMonths.setText("No monthly totals available yet.");
             noMonths.setTextColor(Color.DKGRAY);
             noMonths.setTextSize(13);
+
             monthlyList.addView(noMonths);
+
         } else {
-            // Newest month first. Reverse the insertion order.
-            ArrayList> monthEntries =
+
+            ArrayList<Map.Entry<String, long[]>> monthEntries =
                     new ArrayList<>(monthlyTotals.entrySet());
 
             for (int i = monthEntries.size() - 1; i >= 0; i--) {
+
                 Map.Entry<String, long[]> item = monthEntries.get(i);
                 long[] values = item.getValue();
 
                 TextView month = new TextView(activity);
+
                 month.setText(
                         item.getKey() +
                         "\nIncome: +" + money(values[0]) +
@@ -368,14 +381,18 @@ public class FinanceManager {
                         (values[0] - values[1] >= 0 ? "+" : "-") +
                         money(Math.abs(values[0] - values[1]))
                 );
+
                 month.setTextColor(Color.rgb(55, 65, 75));
                 month.setTextSize(13);
                 month.setPadding(10, 9, 10, 9);
-                month.setBackground(background(Color.rgb(247, 248, 249)));
+                month.setBackground(
+                        background(Color.rgb(247, 248, 249)));
 
                 LinearLayout.LayoutParams monthParams =
                         new LinearLayout.LayoutParams(-1, -2);
+
                 monthParams.bottomMargin = 5;
+
                 monthlyList.addView(month, monthParams);
             }
         }
@@ -389,7 +406,8 @@ public class FinanceManager {
                 activity.getResources().getDisplayMetrics().density * 150
         );
 
-        screen.addView(monthlyScroll,
+        screen.addView(
+                monthlyScroll,
                 new LinearLayout.LayoutParams(-1, monthlyHeight));
 
         TextView historyTitle = new TextView(activity);
@@ -414,9 +432,9 @@ public class FinanceManager {
         transactionScroll.setVerticalScrollBarEnabled(true);
         transactionScroll.addView(transactionList);
 
-        screen.addView(transactionScroll,
-                new LinearLayout.LayoutParams(
-                        -1, 0, 1));
+        screen.addView(
+                transactionScroll,
+                new LinearLayout.LayoutParams(-1, 0, 1));
 
         final String[] selectedFilter = new String[]{"ALL"};
 
@@ -424,24 +442,35 @@ public class FinanceManager {
         final TextView incomeFilter = createHistoryFilter("INCOME");
         final TextView expenseFilter = createHistoryFilter("EXPENSES");
 
-        filters.addView(allFilter, new LinearLayout.LayoutParams(0, -2, 1));
-        filters.addView(incomeFilter, new LinearLayout.LayoutParams(0, -2, 1));
-        filters.addView(expenseFilter, new LinearLayout.LayoutParams(0, -2, 1));
+        filters.addView(
+                allFilter,
+                new LinearLayout.LayoutParams(0, -2, 1));
+
+        filters.addView(
+                incomeFilter,
+                new LinearLayout.LayoutParams(0, -2, 1));
+
+        filters.addView(
+                expenseFilter,
+                new LinearLayout.LayoutParams(0, -2, 1));
 
         Runnable refresh = () -> {
+
             transactionList.removeAllViews();
 
-            setHistoryFilterStyle(allFilter,
-                    selectedFilter[0].equals("ALL"));
-            setHistoryFilterStyle(incomeFilter,
-                    selectedFilter[0].equals("INCOME"));
-            setHistoryFilterStyle(expenseFilter,
-                    selectedFilter[0].equals("EXPENSES"));
+            setHistoryFilterStyle(
+                    allFilter, selectedFilter[0].equals("ALL"));
+
+            setHistoryFilterStyle(
+                    incomeFilter, selectedFilter[0].equals("INCOME"));
+
+            setHistoryFilterStyle(
+                    expenseFilter, selectedFilter[0].equals("EXPENSES"));
 
             int shown = 0;
 
-            // Newest transactions first.
             for (int i = entries.size() - 1; i >= 0; i--) {
+
                 String entry = entries.get(i);
                 String[] parts = entry.split("\\|");
 
@@ -464,11 +493,13 @@ public class FinanceManager {
             }
 
             if (shown == 0) {
+
                 TextView empty = new TextView(activity);
                 empty.setText("No transactions in this filter.");
                 empty.setTextColor(Color.rgb(90, 90, 90));
                 empty.setTextSize(14);
                 empty.setPadding(12, 18, 12, 18);
+
                 transactionList.addView(empty);
             }
         };
@@ -498,34 +529,48 @@ public class FinanceManager {
     }
 
     private long extractTransactionAmount(String value) {
-        if (value == null) return 0;
+
+        if (value == null) {
+            return 0;
+        }
 
         String digits = value.replaceAll("[^0-9]", "");
 
-        if (digits.isEmpty()) return 0;
+        if (digits.isEmpty()) {
+            return 0;
+        }
 
         try {
             return Long.parseLong(digits);
+
         } catch (NumberFormatException e) {
             return 0;
         }
     }
 
     private TextView createHistoryFilter(String label) {
+
         TextView filter = new TextView(activity);
+
         filter.setText(label);
         filter.setTextSize(12);
         filter.setGravity(android.view.Gravity.CENTER);
         filter.setPadding(5, 10, 5, 10);
         filter.setTypeface(null, Typeface.BOLD);
+
         return filter;
     }
 
-    private void setHistoryFilterStyle(TextView filter, boolean selected) {
-        filter.setTextColor(selected ? Color.WHITE : Color.rgb(45, 55, 65));
+    private void setHistoryFilterStyle(
+            TextView filter, boolean selected) {
+
+        filter.setTextColor(
+                selected ? Color.WHITE : Color.rgb(45, 55, 65));
+
         filter.setBackground(background(
-                selected ? Color.rgb(42, 91, 135)
-                         : Color.rgb(232, 237, 241)));
+                selected
+                        ? Color.rgb(42, 91, 135)
+                        : Color.rgb(232, 237, 241)));
     }
 
     private void addTransactionHistoryRow(
@@ -549,23 +594,32 @@ public class FinanceManager {
         description.setTextColor(Color.rgb(50, 58, 65));
         description.setTextSize(13);
         description.setLineSpacing(3, 1.0f);
+
         card.addView(description);
 
         if (parts.length > 3) {
+
             TextView amount = new TextView(activity);
+
             amount.setText(parts[3].trim());
-            amount.setTextColor(income
-                    ? Color.rgb(25, 135, 75)
-                    : Color.rgb(190, 55, 55));
+
+            amount.setTextColor(
+                    income
+                            ? Color.rgb(25, 135, 75)
+                            : Color.rgb(190, 55, 55));
+
             amount.setTextSize(14);
             amount.setTypeface(null, Typeface.BOLD);
             amount.setPadding(0, 5, 0, 0);
+
             card.addView(amount);
         }
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
+
         params.bottomMargin = 6;
+
         parent.addView(card, params);
     }
 
@@ -598,6 +652,19 @@ public class FinanceManager {
 
     // ---------------- MONTHLY FINANCE PROCESSING ----------------
 
+    /*
+     * Processes exactly ONE in-game month.
+     *
+     * Order:
+     * 1. Household monthly expenses.
+     * 2. Loan EMI and monthly interest.
+     * 3. Bank interest, charges, FD and RD.
+     * 4. Investment market movement and SIP.
+     *
+     * Annual property tax is charged only when
+     * chargeAnnualPropertyTax is true.
+     */
+
     public void applyMonthlyFinance(
             boolean chargeAnnualPropertyTax) {
 
@@ -605,53 +672,97 @@ public class FinanceManager {
         processingMonthly = true;
 
         try {
+
             long before = cash;
-            householdManager.applyMonthlyExpenses(chargeAnnualPropertyTax);
+
+            householdManager.applyMonthlyExpenses(
+                    chargeAnnualPropertyTax);
+
             syncCash();
-            recordDelta("Household expenses and property tax", before);
+
+            recordDelta(
+                    "Household expenses and property tax",
+                    before);
 
             before = cash;
+
             loanManager.applyMonthlyLoanPayment();
+
             syncCash();
-            recordDelta("Loan EMI, interest and penalties", before);
+
+            recordDelta(
+                    "Loan EMI, interest and penalties",
+                    before);
 
             before = cash;
+
             bankManager.applyMonthlyBanking();
+
             syncCash();
-            recordDelta("Bank interest, fees and deposits", before);
+
+            recordDelta(
+                    "Bank interest, fees and deposits",
+                    before);
 
             before = cash;
+
             investmentManager.applyMonthlyInvestmentUpdate();
+
             syncCash();
-            recordDelta("Investments and monthly SIP", before);
+
+            recordDelta(
+                    "Investments and monthly SIP",
+                    before);
+
         } finally {
             processingMonthly = false;
         }
 
-        prefs.edit().putLong("last_cash", cash).apply();
+        prefs.edit()
+                .putLong("last_cash", cash)
+                .apply();
     }
 
     // ---------------- ANNUAL FINANCE PROCESSING ----------------
+
+    /*
+     * Compatibility method for existing callers.
+     *
+     * Processes 12 individual monthly cycles.
+     * Annual property tax is charged in the first month.
+     * Annual insurance premiums are charged once after
+     * all 12 monthly cycles.
+     */
 
     public void applyAnnualFinance() {
 
         syncCash();
 
         for (int month = 0; month < 12; month++) {
+
             applyMonthlyFinance(month == 0);
         }
 
+        // Insurance premiums are annual, not monthly.
         syncCash();
 
         long beforeInsurance = cash;
+
         processingMonthly = true;
+
         try {
+
             insuranceManager.applyAnnualPremiums();
+
             syncCash();
+
         } finally {
             processingMonthly = false;
         }
-        recordDelta("Annual insurance premiums", beforeInsurance);
+
+        recordDelta(
+                "Annual insurance premiums",
+                beforeInsurance);
 
         prefs.edit()
                 .putLong("last_cash", cash)
@@ -718,7 +829,8 @@ public class FinanceManager {
 
         View space = new View(activity);
 
-        content.addView(space,
+        content.addView(
+                space,
                 new LinearLayout.LayoutParams(1, height));
     }
 
