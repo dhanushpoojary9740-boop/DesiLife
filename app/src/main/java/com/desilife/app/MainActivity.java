@@ -79,7 +79,10 @@ public class MainActivity extends Activity {
         t.setTextSize(size);
         t.setTextColor(color);
         t.setGravity(Gravity.CENTER);
-        t.setPadding(8,10,8,10);
+        t.setPadding(10,11,10,11);
+        t.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        t.setIncludeFontPadding(false);
+        t.setLineSpacing(2f, 1.04f);
         return t;
     }
 
@@ -145,8 +148,14 @@ public class MainActivity extends Activity {
         TextView b = text(label,15,Color.rgb(25,48,39));
         b.setTypeface(null,Typeface.BOLD);
         b.setBackground(shape(Color.rgb(239,202,126),18));
-        b.setPadding(14,15,14,15);
-        b.setElevation(2);
+        b.setPadding(16,16,16,16);
+        b.setMinHeight(54);
+        b.setGravity(Gravity.CENTER);
+        b.setIncludeFontPadding(false);
+        b.setLetterSpacing(0.015f);
+        b.setClickable(true);
+        b.setFocusable(true);
+        b.setElevation(3);
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
@@ -199,6 +208,9 @@ public class MainActivity extends Activity {
         e.setPadding(15,10,15,10);
         e.setBackground(shape(Color.rgb(28,58,50),16));
         e.setTextSize(15);
+        e.setMinHeight(56);
+        e.setGravity(Gravity.CENTER_VERTICAL);
+        e.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         e.setCompoundDrawablePadding(8);
 
         LinearLayout.LayoutParams p =
@@ -1132,9 +1144,12 @@ public class MainActivity extends Activity {
         t.setTextSize(size);
         t.setTextColor(color);
         t.setGravity(Gravity.CENTER);
-        t.setPadding(5,5,5,5);
-
-        if (bold) t.setTypeface(null,Typeface.BOLD);
+        t.setPadding(6,6,6,6);
+        t.setTypeface(Typeface.create(
+            "sans-serif", bold ? Typeface.BOLD : Typeface.NORMAL
+        ));
+        t.setIncludeFontPadding(false);
+        t.setLineSpacing(1f, 1.03f);
 
         return t;
     }
@@ -1145,7 +1160,11 @@ public class MainActivity extends Activity {
         LinearLayout item = new LinearLayout(this);
         item.setOrientation(LinearLayout.VERTICAL);
         item.setGravity(Gravity.CENTER);
-        item.setPadding(2,4,2,4);
+        item.setPadding(2,6,2,6);
+        item.setMinimumHeight(54);
+        item.setClickable(true);
+        item.setFocusable(true);
+        item.setContentDescription(label + " section");
 
         TextView iconView = dashboardText(
             icon,22,Color.rgb(239,202,126),true
@@ -1154,6 +1173,9 @@ public class MainActivity extends Activity {
         TextView labelView = dashboardText(
             label,10,Color.rgb(231,236,229),true
         );
+        labelView.setIncludeFontPadding(false);
+        labelView.setMaxLines(1);
+        labelView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
         item.addView(iconView);
         item.addView(labelView);
