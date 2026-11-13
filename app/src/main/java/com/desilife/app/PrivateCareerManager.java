@@ -437,13 +437,29 @@ public class PrivateCareerManager {
                                 + random.nextInt(21))
         );
 
+        String currentEducation = save.getString("education_level", "");
+        if (currentEducation.isEmpty()) {
+            currentEducation = save.getString("edu_level", "Not recorded");
+        }
+        String course = save.getString("edu_course", "");
+        if (!course.isEmpty()) {
+            currentEducation += " - " + course;
+        }
+
         new AlertDialog.Builder(activity)
-                .setTitle("Job Interview")
-                .setMessage("Apply to " + c.name + "?\n\n"
-                        + "Position: " + c.positions[0]
-                        + "\nStarting salary: ₹" + c.salary
-                        + "\nInterview success chance: "
-                        + interviewChance + "%")
+                .setTitle("Private Company Job Application")
+                .setMessage("Company: " + c.name
+                        + "\nPosition: " + c.positions[0]
+                        + "\nStarting Salary: ₹" + c.salary
+                        + "\n\nEDUCATION REQUIREMENTS"
+                        + "\nRequired Qualification: " + qualificationName(c.education)
+                        + "\nYour Qualification: " + currentEducation
+                        + "\n\nAGE REQUIREMENTS"
+                        + "\nRequired Age: " + c.minimumAge + "–65 years"
+                        + "\nYour Age: " + age
+                        + "\n\nEligibility: QUALIFIED"
+                        + "\nInterview Success Chance: " + interviewChance + "%"
+                        + "\n\nAttend the interview?")
                 .setPositiveButton("Attend Interview",
                         (dialog, which) -> {
 

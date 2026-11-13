@@ -393,12 +393,29 @@ public class PublicServiceManager {
                 25 + preparation / 2 + random.nextInt(26)
         );
 
+        String currentEducation = save.getString("education_level", "");
+        if (currentEducation.isEmpty()) {
+            currentEducation = save.getString("edu_level", "Not recorded");
+        }
+        String course = save.getString("edu_course", "");
+        if (!course.isEmpty()) {
+            currentEducation += " - " + course;
+        }
+
         new AlertDialog.Builder(activity)
-                .setTitle("Department Recruitment")
-                .setMessage("Apply for " + d.name + "?\n\n"
-                        + "Starting salary: ₹" + d.salary
-                        + "\nSelection probability: " + finalChance + "%\n\n"
-                        + "Your application will be evaluated immediately.")
+                .setTitle("Government Department Application")
+                .setMessage("Department: " + d.name
+                        + "\nStarting Position: " + d.positions[0]
+                        + "\nStarting Salary: ₹" + d.salary
+                        + "\n\nEDUCATION REQUIREMENTS"
+                        + "\nRequired Qualification: " + qualificationName(d.minimumEducation)
+                        + "\nYour Qualification: " + currentEducation
+                        + "\n\nAGE REQUIREMENTS"
+                        + "\nRequired Age: " + d.minimumAge + "–60 years"
+                        + "\nYour Age: " + age
+                        + "\n\nEligibility: QUALIFIED"
+                        + "\nSelection Probability: " + finalChance + "%"
+                        + "\n\nSubmit your government service application?")
                 .setPositiveButton("Apply",
                         (dialog, which) -> {
 
