@@ -116,6 +116,17 @@ public class MafiaManager {
     private int marketCycles = 0;
     private int legendaryMissionStage = 0;
     private int legendaryMissionWins = 0;
+    // Bundle 9: deeper living-world simulation and endgame records.
+    private int rivalWealth = 25000;
+    private int rivalTerritoryCount = 2;
+    private int familyAmbitionLevel = 35;
+    private int globalEconomyIndex = 100;
+    private int empireCrisisCount = 0;
+    private int crisisResolvedCount = 0;
+    private int lifetimeIncome = 0;
+    private int lifetimeExpenses = 0;
+    private String empireEnding = "The empire story is still unfolding";
+    private int lastBundle9Age = -1;
 
     public MafiaManager(Activity activity, SharedPreferences save,
                         int money, int health, int happiness, Callback callback) {
@@ -183,6 +194,16 @@ public class MafiaManager {
         marketCycles = save.getInt("mafia_market_cycles", 0);
         legendaryMissionStage = save.getInt("mafia_legendary_stage", 0);
         legendaryMissionWins = save.getInt("mafia_legendary_wins", 0);
+        rivalWealth = save.getInt("mafia9_rival_wealth", 25000);
+        rivalTerritoryCount = save.getInt("mafia9_rival_territories", 2);
+        familyAmbitionLevel = save.getInt("mafia9_family_ambition", 35);
+        globalEconomyIndex = save.getInt("mafia9_economy_index", 100);
+        empireCrisisCount = save.getInt("mafia9_crises", 0);
+        crisisResolvedCount = save.getInt("mafia9_crises_resolved", 0);
+        lifetimeIncome = save.getInt("mafia9_lifetime_income", 0);
+        lifetimeExpenses = save.getInt("mafia9_lifetime_expenses", 0);
+        empireEnding = save.getString("mafia9_ending", "The empire story is still unfolding");
+        lastBundle9Age = save.getInt("mafia9_last_age", -1);
     }
 
     private void persist() {
@@ -241,6 +262,16 @@ public class MafiaManager {
             .putInt("mafia_market_cycles", marketCycles)
             .putInt("mafia_legendary_stage", legendaryMissionStage)
             .putInt("mafia_legendary_wins", legendaryMissionWins)
+            .putInt("mafia9_rival_wealth", rivalWealth)
+            .putInt("mafia9_rival_territories", rivalTerritoryCount)
+            .putInt("mafia9_family_ambition", familyAmbitionLevel)
+            .putInt("mafia9_economy_index", globalEconomyIndex)
+            .putInt("mafia9_crises", empireCrisisCount)
+            .putInt("mafia9_crises_resolved", crisisResolvedCount)
+            .putInt("mafia9_lifetime_income", lifetimeIncome)
+            .putInt("mafia9_lifetime_expenses", lifetimeExpenses)
+            .putString("mafia9_ending", empireEnding)
+            .putInt("mafia9_last_age", lastBundle9Age)
             .apply();
     }
 
@@ -253,6 +284,7 @@ public class MafiaManager {
             return;
         }
         processLivingWorld();
+        processBundle9World();
         showDashboard();
     }
 
@@ -324,6 +356,12 @@ public class MafiaManager {
             button(page, "📉 DYNAMIC BUSINESS MARKET", this::dynamicBusinessMarket);
             button(page, "🏅 WORLD LEADERBOARD", this::mafiaWorldLeaderboard);
             button(page, "📜 LEGENDARY STORY CAMPAIGN", this::legendaryCampaign);
+            button(page, "🌐 LIVING RIVAL EMPIRE SIMULATION", this::rivalEmpireSimulation);
+            button(page, "🧬 ADVANCED FAMILY LIFE & AMBITIONS", this::familyLifeSimulation);
+            button(page, "📉 GLOBAL ECONOMIC EVENTS", this::globalEconomicEvents);
+            button(page, "🚧 EMPIRE CRISIS & LEADERSHIP", this::empireCrisisSystem);
+            button(page, "🏁 EMPIRE ENDINGS & LEGACY", this::empireEndings);
+            button(page, "📊 PREMIUM LIFETIME ANALYTICS", this::premiumEmpireAnalytics);
             button(page, "🤝 LEAVE CURRENT GANG", this::leaveGang);
         }
         button(page, "⬅ BACK TO LIFE", activity::recreate);
@@ -1562,6 +1600,211 @@ public class MafiaManager {
                 notifyChange("You completed " + chapters[stage] + " through a considered life decision.");
                 showDashboard();
             }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    // Bundle 9: the world advances once for each new character age.
+    private void processBundle9World() {
+        int age = save.getInt("age", 0);
+        if (gang.isEmpty() || age < 18 || lastBundle9Age == age) return;
+        int years = lastBundle9Age < 0 ? 1 : Math.min(8, Math.max(1, age - lastBundle9Age));
+        lastBundle9Age = age;
+        for (int i = 0; i < years; i++) {
+            rivalWealth = Math.max(1000, rivalWealth + 500 + random.nextInt(2500));
+            rivalTerritoryCount = clamp(rivalTerritoryCount + (random.nextInt(4) == 0 ? 1 : 0), 1, 10);
+            rivalEmpirePower = clamp(rivalEmpirePower + random.nextInt(4), 5, 100);
+            familyAmbitionLevel = clamp(familyAmbitionLevel + random.nextInt(7) - 2, 0, 100);
+            globalEconomyIndex = clamp(globalEconomyIndex + random.nextInt(17) - 8, 55, 150);
+            int income = Math.max(0, businessIncome + (assetPortfolio * 100));
+            int expense = Math.min(Math.max(0, money), 150 + safehouseLevel * 50 + lieutenants * 25);
+            if (income > 0) {
+                money += income;
+                lifetimeIncome += income;
+            }
+            money -= expense;
+            lifetimeExpenses += expense;
+            if (random.nextInt(100) < 12) empireCrisisCount++;
+        }
+        persist();
+    }
+
+    private void rivalEmpireSimulation() {
+        new AlertDialog.Builder(activity).setTitle("🌐 Rival Empire Simulation")
+            .setMessage("Rival organisations develop independently as time passes.\n\n" +
+                "Rival wealth: ₹" + rivalWealth +
+                "\nRival territories: " + rivalTerritoryCount +
+                "\nRival power: " + rivalEmpirePower + "/100" +
+                "\nYour territories: " + controlledTerritories +
+                "\n\nEach birthday advances rival wealth, territory ambitions and influence.")
+            .setPositiveButton("CHALLENGE", (d, w) -> rivalChallenge())
+            .setNegativeButton("BACK", (d, w) -> showDashboard()).show();
+    }
+
+    private void familyLifeSimulation() {
+        String[] choices = {
+            "Mentor a family member",
+            "Support a family member's education",
+            "Invite a family member to the council",
+            "Give the next generation more independence"
+        };
+        new AlertDialog.Builder(activity).setTitle("🧬 Family Life & Ambitions")
+            .setItems(choices, (d, which) -> {
+                int cost = new int[]{500, 900, 700, 300}[which];
+                if (money < cost) { message("You need ₹" + cost + " for this family decision."); return; }
+                money -= cost;
+                lifetimeExpenses += cost;
+                if (which == 0) {
+                    familyBond = clamp(familyBond + 8, 0, 100);
+                    familyCouncilTrust = clamp(familyCouncilTrust + 5, 0, 100);
+                    familyAmbitionLevel = clamp(familyAmbitionLevel + 4, 0, 100);
+                } else if (which == 1) {
+                    familyBond = clamp(familyBond + 6, 0, 100);
+                    popularity = clamp(popularity + 2, 0, 100);
+                    familyAmbitionLevel = clamp(familyAmbitionLevel + 7, 0, 100);
+                } else if (which == 2) {
+                    familyCouncilTrust = clamp(familyCouncilTrust + 10, 0, 100);
+                    familyAmbitionLevel = clamp(familyAmbitionLevel + 5, 0, 100);
+                } else {
+                    familyBond = clamp(familyBond + 3, 0, 100);
+                    familyCouncilTrust = clamp(familyCouncilTrust - 2, 0, 100);
+                }
+                permanentDecisions++;
+                persist();
+                new AlertDialog.Builder(activity).setTitle("Family Decision Recorded")
+                    .setMessage("Family bond: " + familyBond + "/100\nCouncil trust: " +
+                        familyCouncilTrust + "/100\nFamily ambition: " + familyAmbitionLevel + "/100")
+                    .setPositiveButton("CONTINUE", (x, y) -> showDashboard()).show();
+            }).setNegativeButton("BACK", (d, w) -> showDashboard()).show();
+    }
+
+    private void globalEconomicEvents() {
+        String[] options = {
+            "Review the market outlook",
+            "Protect the portfolio with a reserve",
+            "Invest in long-term business stability"
+        };
+        new AlertDialog.Builder(activity).setTitle("📉 Global Economic Events")
+            .setMessage("Global market index: " + globalEconomyIndex +
+                "\nMarket cycles: " + marketCycles +
+                "\nLifetime simulated income: ₹" + lifetimeIncome +
+                "\nLifetime simulated expenses: ₹" + lifetimeExpenses +
+                "\n\nMarket conditions affect your fictional business portfolio.")
+            .setItems(options, (d, which) -> {
+                if (which == 0) {
+                    message(globalEconomyIndex >= 115 ? "The market is booming." :
+                        globalEconomyIndex <= 80 ? "The market is in a downturn." : "The market is relatively stable.");
+                } else {
+                    int cost = which == 1 ? 1000 : 1800;
+                    if (money < cost) { message("You need ₹" + cost + " for this decision."); return; }
+                    money -= cost;
+                    lifetimeExpenses += cost;
+                    if (which == 1) {
+                        assetPortfolio += 1;
+                        reputation = clamp(reputation + 1, 0, 100);
+                    } else {
+                        businessLevel = clamp(businessLevel + 1, 0, 20);
+                        businessIncome += 150;
+                    }
+                    persist();
+                    new AlertDialog.Builder(activity).setTitle("Economic Decision")
+                        .setMessage("Your portfolio has been updated. Current cash: ₹" + money)
+                        .setPositiveButton("OK", (x, y) -> showDashboard()).show();
+                }
+            }).setNegativeButton("BACK", (d, w) -> showDashboard()).show();
+    }
+
+    private void empireCrisisSystem() {
+        String[] choices = {
+            "Hold a transparent family council",
+            "Appoint a trusted mediator",
+            "Invest in organisational stability"
+        };
+        new AlertDialog.Builder(activity).setTitle("🚧 Empire Crisis & Leadership")
+            .setMessage("Unresolved crises: " + Math.max(0, empireCrisisCount - crisisResolvedCount) +
+                "\nCrises encountered: " + empireCrisisCount +
+                "\nCrises resolved: " + crisisResolvedCount +
+                "\nCouncil trust: " + familyCouncilTrust + "/100\n\nChoose a peaceful leadership response.")
+            .setItems(choices, (d, which) -> {
+                int cost = new int[]{0, 400, 1200}[which];
+                if (money < cost) { message("You need ₹" + cost + " for this response."); return; }
+                money -= cost;
+                lifetimeExpenses += cost;
+                crisisResolvedCount = Math.min(empireCrisisCount, crisisResolvedCount + 1);
+                if (which == 0) {
+                    familyCouncilTrust = clamp(familyCouncilTrust + 9, 0, 100);
+                    loyalty = clamp(loyalty + 5, 0, 100);
+                } else if (which == 1) {
+                    familyBond = clamp(familyBond + 5, 0, 100);
+                    diplomacyScore += 2;
+                } else {
+                    reputation = clamp(reputation + 3, 0, 100);
+                    familyCouncilTrust = clamp(familyCouncilTrust + 4, 0, 100);
+                }
+                permanentDecisions++;
+                persist();
+                new AlertDialog.Builder(activity).setTitle("Crisis Response Complete")
+                    .setMessage("Your leadership response has been recorded.\nRemaining crises: " +
+                        Math.max(0, empireCrisisCount - crisisResolvedCount))
+                    .setPositiveButton("CONTINUE", (x, y) -> showDashboard()).show();
+            }).setNegativeButton("BACK", (d, w) -> showDashboard()).show();
+    }
+
+    private void empireEndings() {
+        String[] endings = {
+            "Build a respected legacy",
+            "Retire and hand over leadership",
+            "Pursue the Global Emperor achievement"
+        };
+        new AlertDialog.Builder(activity).setTitle("🏁 Choose Your Empire Ending")
+            .setMessage("Your story is shaped by reputation, family stability, wealth and influence.\n\nCurrent legacy: " +
+                empireEnding + "\nLegacy score: " + legacyScore +
+                "\nDynasty generations: " + dynastyGenerations)
+            .setItems(endings, (d, which) -> {
+                if (which == 0) {
+                    empireEnding = "The Respected Legacy";
+                    legacyScore += 25;
+                    reputation = clamp(reputation + 10, 0, 100);
+                } else if (which == 1) {
+                    if (heirName == null || heirName.trim().isEmpty()) {
+                        message("Name an heir in the Heir & Generational Succession section first.");
+                        return;
+                    }
+                    empireEnding = "The Peaceful Retirement";
+                    legacyScore += 20;
+                    familyBond = clamp(familyBond + 8, 0, 100);
+                } else {
+                    if (globalInfluence < 50 || controlledTerritories < 5) {
+                        message("Reach 50 global influence and control at least 5 territories to unlock this ending.");
+                        return;
+                    }
+                    empireEnding = "The Global Emperor";
+                    legacyScore += 50;
+                    dominationScore = 100;
+                }
+                permanentDecisions++;
+                persist();
+                new AlertDialog.Builder(activity).setTitle("🏆 Ending Unlocked")
+                    .setMessage(empireEnding + "\n\nYour dynasty can continue. This ending records a milestone; it does not delete your save.")
+                    .setPositiveButton("CONTINUE", (x, y) -> showDashboard()).show();
+            }).setNegativeButton("BACK", (d, w) -> showDashboard()).show();
+    }
+
+    private void premiumEmpireAnalytics() {
+        new AlertDialog.Builder(activity).setTitle("📊 Premium Empire Analytics")
+            .setMessage("LIFETIME PERFORMANCE\n\n" +
+                "Total simulated income: ₹" + lifetimeIncome +
+                "\nTotal simulated expenses: ₹" + lifetimeExpenses +
+                "\nCurrent cash: ₹" + money +
+                "\nPeak wealth: ₹" + Math.max(lifetimeWealthPeak, money) +
+                "\nPeak influence: " + Math.max(lifetimeInfluencePeak, globalInfluence) +
+                "\nPeak territories: " + Math.max(lifetimeTerritoriesPeak, controlledTerritories) +
+                "\nRival wealth: ₹" + rivalWealth +
+                "\nRival territories: " + rivalTerritoryCount +
+                "\nFamily bond: " + familyBond + "/100" +
+                "\nFamily ambition: " + familyAmbitionLevel + "/100" +
+                "\nResolved crises: " + crisisResolvedCount + "/" + empireCrisisCount +
+                "\nPermanent decisions: " + permanentDecisions +
+                "\nCurrent ending: " + empireEnding)
+            .setPositiveButton("OK", null).show();
     }
 
     private void notifyChange(String description) {
