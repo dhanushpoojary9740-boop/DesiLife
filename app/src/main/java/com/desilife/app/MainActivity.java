@@ -2453,6 +2453,15 @@ public class MainActivity extends Activity {
             }
         );
 
+        propertyManager.setFinancialEventListener((category, amount, details, cashMovement) -> {
+            if (cashMovement) {
+                money = (int)Math.max(0, Math.min(Integer.MAX_VALUE, money + amount));
+                recordFinancialTransaction(category, amount, money);
+            } else {
+                recordFinancialAssetEvent(category, amount, details);
+            }
+        });
+
         propertyManager.open();
     }
 
@@ -2476,6 +2485,15 @@ public class MainActivity extends Activity {
                 showDashboard();
             }
         );
+
+        businessManager.setFinancialEventListener((category, amount, details, cashMovement) -> {
+            if (cashMovement) {
+                money = (int)Math.max(0, Math.min(Integer.MAX_VALUE, money + amount));
+                recordFinancialTransaction(category, amount, money);
+            } else {
+                recordFinancialAssetEvent(category, amount, details);
+            }
+        });
 
         businessManager.open();
     }

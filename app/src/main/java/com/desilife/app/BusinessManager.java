@@ -27,6 +27,22 @@ public class BusinessManager {
         );
     }
 
+    public interface FinancialEventListener {
+        void onEvent(String category, long amount, String details, boolean cashMovement);
+    }
+
+    private FinancialEventListener financialEventListener;
+
+    public void setFinancialEventListener(FinancialEventListener listener) {
+        this.financialEventListener = listener;
+    }
+
+    private void recordEvent(String category, long amount, String details, boolean cashMovement) {
+        if (amount != 0 && financialEventListener != null) {
+            financialEventListener.onEvent(category, amount, details, cashMovement);
+        }
+    }
+
     private Activity activity;
     private SharedPreferences save;
     private int age, money, health, happiness;
@@ -296,6 +312,10 @@ public class BusinessManager {
 
                     businesses.add(record);
                     businessCount++;
+                    recordEvent("Business startup - " + name, -cost,
+                            "Initial business investment", true);
+                    recordEvent("Business asset acquired - " + name, cost,
+                            "Business opened in " + city, false);
 
                     update(
                             money - cost,
@@ -759,6 +779,15 @@ public class BusinessManager {
                     value + (profit / 2)
             );
 
+            if (newValue != value) {
+                recordEvent("Business valuation - " + b[0],
+                        (long)newValue - value,
+                        "Annual revenue ₹" + revenue
+                                + "; operating expenses ₹" + expenses
+                                + "; operating profit/loss ₹" + profit,
+                        false);
+            }
+
             b[6] = String.valueOf(newValue);
 
             setBusinessData(i, b);
@@ -790,6 +819,13 @@ public class BusinessManager {
                 "\nTotal operating expenses: ₹" + totalExpenses +
                 "\nNet business result: ₹" + net +
                 "\nOutstanding loan: ₹" + loan;
+
+        int actualCashChange = Math.max(0, money + net) - money;
+        recordEvent("Business annual net result", actualCashChange,
+                "Combined yearly business revenue and operating expenses; "
+                        + "operating expenses ₹" + totalExpenses
+                        + "; loan interest is reflected in net result",
+                true);
 
         update(
                 money + net,

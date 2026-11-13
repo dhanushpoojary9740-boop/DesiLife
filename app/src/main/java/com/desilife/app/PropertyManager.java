@@ -25,6 +25,22 @@ public class PropertyManager {
         );
     }
 
+    public interface FinancialEventListener {
+        void onEvent(String category, long amount, String details, boolean cashMovement);
+    }
+
+    private FinancialEventListener financialEventListener;
+
+    public void setFinancialEventListener(FinancialEventListener listener) {
+        this.financialEventListener = listener;
+    }
+
+    private void recordEvent(String category, long amount, String details, boolean cashMovement) {
+        if (amount != 0 && financialEventListener != null) {
+            financialEventListener.onEvent(category, amount, details, cashMovement);
+        }
+    }
+
     private final Activity activity;
     private final SharedPreferences save;
     private final int age;
@@ -243,6 +259,10 @@ public class PropertyManager {
         }
 
         money -= price;
+        recordEvent("Property purchase - " + name, -price,
+                "Purchased " + type + " for ₹" + price, true);
+        recordEvent("Property asset acquired - " + name, price,
+                "Added property to owned assets", false);
 
         properties.add(new Property(
                 name,
@@ -388,11 +408,17 @@ public class PropertyManager {
                     }
 
                     money -= cost;
+                    recordEvent("Property renovation - " + p.name, -cost,
+                            "Renovation and upgrade expense", true);
 
+                    int oldValue = p.value;
                     p.level++;
                     p.condition = Math.min(100, p.condition + 20);
                     p.value += cost + (cost / 2);
                     p.rent += Math.max(1000, p.rent / 5);
+                    recordEvent("Property value increase - " + p.name,
+                            (long)p.value - oldValue,
+                            "Value added after renovation", false);
 
                     saveProperties();
 
@@ -423,6 +449,8 @@ public class PropertyManager {
         }
 
         money += totalRent;
+        recordEvent("Property rental income", totalRent,
+                "Rent collected from owned properties", true);
 
         update("You collected " + formatMoney(totalRent)
                 + " in rental income.");
@@ -460,6 +488,10 @@ public class PropertyManager {
                     }
 
                     money -= total;
+                    recordEvent("Property tax", -taxes,
+                            "Property tax paid", true);
+                    recordEvent("Property maintenance", -maintenance,
+                            "Maintenance paid; property condition improved", true);
 
                     for (Property p : properties) {
                         p.condition = Math.min(100, p.condition + 15);
@@ -496,6 +528,11 @@ public class PropertyManager {
                 )
                 .setPositiveButton("Sell", (dialog, which) -> {
                     money += finalValue;
+                    recordEvent("Property sale - " + p.name, finalValue,
+                            "Sale proceeds; purchase cost ₹" + p.purchasePrice
+                                    + "; realised gain/loss ₹" + profit, true);
+                    recordEvent("Property asset disposed - " + p.name,
+                            -marketValue, "Property removed from owned assets", false);
                     properties.remove(index);
 
                     saveProperties();
