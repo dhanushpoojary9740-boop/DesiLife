@@ -74,6 +74,10 @@ public class MafiaManager {
     private int safehouseLevel;
     private int bossVictories;
     private int legacyScore;
+    private int internationalCities;
+    private int globalAlliances;
+    private int assetPortfolio;
+    private int globalInfluence;
 
     public MafiaManager(Activity activity, SharedPreferences save,
                         int money, int health, int happiness, Callback callback) {
@@ -104,6 +108,10 @@ public class MafiaManager {
         safehouseLevel = save.getInt("mafia_safehouse_level", 0);
         bossVictories = save.getInt("mafia_boss_victories", 0);
         legacyScore = save.getInt("mafia_legacy_score", 0);
+        internationalCities = save.getInt("mafia_global_cities", 0);
+        globalAlliances = save.getInt("mafia_global_alliances", 0);
+        assetPortfolio = save.getInt("mafia_global_assets", 0);
+        globalInfluence = save.getInt("mafia_global_influence", 0);
     }
 
     private void persist() {
@@ -125,6 +133,10 @@ public class MafiaManager {
             .putInt("mafia_safehouse_level", safehouseLevel)
             .putInt("mafia_boss_victories", bossVictories)
             .putInt("mafia_legacy_score", legacyScore)
+            .putInt("mafia_global_cities", internationalCities)
+            .putInt("mafia_global_alliances", globalAlliances)
+            .putInt("mafia_global_assets", assetPortfolio)
+            .putInt("mafia_global_influence", globalInfluence)
             .apply();
     }
 
@@ -179,6 +191,10 @@ public class MafiaManager {
             button(page, "🏢 UNDERGROUND BUSINESS NETWORK", this::businessNetwork);
             button(page, "🚨 POLICE ATTENTION & PRISON", this::policeAndPrison);
             button(page, "👑 MAFIA WORLD DOMINATION", this::worldDomination);
+            button(page, "🌍 INTERNATIONAL NETWORK", this::internationalNetwork);
+            button(page, "🤝 GLOBAL ALLIANCES", this::globalAlliancesMenu);
+            button(page, "💎 WEALTH & ASSET PORTFOLIO", this::globalAssetPortfolio);
+            button(page, "🏆 EMPEROR ACHIEVEMENTS", this::emperorAchievements);
             button(page, "🤝 LEAVE CURRENT GANG", this::leaveGang);
         }
         button(page, "⬅ BACK TO LIFE", activity::recreate);
@@ -646,6 +662,108 @@ public class MafiaManager {
                 notifyChange("You left your organisation. You can join another gang.");
                 showDashboard();
             }).show();
+    }
+
+
+    // International expansion is a fictional, non-violent strategy-game system.
+    private void internationalNetwork() {
+        String[] cities = {"Dubai", "Singapore", "London", "Tokyo", "New York", "Zurich"};
+        String[] actions = new String[cities.length + 1];
+        for (int i = 0; i < cities.length; i++) {
+            actions[i] = (i < internationalCities ? "✓ " : "🌐 ") + cities[i] +
+                (i < internationalCities ? " — established" : " — establish network (₹" + (8000 + i * 4000) + ")");
+        }
+        actions[cities.length] = "Review international network";
+        new AlertDialog.Builder(activity).setTitle("International Network")
+            .setMessage("Build a fictional global organisation through lawful business partnerships, cultural exchanges and reputation campaigns.")
+            .setItems(actions, (d, which) -> {
+                if (which == cities.length) {
+                    message("International cities: " + internationalCities + "/" + cities.length +
+                        "\nGlobal influence: " + globalInfluence +
+                        "\nAlliances: " + globalAlliances);
+                    return;
+                }
+                if (which < internationalCities) { message("Your network is already established in " + cities[which] + "."); return; }
+                if (which != internationalCities) { message("Expand one city at a time to strengthen the network."); return; }
+                final int cost = 8000 + which * 4000;
+                new AlertDialog.Builder(activity).setTitle("Establish in " + cities[which])
+                    .setMessage("Investment required: ₹" + cost + "\nThis creates a fictional international business and reputation presence.")
+                    .setNegativeButton("CANCEL", null).setPositiveButton("INVEST", (x, y) -> {
+                        if (money < cost) { message("You need ₹" + cost + "."); return; }
+                        money -= cost; internationalCities++; globalInfluence += 10;
+                        influence += 5; reputation = clamp(reputation + 3, 0, 100);
+                        dominationScore = clamp(dominationScore + 6, 0, 100);
+                        legacyScore += 5; persist();
+                        notifyChange("Your fictional international network expanded to " + cities[which] + ".");
+                        showDashboard();
+                    }).show();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void globalAlliancesMenu() {
+        String[] partners = {"European Business Council", "Asia-Pacific Trade Forum", "African Development Network", "Americas Leadership Circle", "Global Cultural Foundation"};
+        String[] options = new String[partners.length + 1];
+        for (int i = 0; i < partners.length; i++)
+            options[i] = (i < globalAlliances ? "✓ " : "🤝 ") + partners[i] + (i < globalAlliances ? " — allied" : " — partnership (₹" + (5000 + i * 2500) + ")");
+        options[partners.length] = "Review alliance benefits";
+        new AlertDialog.Builder(activity).setTitle("Global Alliances")
+            .setMessage("Create fictional diplomatic and business partnerships. Each alliance improves global standing.")
+            .setItems(options, (d, which) -> {
+                if (which == partners.length) {
+                    message("Global alliances: " + globalAlliances + "/" + partners.length +
+                        "\nGlobal influence: " + globalInfluence +
+                        "\nBenefits: reputation, influence and legacy bonuses."); return;
+                }
+                if (which < globalAlliances) { message("You already have this partnership."); return; }
+                if (which != globalAlliances) { message("Build partnerships in sequence to grow your diplomatic standing."); return; }
+                int cost = 5000 + which * 2500;
+                if (money < cost) { message("You need ₹" + cost + "."); return; }
+                money -= cost; globalAlliances++; globalInfluence += 8;
+                reputation = clamp(reputation + 4, 0, 100); loyalty = clamp(loyalty + 2, 0, 100);
+                dominationScore = clamp(dominationScore + 4, 0, 100); legacyScore += 4;
+                persist(); notifyChange("A new global partnership was established with " + partners[which] + ".");
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void globalAssetPortfolio() {
+        String[] assets = {"Premium commercial property (₹10,000)", "International hospitality group (₹15,000)",
+            "Technology investment fund (₹20,000)", "Cultural and sports ventures (₹12,000)", "Review portfolio"};
+        new AlertDialog.Builder(activity).setTitle("Wealth & Asset Portfolio")
+            .setMessage("Build a diversified, fictional legal asset portfolio. Assets increase your long-term wealth score.")
+            .setItems(assets, (d, which) -> {
+                if (which == 4) {
+                    message("Portfolio assets: " + assetPortfolio +
+                        "\nPortfolio value invested: ₹" + (assetPortfolio * 10000) +
+                        "\nGlobal influence: " + globalInfluence +
+                        "\nYour portfolio is a game statistic; it does not change real-world finances."); return;
+                }
+                int[] costs = {10000, 15000, 20000, 12000};
+                if (money < costs[which]) { message("You need ₹" + costs[which] + "."); return; }
+                money -= costs[which]; assetPortfolio++;
+                globalInfluence += 6; reputation = clamp(reputation + 2, 0, 100);
+                dominationScore = clamp(dominationScore + 3, 0, 100); legacyScore += 3;
+                persist(); notifyChange("You added a diversified asset to your fictional portfolio.");
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void emperorAchievements() {
+        int score = internationalCities * 10 + globalAlliances * 8 + assetPortfolio * 5 +
+            bossVictories * 5 + lieutenants * 3 + safehouseLevel * 3 + controlledTerritories * 2 + completedMissions;
+        String[] names = {"Global Explorer", "Diplomatic Leader", "Wealth Architect", "Territory Strategist", "Mafia Emperor"};
+        boolean[] unlocked = {internationalCities >= 3, globalAlliances >= 3, assetPortfolio >= 4,
+            controlledTerritories >= 8 && rank >= 5, rank >= 7 &&
+            (dominationScore + globalInfluence + internationalCities * 3 + globalAlliances * 2) >= 90};
+        StringBuilder report = new StringBuilder("EMPEROR ACHIEVEMENTS\n\n");
+        for (int i = 0; i < names.length; i++) report.append(unlocked[i] ? "🏆 " : "🔒 ").append(names[i]).append("\n");
+        report.append("\nGlobal score: ").append(score)
+            .append("\nInternational cities: ").append(internationalCities).append("/6")
+            .append("\nGlobal alliances: ").append(globalAlliances).append("/5")
+            .append("\nPortfolio assets: ").append(assetPortfolio)
+            .append("\nGlobal influence: ").append(globalInfluence);
+        new AlertDialog.Builder(activity).setTitle("Mafia Emperor Achievements")
+            .setMessage(report.toString()).setPositiveButton("OK", null).show();
     }
 
     private void notifyChange(String description) {
