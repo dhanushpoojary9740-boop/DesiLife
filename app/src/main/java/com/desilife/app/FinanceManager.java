@@ -38,10 +38,26 @@ public class FinanceManager {
 
     private LinearLayout content;
     private TransactionListener transactionListener;
+    private AssetEventListener assetEventListener;
     private boolean processingMonthly = false;
 
     public interface TransactionListener {
         void onTransaction(String category, long amount, long balance);
+    }
+
+    public interface AssetEventListener {
+        void onAssetEvent(String category, long change, String details);
+    }
+
+    public void setAssetEventListener(AssetEventListener listener) {
+        this.assetEventListener = listener;
+    }
+
+    private void recordAssetChange(String category, long before, long after, String details) {
+        long change = after - before;
+        if (change != 0 && assetEventListener != null) {
+            assetEventListener.onAssetEvent(category, change, details);
+        }
     }
 
     public void setTransactionListener(TransactionListener listener) {
@@ -112,6 +128,14 @@ public class FinanceManager {
                 cash,
                 this::updateCash
         );
+        insuranceManager.setPremiumPaymentListener((policyType, amount, remainingCash) -> {
+            if (transactionListener != null) {
+                transactionListener.onTransaction(
+                        "Insurance premium: " + policyType,
+                        -amount,
+                        remainingCash);
+            }
+        });
 
         investmentManager = new InvestmentManager(
                 activity,
@@ -287,6 +311,9 @@ public class FinanceManager {
             }
         }
 
+        String assetHistory = gameSave.getString("asset_history", "");
+        assetHistory = assetHistory.replace("\\n", "\n").trim();
+
         long totalIncome = 0;
         long totalExpense = 0;
 
@@ -362,6 +389,25 @@ public class FinanceManager {
                 background(Color.rgb(239, 244, 247)));
 
         screen.addView(summary);
+
+        TextView assetTitle = new TextView(activity);
+        assetTitle.setText("BANK & INVESTMENT ASSET CHANGES");
+        assetTitle.setTextColor(Color.rgb(25, 75, 110));
+        assetTitle.setTextSize(14);
+        assetTitle.setTypeface(null, Typeface.BOLD);
+        assetTitle.setPadding(4, 12, 4, 6);
+        screen.addView(assetTitle);
+
+        TextView assetContent = new TextView(activity);
+        assetContent.setText(assetHistory.isEmpty()
+                ? "No bank or investment asset changes recorded yet."
+                : assetHistory.replace("\\n", "\n"));
+        assetContent.setTextColor(Color.rgb(45, 55, 65));
+        assetContent.setTextSize(12);
+        assetContent.setLineSpacing(3, 1.0f);
+        assetContent.setPadding(12, 10, 12, 10);
+        assetContent.setBackground(background(Color.rgb(239, 244, 247)));
+        screen.addView(assetContent);
 
         TextView monthlyTitle = new TextView(activity);
         monthlyTitle.setText("MONTHLY TOTALS");
@@ -811,29 +857,43 @@ public class FinanceManager {
                 }
             }
 
-            // BANK
+            // BANK: keep cash movements separate from changes in bank assets.
 
             long before = cash;
-
+            long bankBefore = bankManager.getTotalBankBalance();
             bankManager.applyMonthlyBanking();
-
             syncCash();
+            recordDelta("Recurring deposit installment", before);
+            recordAssetChange("Bank balance change", bankBefore,
+                    bankManager.getTotalBankBalance(),
+                    "Savings, current account, fixed deposit and recurring deposit balances");
 
-            recordDelta(
-                    "Bank interest, fees and deposits",
-                    before);
-
-            // INVESTMENTS
+            // INVESTMENTS: cash dividends/SIP remain cash transactions;
+            // portfolio valuation changes are recorded as asset events.
 
             before = cash;
-
+            long portfolioBefore = investmentManager.getPortfolioValue();
+            long dividendsBefore = investmentManager.getTotalDividends();
             investmentManager.applyMonthlyInvestmentUpdate();
-
             syncCash();
-
-            recordDelta(
-                    "Investments and monthly SIP",
-                    before);
+            long dividendChange = Math.max(0,
+                    investmentManager.getTotalDividends() - dividendsBefore);
+            long investmentCashChange = cash - before;
+            long sipDebit = Math.max(0, dividendChange - investmentCashChange);
+            if (sipDebit > 0 && transactionListener != null) {
+                transactionListener.onTransaction(
+                        "Monthly investment SIP", -sipDebit, before - sipDebit);
+            }
+            if (dividendChange > 0 && transactionListener != null) {
+                transactionListener.onTransaction(
+                        "Investment dividend received", dividendChange, cash);
+            }
+            recordAssetChange("Investment portfolio market movement",
+                    portfolioBefore, investmentManager.getPortfolioValue(),
+                    "Change in market value; this is not a cash transaction");
+            recordAssetChange("Investment dividends accumulated",
+                    dividendsBefore, investmentManager.getTotalDividends(),
+                    "Cumulative dividends received by the portfolio");
 
         } finally {
 
@@ -858,8 +918,6 @@ public class FinanceManager {
 
         syncCash();
 
-        long beforeInsurance = cash;
-
         processingMonthly = true;
 
         try {
@@ -872,10 +930,6 @@ public class FinanceManager {
 
             processingMonthly = false;
         }
-
-        recordDelta(
-                "Annual insurance premiums",
-                beforeInsurance);
 
         prefs.edit()
                 .putLong("last_cash", cash)

@@ -64,6 +64,16 @@ public class InsuranceManager {
     private long totalClaimsReceived;
     private long totalClaimsSubmitted;
 
+    public interface PremiumPaymentListener {
+        void onPremiumPaid(String policyType, long amount, long remainingCash);
+    }
+
+    private PremiumPaymentListener premiumPaymentListener;
+
+    public void setPremiumPaymentListener(PremiumPaymentListener listener) {
+        this.premiumPaymentListener = listener;
+    }
+
     private static final String PREF = "desilife_insurance_data";
 
     private LinearLayout content;
@@ -788,6 +798,11 @@ public class InsuranceManager {
             if (cash >= p.premium) {
 
                 updateCash(cash - p.premium);
+
+                if (premiumPaymentListener != null) {
+                    premiumPaymentListener.onPremiumPaid(
+                            p.type, p.premium, cash);
+                }
 
                 totalPremiumPaid = safeAdd(
                         totalPremiumPaid, p.premium

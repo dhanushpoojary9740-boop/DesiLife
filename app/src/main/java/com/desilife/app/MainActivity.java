@@ -287,6 +287,34 @@ public class MainActivity extends Activity {
         saveGame();
     }
 
+    void recordFinancialAssetEvent(String category, long change, String details) {
+        if (change == 0) return;
+
+        String sign = change > 0 ? "+₹" : "-₹";
+        String entry = "Age " + getFormattedAge()
+                + " | " + category
+                + " | " + sign + Math.abs(change)
+                + " | " + details;
+
+        String old = save.getString("asset_history", "");
+        String updated = old.isEmpty() ? entry : old + "\\n" + entry;
+        String[] entries = updated.split("\\n");
+
+        if (entries.length > 300) {
+            StringBuilder trimmed = new StringBuilder();
+            for (int i = entries.length - 300; i < entries.length; i++) {
+                if (trimmed.length() > 0) trimmed.append("\\n");
+                trimmed.append(entries[i]);
+            }
+            updated = trimmed.toString();
+        }
+
+        save.edit().putString("asset_history", updated).apply();
+        addLifeEvent("Financial asset update: " + category + " "
+                + sign + Math.abs(change) + " (" + details + ").");
+        saveGame();
+    }
+
     String getFormattedAge() {
         if (ageMonths == 0) return age + (age == 1 ? " year" : " years");
         return age + (age == 1 ? " year, " : " years, ")
@@ -1939,6 +1967,10 @@ public class MainActivity extends Activity {
             money = (int)Math.max(
                     0, Math.min(Integer.MAX_VALUE, balance));
             recordFinancialTransaction(category, amount, balance);
+        });
+
+        manager.setAssetEventListener((category, change, details) -> {
+            recordFinancialAssetEvent(category, change, details);
         });
 
         return manager;
