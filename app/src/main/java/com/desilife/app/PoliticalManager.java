@@ -98,7 +98,7 @@ public class PoliticalManager {
     private void showDashboard() {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(24, 25, 24, 30);
+        root.setPadding(18, 20, 18, 26);
         root.setBackgroundColor(dark);
 
         ScrollView scroll = new ScrollView(activity);
@@ -140,7 +140,7 @@ public class PoliticalManager {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(16, 12, 16, 12);
-        card.setBackground(background(Color.rgb(23, 39, 35), 14));
+        card.setBackground(background(Color.rgb(28, 58, 50), 14));
 
         TextView heading = new TextView(activity);
         heading.setText(label);
@@ -178,7 +178,8 @@ public class PoliticalManager {
         button.setTypeface(null, Typeface.BOLD);
         button.setGravity(Gravity.CENTER);
         button.setPadding(14, 17, 14, 17);
-        button.setBackground(background(gold, 14));
+        button.setBackground(background(Color.rgb(239, 202, 126), 18));
+        button.setElevation(3);
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(
@@ -193,7 +194,7 @@ public class PoliticalManager {
 
     private void addDivider(LinearLayout root) {
         TextView divider = new TextView(activity);
-        divider.setBackgroundColor(Color.rgb(65, 75, 68));
+        divider.setBackgroundColor(Color.rgb(76, 105, 89));
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, 1

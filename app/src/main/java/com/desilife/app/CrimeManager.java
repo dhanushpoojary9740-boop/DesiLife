@@ -97,7 +97,7 @@ public class CrimeManager {
 
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(20, 20, 20, 30);
+        root.setPadding(18, 20, 18, 26);
 
         scroll.addView(root);
 
@@ -695,14 +695,14 @@ public class CrimeManager {
         TextView button = new TextView(activity);
 
         button.setText(value);
-        button.setTextColor(white);
+        button.setTextColor(Color.rgb(25, 48, 39));
         button.setTextSize(16);
         button.setTypeface(null, Typeface.BOLD);
         button.setGravity(Gravity.CENTER);
         button.setPadding(12, 17, 12, 17);
 
         GradientDrawable background = new GradientDrawable();
-        background.setColor(card);
+        background.setColor(Color.rgb(239, 202, 126));
         background.setCornerRadius(18);
         background.setStroke(1, gold);
 

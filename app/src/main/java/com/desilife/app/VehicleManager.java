@@ -119,7 +119,7 @@ public class VehicleManager {
 
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(20, 25, 20, 25);
+        root.setPadding(18, 20, 18, 26);
 
         scroll.addView(root);
 
@@ -475,7 +475,9 @@ public class VehicleManager {
         TextView button = text(value, 15, dark);
         button.setGravity(Gravity.CENTER);
         button.setTypeface(null, Typeface.BOLD);
-        button.setBackground(shape(gold, 16));
+        button.setBackground(shape(Color.rgb(239, 202, 126), 18));
+        button.setElevation(3);
+        button.setPadding(14, 16, 14, 16);
         button.setPadding(12, 15, 12, 15);
 
         LinearLayout.LayoutParams params =

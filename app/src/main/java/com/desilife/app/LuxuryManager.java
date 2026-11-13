@@ -21,7 +21,7 @@ public class LuxuryManager {
 
     private final int gold = Color.rgb(226,184,105);
     private final int bg = Color.rgb(12,25,23);
-    private final int card = Color.rgb(35,45,62);
+    private final int card = Color.rgb(28,58,50);
     private final int white = Color.WHITE;
 
     public interface MoneyListener {
@@ -144,7 +144,9 @@ public class LuxuryManager {
         LinearLayout root,String title,Runnable action
     ) {
         TextView b = text(title,14,bg,true);
-        b.setBackground(shape(gold,18));
+        b.setBackground(shape(Color.rgb(239,202,126),18));
+        b.setElevation(3);
+        b.setPadding(14,15,14,15);
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
