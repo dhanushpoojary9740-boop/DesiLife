@@ -825,6 +825,12 @@ public class PublicServiceManager {
 
         if (job.isEmpty()) return;
 
+        // Prevent duplicate service-year, salary, and pension updates
+        // if annual progression is triggered more than once at the same age.
+        int lastUpdatedAge = getInt("last_annual_update_age", -1);
+        if (lastUpdatedAge == age) return;
+        putInt("last_annual_update_age", age);
+
         String status = getString("status", "Active");
 
         if (status.equals("Active")) {
