@@ -662,9 +662,10 @@ public class PrivateCareerManager {
 
         int level = getInt("level", 0);
         int performance = getInt("performance", 50);
+        Company company = findCompany(getString("company", ""));
 
-        if (level >= 3) {
-            message("You have reached the highest position.");
+        if (company == null || level + 1 >= company.positions.length) {
+            message("You have reached the highest position in this company career path.");
             return;
         }
 
@@ -674,51 +675,60 @@ public class PrivateCareerManager {
 
         if (experience < requiredYears) {
             message("Promotion requirement not met.\n\n"
-                    + "Required experience: " + requiredYears + " years"
+                    + "Current position: " + job
+                    + "\nNext position: " + company.positions[level + 1]
+                    + "\nRequired experience: " + requiredYears + " years"
                     + "\nYour experience: " + experience + " years.");
             return;
         }
 
         if (performance < requiredPerformance) {
             message("Promotion requirement not met.\n\n"
-                    + "Required performance: " + requiredPerformance + "%"
+                    + "Current position: " + job
+                    + "\nNext position: " + company.positions[level + 1]
+                    + "\nRequired performance: " + requiredPerformance + "%"
                     + "\nYour performance: " + performance + "%.");
             return;
         }
 
-        final int chance = Math.min(90, 30 + performance / 2
-                + getInt("experience", 0));
+        final int chance = Math.min(90, 30 + performance / 2 + experience);
+        final int nextLevel = level + 1;
 
-        if (random.nextInt(100) < chance) {
-            Company c = findCompany(getString("company", ""));
+        new AlertDialog.Builder(activity)
+                .setTitle("Private Career Promotion")
+                .setMessage("Company: " + getString("company", "")
+                        + "\nCurrent Grade: " + job
+                        + "\nNext Grade: " + company.positions[nextLevel]
+                        + "\n\nEligibility: QUALIFIED"
+                        + "\nRequired Experience: " + requiredYears + " years"
+                        + "\nYour Experience: " + experience + " years"
+                        + "\nRequired Performance: " + requiredPerformance + "%"
+                        + "\nYour Performance: " + performance + "%"
+                        + "\n\nEstimated Promotion Chance: " + chance + "%"
+                        + "\n\nSubmit promotion request?")
+                .setPositiveButton("Request", (dialog, which) -> {
+                    if (random.nextInt(100) < chance) {
+                        putInt("level", nextLevel);
+                        putString("job", company.positions[nextLevel]);
 
-            if (c == null || level + 1 >= c.positions.length) {
-                message("No further position is available.");
-                return;
-            }
+                        int salary = getInt("salary", 0);
+                        int updatedSalary = (int) Math.min(
+                                Integer.MAX_VALUE,
+                                (long) salary + Math.max(3000, salary / 5)
+                        );
+                        putInt("salary", updatedSalary);
 
-            level++;
-
-            putInt("level", level);
-            putString("job", c.positions[level]);
-
-            int salary = getInt("salary", 0);
-            int updatedSalary = (int) Math.min(
-                    Integer.MAX_VALUE,
-                    (long) salary + Math.max(3000, salary / 5)
-            );
-
-            putInt("salary", updatedSalary);
-
-            notifyUpdate("Congratulations! You were promoted to "
-                    + c.positions[level] + ". Salary: ₹" + updatedSalary);
-
-        } else {
-            happiness = Math.max(0, happiness - 3);
-            notifyUpdate("Your promotion request was not approved.");
-        }
-
-        showJobRecord();
+                        notifyUpdate("Congratulations! You were promoted to "
+                                + company.positions[nextLevel]
+                                + ". Salary: ₹" + updatedSalary);
+                    } else {
+                        happiness = Math.max(0, happiness - 3);
+                        notifyUpdate("Your promotion request was not approved.");
+                    }
+                    showJobRecord();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void showSalary() {
