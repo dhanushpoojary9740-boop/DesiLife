@@ -133,7 +133,7 @@ public class FamilyManager {
 
         root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(22,25,22,30);
+        root.setPadding(18,18,18,26);
         root.setGravity(Gravity.CENTER_HORIZONTAL);
         root.setBackgroundColor(bg);
 
@@ -156,7 +156,7 @@ public class FamilyManager {
     private void addDivider() {
 
         TextView line = new TextView(activity);
-        line.setBackgroundColor(Color.rgb(75,75,65));
+        line.setBackgroundColor(Color.rgb(76,105,89));
 
         LinearLayout.LayoutParams params =
             new LinearLayout.LayoutParams(-1,1);
@@ -173,7 +173,7 @@ public class FamilyManager {
         button.setTextSize(14);
         button.setTypeface(null,Typeface.BOLD);
         button.setAllCaps(false);
-        button.setBackground(background(gold));
+        button.setBackground(background(Color.rgb(239,202,126)));
 
         LinearLayout.LayoutParams params =
             new LinearLayout.LayoutParams(-1,-2);

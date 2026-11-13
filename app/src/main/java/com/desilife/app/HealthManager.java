@@ -108,7 +108,9 @@ public class HealthManager {
             value,15,dark,true
         );
 
-        button.setBackground(shape(gold,20));
+        button.setBackground(shape(Color.rgb(239,202,126),18));
+        button.setElevation(3);
+        button.setPadding(14,15,14,15);
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);

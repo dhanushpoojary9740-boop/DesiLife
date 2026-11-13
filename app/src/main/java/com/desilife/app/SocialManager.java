@@ -110,7 +110,8 @@ public class SocialManager {
     void button(String value, Runnable action) {
         TextView b = text(value, 15, bg);
         b.setTypeface(null, Typeface.BOLD);
-        b.setBackground(shape(gold, 22));
+        b.setBackground(shape(Color.rgb(239,202,126), 18));
+        b.setElevation(3);
         b.setPadding(12, 15, 12, 15);
 
         LinearLayout.LayoutParams p =
@@ -139,7 +140,7 @@ public class SocialManager {
 
         root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(18, 18, 18, 28);
+        root.setPadding(18,18,18,26);
         root.setBackgroundColor(bg);
 
         scroll.addView(root);

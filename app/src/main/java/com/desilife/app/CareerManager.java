@@ -135,7 +135,9 @@ public class CareerManager {
         TextView b = text(label,16,dark);
         b.setGravity(Gravity.CENTER);
         b.setTypeface(null,Typeface.BOLD);
-        b.setBackground(shape(gold,18));
+        b.setBackground(shape(Color.rgb(239,202,126),18));
+        b.setElevation(3);
+        b.setPadding(14,15,14,15);
 
         LinearLayout.LayoutParams p =
                 new LinearLayout.LayoutParams(-1,-2);
@@ -280,7 +282,7 @@ public class CareerManager {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(12,8,12,8);
-        card.setBackground(shape(Color.rgb(35,45,62),15));
+        card.setBackground(shape(Color.rgb(28,58,50),15));
 
         card.addView(text(title,13,Color.LTGRAY));
         card.addView(text(value,20,white));
