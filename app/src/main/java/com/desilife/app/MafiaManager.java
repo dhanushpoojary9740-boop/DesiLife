@@ -69,6 +69,11 @@ public class MafiaManager {
     private int businessIncome;
     private int prisonYears;
     private int dominationScore;
+    private int loyalty;
+    private int lieutenants;
+    private int safehouseLevel;
+    private int bossVictories;
+    private int legacyScore;
 
     public MafiaManager(Activity activity, SharedPreferences save,
                         int money, int health, int happiness, Callback callback) {
@@ -94,6 +99,11 @@ public class MafiaManager {
         businessIncome = save.getInt("mafia_business_income", 0);
         prisonYears = save.getInt("mafia_prison_years", 0);
         dominationScore = save.getInt("mafia_domination", 0);
+        loyalty = save.getInt("mafia_loyalty", 50);
+        lieutenants = save.getInt("mafia_lieutenants", 0);
+        safehouseLevel = save.getInt("mafia_safehouse_level", 0);
+        bossVictories = save.getInt("mafia_boss_victories", 0);
+        legacyScore = save.getInt("mafia_legacy_score", 0);
     }
 
     private void persist() {
@@ -110,6 +120,11 @@ public class MafiaManager {
             .putInt("mafia_business_income", businessIncome)
             .putInt("mafia_prison_years", prisonYears)
             .putInt("mafia_domination", dominationScore)
+            .putInt("mafia_loyalty", loyalty)
+            .putInt("mafia_lieutenants", lieutenants)
+            .putInt("mafia_safehouse_level", safehouseLevel)
+            .putInt("mafia_boss_victories", bossVictories)
+            .putInt("mafia_legacy_score", legacyScore)
             .apply();
     }
 
@@ -156,6 +171,10 @@ public class MafiaManager {
             button(page, "🏙 EXPAND INTO A NEW TERRITORY", this::expandTerritory);
             button(page, "⚔ RIVAL GANG CHALLENGE", this::rivalChallenge);
             button(page, "👥 GANG MANAGEMENT", this::gangManagement);
+            button(page, "⚔ RIVAL BOSS SHOWDOWN", this::bossShowdown);
+            button(page, "🤝 LOYALTY & FAMILY HIERARCHY", this::familyHierarchy);
+            button(page, "🏠 SAFEHOUSE NETWORK", this::safehouseNetwork);
+            button(page, "📜 LEGACY & GENERATION RECORD", this::legacyRecord);
             button(page, "🏆 RANK & EMPIRE PROGRESS", this::showProgress);
             button(page, "🏢 UNDERGROUND BUSINESS NETWORK", this::businessNetwork);
             button(page, "🚨 POLICE ATTENTION & PRISON", this::policeAndPrison);
@@ -182,6 +201,8 @@ public class MafiaManager {
                 controlledTerritories = 0;
                 rivalWins = 0;
                 heat = 0;
+                loyalty = 55;
+                lieutenants = 0;
                 persist();
                 notifyChange("You joined " + gang + " as a Street Recruit.");
                 showDashboard();
@@ -481,6 +502,137 @@ public class MafiaManager {
                 notifyChange("PROMOTION! You are now " + ranks[rank] + ".");
             } else break;
         }
+    }
+
+
+    /**
+     * Fictional strategy encounters. Outcomes are abstracted into reputation,
+     * morale and influence; no real-world violence or criminal tactics.
+     */
+    private void bossShowdown() {
+        if (prisonYears > 0) { message("Complete your sentence before taking part in a boss showdown."); return; }
+        String[] rivals = {"The Iron Crown", "The Eastern Council", "The Sapphire Circle", "The Crimson House"};
+        String rival = rivals[Math.min(bossVictories, rivals.length - 1)];
+        String[] approaches = {"Negotiation and alliance", "Business leadership contest", "Public reputation challenge"};
+        new AlertDialog.Builder(activity).setTitle("Rival Boss: " + rival)
+            .setMessage("Choose an abstract strategy challenge. Your reputation, influence and team loyalty affect the result.")
+            .setItems(approaches, (d, which) -> {
+                int chance = 38 + reputation / 5 + influence / 8 + loyalty / 10 + rank * 3;
+                if (which == 0) chance += 12;
+                else if (which == 1) chance += 7;
+                chance = Math.min(92, chance);
+                if (random.nextInt(100) < chance) {
+                    bossVictories++;
+                    rivalWins++;
+                    reputation = clamp(reputation + 8, 0, 100);
+                    influence += 12;
+                    loyalty = clamp(loyalty + 5, 0, 100);
+                    dominationScore = clamp(dominationScore + 8, 0, 100);
+                    legacyScore += 10;
+                    money += 2500 + bossVictories * 500;
+                    checkPromotion();
+                    notifyChange("Victory! Your leadership outperformed " + rival + ". Your organisation gained influence, loyalty and a legacy milestone.");
+                } else {
+                    reputation = Math.max(0, reputation - 4);
+                    loyalty = Math.max(0, loyalty - 8);
+                    happiness = Math.max(0, happiness - 3);
+                    heat = clamp(heat + 4, 0, 100);
+                    notifyChange(rival + " won the leadership contest. Your organisation must rebuild morale.");
+                }
+                persist();
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void familyHierarchy() {
+        String[] actions = {
+            "Appoint a lieutenant (₹2,000)",
+            "Hold a family council",
+            "Review loyalty and hierarchy",
+            "Recognise a trusted member"
+        };
+        new AlertDialog.Builder(activity).setTitle("Mafia Family & Loyalty")
+            .setItems(actions, (d, which) -> {
+                if (which == 0) {
+                    if (rank < 2 || money < 2000) {
+                        message("Reach Enforcer rank and have ₹2,000 to appoint a lieutenant.");
+                        return;
+                    }
+                    money -= 2000;
+                    lieutenants = Math.min(5, lieutenants + 1);
+                    loyalty = clamp(loyalty + 7, 0, 100);
+                    influence += 5;
+                    legacyScore += 2;
+                    notifyChange("A trusted lieutenant joined your fictional leadership council.");
+                } else if (which == 1) {
+                    loyalty = clamp(loyalty + 10, 0, 100);
+                    happiness = clamp(happiness + 3, 0, 100);
+                    notifyChange("The family council improved communication and team morale.");
+                } else if (which == 2) {
+                    message("Gang loyalty: " + loyalty + "/100\nLieutenants: " + lieutenants +
+                        "\nCurrent rank: " + ranks[Math.min(rank, ranks.length - 1)] +
+                        "\n\nLow loyalty can trigger a fictional departure event after a failed boss showdown.");
+                    return;
+                } else {
+                    loyalty = clamp(loyalty + 5, 0, 100);
+                    reputation = clamp(reputation + 2, 0, 100);
+                    notifyChange("You recognised a trusted member and strengthened the family.");
+                }
+                persist();
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void safehouseNetwork() {
+        String[] actions = {
+            "Acquire a safehouse (₹4,000)",
+            "Upgrade safehouse network (₹3,500)",
+            "Review safehouse assets"
+        };
+        new AlertDialog.Builder(activity).setTitle("Safehouse Network")
+            .setMessage("Safehouses are fictional strategy-game properties that provide stability and legacy points.")
+            .setItems(actions, (d, which) -> {
+                if (which == 0) {
+                    if (safehouseLevel >= 5) { message("Your safehouse network is fully developed."); return; }
+                    if (money < 4000) { message("You need ₹4,000."); return; }
+                    money -= 4000;
+                    safehouseLevel++;
+                    loyalty = clamp(loyalty + 3, 0, 100);
+                    legacyScore += 4;
+                    dominationScore = clamp(dominationScore + 3, 0, 100);
+                    notifyChange("You acquired a new fictional safehouse. Your network is now level " + safehouseLevel + ".");
+                } else if (which == 1) {
+                    if (safehouseLevel == 0) { message("Acquire a safehouse first."); return; }
+                    if (money < 3500) { message("You need ₹3,500."); return; }
+                    money -= 3500;
+                    safehouseLevel = Math.min(5, safehouseLevel + 1);
+                    reputation = clamp(reputation + 2, 0, 100);
+                    legacyScore += 3;
+                    notifyChange("Your safehouse network received a comfort and facilities upgrade.");
+                } else {
+                    message("Safehouse network level: " + safehouseLevel + "/5\nLeadership council: " + lieutenants +
+                        "\nLegacy points: " + legacyScore);
+                    return;
+                }
+                persist();
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void legacyRecord() {
+        int total = legacyScore + bossVictories * 5 + lieutenants * 3 + safehouseLevel * 4 +
+            completedMissions + controlledTerritories * 2;
+        String tier = total >= 150 ? "Legendary Dynasty" : total >= 90 ? "Powerful Family" :
+            total >= 40 ? "Rising Legacy" : "Legacy in the Making";
+        new AlertDialog.Builder(activity).setTitle("Family Legacy")
+            .setMessage("Legacy tier: " + tier + "\nLegacy score: " + total +
+                "\nBoss victories: " + bossVictories +
+                "\nLieutenants appointed: " + lieutenants +
+                "\nSafehouse network: " + safehouseLevel + "/5" +
+                "\nMissions completed: " + completedMissions +
+                "\nTerritories influenced: " + controlledTerritories +
+                "\n\nYour character's achievements are saved as a permanent career record.")
+            .setPositiveButton("OK", null).show();
     }
 
     private void leaveGang() {
