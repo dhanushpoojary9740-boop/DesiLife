@@ -127,6 +127,7 @@ public class PoliticalManager {
         addButton(root, "🗳️ Join a Political Party", this::joinParty);
         addButton(root, "📢 Run a Political Campaign", this::campaign);
         addButton(root, "🏆 Contest an Election", this::contestElection);
+        addButton(root, "🎖️ Political Leadership Advancement", this::seekLeadershipPosition);
         addButton(root, "📜 Introduce a Public Policy", this::introducePolicy);
         addButton(root, "🤝 Public Service", this::publicService);
         addButton(root, "📰 Handle a Political Scandal", this::handleScandal);
@@ -372,6 +373,90 @@ public class PoliticalManager {
 
             update("You lost the election. Your campaign expense was ₹" +
                     campaignCost + ". Work harder and improve your public approval before the next election.");
+        }
+    }
+
+    private void seekLeadershipPosition() {
+        if (party.isEmpty()) {
+            showMessage("Join a Political Party",
+                    "You must join a political party before progressing in politics.");
+            return;
+        }
+
+        String nextPosition;
+        int requiredPopularity;
+        int requiredWins;
+        int requiredYears;
+
+        if (office.equals("Ordinary Citizen")) {
+            nextPosition = "Local Party Worker";
+            requiredPopularity = 10;
+            requiredWins = 0;
+            requiredYears = 1;
+        } else if (office.equals("Local Party Worker")) {
+            nextPosition = "Ward / Block Party President";
+            requiredPopularity = 25;
+            requiredWins = 0;
+            requiredYears = 2;
+        } else if (office.equals("Ward / Block Party President")) {
+            nextPosition = "District Party President";
+            requiredPopularity = 40;
+            requiredWins = 0;
+            requiredYears = 3;
+        } else if (office.equals("Municipal Councillor")) {
+            nextPosition = "Municipal Chairperson";
+            requiredPopularity = 45;
+            requiredWins = 1;
+            requiredYears = 2;
+        } else if (office.equals("Member of Legislative Assembly (MLA)")) {
+            nextPosition = "State Minister";
+            requiredPopularity = 55;
+            requiredWins = 1;
+            requiredYears = 2;
+        } else if (office.equals("State Minister")) {
+            nextPosition = "Chief Minister";
+            requiredPopularity = 80;
+            requiredWins = 2;
+            requiredYears = 4;
+        } else if (office.equals("Member of Parliament (MP)")) {
+            nextPosition = "Union Minister";
+            requiredPopularity = 60;
+            requiredWins = 1;
+            requiredYears = 2;
+        } else if (office.equals("Union Minister")) {
+            nextPosition = "Prime Minister";
+            requiredPopularity = 90;
+            requiredWins = 3;
+            requiredYears = 5;
+        } else {
+            showMessage("Leadership Progression",
+                    "Your current political position has no further automatic appointment route. Continue serving, winning elections and building party support.");
+            return;
+        }
+
+        if (popularity < requiredPopularity
+                || electionWins < requiredWins
+                || politicalYears < requiredYears) {
+            showMessage("Promotion Requirements",
+                    "Next position: " + nextPosition
+                            + "\\\nRequired public approval: " + requiredPopularity + "%"
+                            + "\\\nYour public approval: " + popularity + "%"
+                            + "\\\nRequired election wins: " + requiredWins
+                            + "\\\nYour election wins: " + electionWins
+                            + "\\\nRequired political experience: " + requiredYears + " years"
+                            + "\\\nYour experience: " + politicalYears + " years");
+            return;
+        }
+
+        int chance = Math.min(90, 25 + popularity / 2
+                + electionWins * 8 - scandals * 5);
+        if (random.nextInt(100) < chance) {
+            office = nextPosition;
+            update("Political advancement achieved! You are now "
+                    + nextPosition + ".");
+        } else {
+            popularity = Math.max(0, popularity - 2);
+            update("Your party leadership advancement request was not approved. Continue building public trust.");
         }
     }
 

@@ -520,8 +520,21 @@ public class PublicServiceManager {
             return;
         }
 
-        if (performance < 60) {
-            message("Improve your work performance to at least 60% before requesting a promotion.");
+        int serviceYears = getInt("service_years", 0);
+        int requiredYears = 1 + (level * 2);
+        int requiredPerformance = 60 + (level * 5);
+
+        if (serviceYears < requiredYears) {
+            message("Promotion requirement not met.\n\n"
+                    + "Required service: " + requiredYears + " years"
+                    + "\nYour service: " + serviceYears + " years.");
+            return;
+        }
+
+        if (performance < requiredPerformance) {
+            message("Promotion requirement not met.\n\n"
+                    + "Required performance: " + requiredPerformance + "%"
+                    + "\nYour performance: " + performance + "%.");
             return;
         }
 

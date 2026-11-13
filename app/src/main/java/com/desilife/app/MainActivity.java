@@ -1611,41 +1611,36 @@ public class MainActivity extends Activity {
         );
     }
 
-    // CAREER HUB - CONNECTS ALL EXISTING CAREER SYSTEMS
-
+    // DEDICATED CAREER DASHBOARD
     void openCareer() {
+        CareerDashboardManager dashboard = new CareerDashboardManager(
+            this, save, age, money,
+            new CareerDashboardManager.CareerActions() {
+                @Override public void generalCareer() { openGeneralCareer(); }
+                @Override public void governmentExams() { openGovernmentExams(); }
+                @Override public void governmentService() { openPublicServiceCareer(); }
+                @Override public void privateCareer() { openPrivateCareer(); }
+                @Override public void employment() { openGeneralEmployment(); }
+                @Override public void politics() { openPoliticalCareer(); }
+                @Override public void back() { showDashboard(); }
+            }
+        );
+        dashboard.open();
+    }
 
-        String[] careerOptions = {
-            "💼 General Careers",
-            "🏛️ Government Competitive Exams",
-            "🇮🇳 Karnataka & Central Government Service",
-            "🏢 Private Company Careers",
-            "👔 General Employment"
-        };
-
-        new android.app.AlertDialog.Builder(this)
-            .setTitle("💼 CAREER CENTRE")
-            .setItems(careerOptions, (dialog, which) -> {
-                switch (which) {
-                    case 0:
-                        openGeneralCareer();
-                        break;
-                    case 1:
-                        openGovernmentExams();
-                        break;
-                    case 2:
-                        openPublicServiceCareer();
-                        break;
-                    case 3:
-                        openPrivateCareer();
-                        break;
-                    case 4:
-                        openGeneralEmployment();
-                        break;
-                }
-            })
-            .setNegativeButton("BACK", null)
-            .show();
+    // POLITICAL CAREER
+    void openPoliticalCareer() {
+        PoliticalManager manager = new PoliticalManager(
+            this, save, age, money, health, happiness,
+            (newMoney, newHealth, newHappiness, description) -> {
+                money = Math.max(0, newMoney);
+                health = Math.max(0, Math.min(100, newHealth));
+                happiness = Math.max(0, Math.min(100, newHappiness));
+                addLifeEvent(description);
+                saveGame();
+            }
+        );
+        manager.open();
     }
 
     // 1. GENERAL CAREERS

@@ -613,6 +613,18 @@ public class EmploymentManager {
             String sector
     ) {
 
+        String requirement = getJobRequirement(selectedJob);
+        String missing = getJobEligibilityFailure(selectedJob);
+        if (!missing.isEmpty()) {
+            showMessage(
+                    "Application Not Eligible",
+                    "Position: " + selectedJob
+                            + "\nRequired qualification: " + requirement
+                            + "\n\nYou cannot apply yet. " + missing
+            );
+            return;
+        }
+
         jobApplications++;
 
         int chance = 40;
@@ -645,6 +657,8 @@ public class EmploymentManager {
                 .setMessage(
                         "Position: " + selectedJob
                                 + "\nSector: " + sector
+                                + "\nRequired Qualification: " + getJobRequirement(selectedJob)
+                                + "\nYour Qualification: " + getPlayerQualification()
                                 + "\nMonthly Salary: ₹" + salary
                                 + "\nEstimated Selection Chance: "
                                 + finalChance + "%"
@@ -681,6 +695,171 @@ public class EmploymentManager {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    // ---------------- JOB QUALIFICATION RULES ----------------
+
+    private String getPlayerQualification() {
+        String level = save.getString("edu_level",
+                save.getString("education_level", "Not completed"));
+        String course = save.getString("edu_course", "");
+        boolean graduated = save.getBoolean("edu_graduated",
+                save.getBoolean("degreeCompleted", false));
+        if (!graduated && (level.contains("Degree") || level.contains("Undergraduate"))) {
+            level += " (in progress)";
+        }
+        return level + (course.isEmpty() ? "" : " - " + course);
+    }
+
+    private int getEducationRank() {
+        String level = save.getString("edu_level",
+                save.getString("education_level", "")).toLowerCase();
+        boolean graduated = save.getBoolean("edu_graduated",
+                save.getBoolean("degreeCompleted", false));
+        if (level.contains("phd") || level.contains("master")
+                || level.contains("postgraduate") || level.contains("mba")
+                || level.contains("m.tech")) return graduated ? 4 : 3;
+        if (level.contains("degree") || level.contains("undergraduate")
+                || level.contains("bachelor")) return graduated ? 3 : 2;
+        if (level.contains("puc") || level.contains("12")
+                || level.contains("higher secondary")) return 2;
+        if (level.contains("high school") || level.contains("sslc")
+                || level.contains("10th")) return 1;
+        return 0;
+    }
+
+    private String getJobRequirement(String job) {
+        switch (job) {
+            case "Government Clerk":
+            case "Police Constable":
+            case "Office Assistant":
+            case "Sales Executive":
+            case "Bank Clerk":
+            case "Bank Assistant":
+            case "Hospital Assistant":
+            case "Teaching Assistant":
+                return "Completed SSLC / 10th (minimum)";
+            case "Revenue Inspector":
+            case "Government Officer":
+            case "Bank Officer":
+            case "Junior Developer":
+            case "Software Engineer":
+            case "Accountant":
+            case "HR Executive":
+            case "Project Manager":
+                return "Completed relevant Bachelor's degree";
+            case "Government Teacher":
+            case "School Teacher":
+                return "Bachelor's degree + B.Ed. / teaching qualification";
+            case "Nurse":
+                return "GNM or B.Sc. Nursing";
+            case "Pharmacist":
+                return "D.Pharm or B.Pharm";
+            case "Doctor":
+            case "Senior Doctor":
+                return "MBBS; Senior Doctor also requires 3 years' experience";
+            case "Lecturer":
+                return "Relevant Master's degree";
+            case "Professor":
+                return "Relevant Master's degree / PhD and experience";
+            case "IAS Officer":
+                return "Bachelor's degree + Civil Services Examination qualification";
+            case "Bank Manager":
+            case "Operations Manager":
+                return "Bachelor's degree + 3 years' experience";
+            case "Regional Manager":
+            case "Business Director":
+            case "Company Director":
+            case "Technology Director":
+            case "Hospital Director":
+                return "Relevant Master's / MBA + 5 years' experience";
+            case "Senior Developer":
+                return "Relevant Bachelor's degree + 2 years' experience";
+            case "Technical Lead":
+            case "IT Manager":
+                return "Relevant Bachelor's degree + 5 years' experience";
+            case "Senior Teacher":
+                return "Bachelor's degree + B.Ed. + 3 years' experience";
+            case "Principal":
+                return "Master's degree + B.Ed. + 5 years' experience";
+            case "Chartered Accountant":
+                return "Completed CA qualification";
+            default:
+                return "Completed 12th / PUC";
+        }
+    }
+
+    private String getJobEligibilityFailure(String job) {
+        if (age < 18) return "You must be at least 18 years old.";
+        int rank = getEducationRank();
+        String course = save.getString("edu_course", "").toLowerCase();
+        int experienceRequired = 0;
+        int educationRequired = 2;
+
+        if (job.equals("Government Clerk") || job.equals("Police Constable")
+                || job.equals("Office Assistant") || job.equals("Sales Executive")
+                || job.equals("Bank Clerk") || job.equals("Bank Assistant")
+                || job.equals("Hospital Assistant") || job.equals("Teaching Assistant")) {
+            educationRequired = 1;
+        }
+        if (job.equals("Revenue Inspector") || job.equals("Government Officer")
+                || job.equals("Bank Officer") || job.equals("Junior Developer")
+                || job.equals("Software Engineer") || job.equals("Accountant")
+                || job.equals("HR Executive") || job.equals("Project Manager")
+                || job.equals("Government Teacher") || job.equals("School Teacher")
+                || job.equals("IAS Officer") || job.equals("Bank Manager")
+                || job.equals("Operations Manager") || job.equals("Senior Developer")
+                || job.equals("Technical Lead") || job.equals("IT Manager")) {
+            educationRequired = 3;
+        }
+        if (job.equals("Lecturer") || job.equals("Professor")
+                || job.equals("Regional Manager") || job.equals("Business Director")
+                || job.equals("Company Director") || job.equals("Technology Director")
+                || job.equals("Hospital Director") || job.equals("Principal")) {
+            educationRequired = 4;
+        }
+        if (job.equals("Senior Doctor") || job.equals("Senior Developer")
+                || job.equals("Senior Teacher") || job.equals("Bank Manager")
+                || job.equals("Operations Manager")) experienceRequired = 3;
+        if (job.equals("Technical Lead") || job.equals("IT Manager")
+                || job.equals("Regional Manager") || job.equals("Business Director")
+                || job.equals("Company Director") || job.equals("Technology Director")
+                || job.equals("Hospital Director") || job.equals("Principal")) experienceRequired = 5;
+
+        boolean courseMatch = true;
+        if (job.equals("Nurse")) {
+            courseMatch = course.contains("nursing") || course.contains("gnm");
+            educationRequired = 3;
+        } else if (job.equals("Pharmacist")) {
+            courseMatch = course.contains("pharmacy") || course.contains("d.pharm");
+            educationRequired = 3;
+        } else if (job.equals("Doctor") || job.equals("Senior Doctor")) {
+            courseMatch = course.contains("mbbs") || course.contains("medicine");
+            educationRequired = 3;
+        } else if (job.equals("Government Teacher") || job.equals("School Teacher")
+                || job.equals("Senior Teacher") || job.equals("Principal")) {
+            courseMatch = course.contains("bed") || course.contains("b.ed")
+                    || course.contains("education") || course.contains("teacher");
+        } else if (job.equals("IAS Officer")) {
+            courseMatch = save.getBoolean("civil_services_exam_cleared", false)
+                    || save.getBoolean("government_exam_cleared", false);
+        } else if (job.equals("Chartered Accountant")) {
+            courseMatch = course.contains("chartered accountant")
+                    || save.getBoolean("ca_qualified", false);
+            educationRequired = 3;
+        }
+
+        if (rank < educationRequired) {
+            return "Your completed education is below the required level. Complete the required degree first.";
+        }
+        if (!courseMatch) {
+            return "Your degree or professional certification does not match this job's required specialization.";
+        }
+        if (experience < experienceRequired) {
+            return "This position requires at least " + experienceRequired
+                    + " years of work experience. Your experience: " + experience + " years.";
+        }
+        return "";
     }
 
     // ---------------- INTERVIEW ----------------
@@ -932,8 +1111,22 @@ public class EmploymentManager {
 
         if (!employed) return;
 
-        if (yearsInJob < 1) {
-            toast("You need at least one year in your current job.");
+        int requiredYears = 1 + (promotions * 2);
+        int requiredPerformance = 60 + (promotions * 5);
+
+        if (yearsInJob < requiredYears) {
+            showMessage("Promotion Requirements",
+                    "You need at least " + requiredYears
+                            + " years in your current grade."
+                            + "\nYour current service: " + yearsInJob + " years.");
+            return;
+        }
+
+        if (performance < requiredPerformance) {
+            showMessage("Promotion Requirements",
+                    "You need performance of at least "
+                            + requiredPerformance + "%."
+                            + "\nYour current performance: " + performance + "%.");
             return;
         }
 

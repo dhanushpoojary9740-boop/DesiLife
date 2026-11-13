@@ -668,8 +668,21 @@ public class PrivateCareerManager {
             return;
         }
 
-        if (performance < 65) {
-            message("Improve your performance to at least 65%.");
+        int requiredYears = 1 + (level * 2);
+        int experience = getInt("experience", 0);
+        int requiredPerformance = 65 + (level * 5);
+
+        if (experience < requiredYears) {
+            message("Promotion requirement not met.\n\n"
+                    + "Required experience: " + requiredYears + " years"
+                    + "\nYour experience: " + experience + " years.");
+            return;
+        }
+
+        if (performance < requiredPerformance) {
+            message("Promotion requirement not met.\n\n"
+                    + "Required performance: " + requiredPerformance + "%"
+                    + "\nYour performance: " + performance + "%.");
             return;
         }
 
