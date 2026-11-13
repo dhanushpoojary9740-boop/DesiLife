@@ -280,6 +280,9 @@ public class EmploymentManager {
             addButton(root, "🏆 Request Promotion",
                     this::requestPromotion);
 
+            addButton(root, "📜 Promotion History",
+                    this::showPromotionHistory);
+
             addButton(root, "🎁 Request Performance Bonus",
                     this::requestBonus);
 
@@ -1164,9 +1167,16 @@ public class EmploymentManager {
 
                     if (random.nextInt(100) < promotionChance) {
 
+                        String previousGrade = jobLevel;
                         promotions++;
 
                         jobLevel = nextLevel(jobLevel);
+                        yearsInJob = 0;
+                        String history = save.getString("employment_promotion_history", "");
+                        String entry = "Age " + age + ": " + previousGrade
+                                + " → " + jobLevel + " | Salary ₹" + monthlySalary;
+                        save.edit().putString("employment_promotion_history",
+                                history.isEmpty() ? entry : history + "\\n" + entry).apply();
 
                         monthlySalary = safeAdd(
                                 monthlySalary,
@@ -1422,6 +1432,14 @@ public class EmploymentManager {
     }
 
     // ---------------- EMPLOYMENT REPORT ----------------
+
+    private void showPromotionHistory() {
+        String history = save.getString("employment_promotion_history", "");
+        if (history.isEmpty()) {
+            history = "No promotions recorded yet. Your successful promotions will appear here.";
+        }
+        showMessage("Employment Promotion History", history);
+    }
 
     private void showReport() {
 

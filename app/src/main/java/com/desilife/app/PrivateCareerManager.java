@@ -312,6 +312,9 @@ public class PrivateCareerManager {
         addButton(root, "My Job and Employment Record",
                 this::showJobRecord);
 
+        addButton(root, "Promotion History",
+                this::showPromotionHistory);
+
         addButton(root, "Workplace and Performance",
                 this::showWorkplace);
 
@@ -685,11 +688,12 @@ public class PrivateCareerManager {
             return;
         }
 
-        int requiredYears = 1 + (level * 2);
         int experience = getInt("experience", 0);
+        int yearsInGrade = getInt("years_in_grade", experience);
+        int requiredYears = 1 + (level * 2);
         int requiredPerformance = 65 + (level * 5);
 
-        if (experience < requiredYears) {
+        if (yearsInGrade < requiredYears) {
             message("Promotion requirement not met.\n\n"
                     + "Current position: " + job
                     + "\nNext position: " + company.positions[level + 1]
@@ -724,8 +728,10 @@ public class PrivateCareerManager {
                         + "\n\nSubmit promotion request?")
                 .setPositiveButton("Request", (dialog, which) -> {
                     if (random.nextInt(100) < chance) {
+                        String previousGrade = getString("job", "");
                         putInt("level", nextLevel);
                         putString("job", company.positions[nextLevel]);
+                        putInt("years_in_grade", 0);
 
                         int salary = getInt("salary", 0);
                         int updatedSalary = (int) Math.min(
@@ -733,6 +739,12 @@ public class PrivateCareerManager {
                                 (long) salary + Math.max(3000, salary / 5)
                         );
                         putInt("salary", updatedSalary);
+                        String history = getString("promotion_history", "");
+                        String entry = "Age " + age + ": " + previousGrade
+                                + " → " + company.positions[nextLevel]
+                                + " | Salary ₹" + updatedSalary;
+                        putString("promotion_history",
+                                history.isEmpty() ? entry : history + "\\n" + entry);
 
                         notifyUpdate("Congratulations! You were promoted to "
                                 + company.positions[nextLevel]
@@ -744,6 +756,18 @@ public class PrivateCareerManager {
                     showJobRecord();
                 })
                 .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showPromotionHistory() {
+        String history = getString("promotion_history", "");
+        if (history.isEmpty()) {
+            history = "No promotions recorded yet. Successful promotions will appear here.";
+        }
+        new AlertDialog.Builder(activity)
+                .setTitle("Private Career Promotion History")
+                .setMessage(history)
+                .setPositiveButton("OK", null)
                 .show();
     }
 
@@ -900,6 +924,8 @@ public class PrivateCareerManager {
         putInt("salary_paid_age", age);
 
         putInt("experience", getInt("experience", 0) + 1);
+        putInt("years_in_grade", getInt("years_in_grade",
+                getInt("experience", 0)) + 1);
 
         int increment = Math.max(500, monthlySalary / 20);
         long updatedSalary = (long) monthlySalary + increment;

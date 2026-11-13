@@ -276,6 +276,9 @@ public class PublicServiceManager {
         addButton(root, "My Service Record",
                 this::showServiceRecord);
 
+        addButton(root, "Promotion History",
+                this::showPromotionHistory);
+
         addButton(root, "Work Assignments",
                 this::showAssignments);
 
@@ -428,6 +431,8 @@ public class PublicServiceManager {
                                 putInt("salary", d.salary);
                                 putInt("level", 0);
                                 putInt("service_years", 0);
+                                putInt("years_in_grade", 0);
+                                putString("promotion_history", "");
                                 putInt("performance", 50);
                                 putInt("assignments_completed", 0);
                                 putInt("assignments_failed", 0);
@@ -541,11 +546,12 @@ public class PublicServiceManager {
 
         int performance = getInt("performance", 50);
         int serviceYears = getInt("service_years", 0);
+        int yearsInGrade = getInt("years_in_grade", serviceYears);
         int requiredYears = 1 + (level * 2);
         int requiredPerformance = 60 + (level * 5);
         String nextPosition = department.positions[level + 1];
 
-        if (serviceYears < requiredYears) {
+        if (yearsInGrade < requiredYears) {
             message("Promotion requirement not met.\n\n"
                     + "Current Position: " + job
                     + "\nNext Position: " + nextPosition
@@ -581,8 +587,10 @@ public class PublicServiceManager {
                         + "\n\nSubmit promotion request?")
                 .setPositiveButton("Request", (dialog, which) -> {
                     if (random.nextInt(100) < promotionChance) {
+                        String previousGrade = getString("job", "");
                         putInt("level", nextLevel);
                         putString("job", department.positions[nextLevel]);
+                        putInt("years_in_grade", 0);
 
                         int salary = getInt("salary", department.salary);
                         int updatedSalary = (int) Math.min(
@@ -590,6 +598,12 @@ public class PublicServiceManager {
                                 (long) salary + Math.max(3000, salary / 5)
                         );
                         putInt("salary", updatedSalary);
+                        String history = getString("promotion_history", "");
+                        String entry = "Age " + age + ": " + previousGrade
+                                + " → " + department.positions[nextLevel]
+                                + " | Salary ₹" + updatedSalary;
+                        putString("promotion_history",
+                                history.isEmpty() ? entry : history + "\\n" + entry);
 
                         notifyUpdate("Promotion approved! You are now "
                                 + department.positions[nextLevel]
@@ -609,6 +623,18 @@ public class PublicServiceManager {
             if (d.name.equals(name)) return d;
         }
         return null;
+    }
+
+    private void showPromotionHistory() {
+        String history = getString("promotion_history", "");
+        if (history.isEmpty()) {
+            history = "No promotions recorded yet. Successful government promotions will appear here.";
+        }
+        new AlertDialog.Builder(activity)
+                .setTitle("Government Promotion History")
+                .setMessage(history)
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     private void showAssignments() {
@@ -866,6 +892,8 @@ public class PublicServiceManager {
 
         if (status.equals("Active")) {
             putInt("service_years", getInt("service_years", 0) + 1);
+            putInt("years_in_grade", getInt("years_in_grade",
+                    getInt("service_years", 0) - 1) + 1);
 
             int salary = getInt("salary", 0);
 
