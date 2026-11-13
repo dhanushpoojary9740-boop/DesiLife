@@ -476,13 +476,7 @@ public class PrivateCareerManager {
                         (dialog, which) -> {
 
                             if (random.nextInt(100) < interviewChance) {
-                                setJob(c);
-
-                                notifyUpdate("Congratulations! You joined "
-                                        + c.name + " as "
-                                        + c.positions[0] + ".");
-
-                                showJobRecord();
+                                beginInterview(c, 1, 0);
 
                             } else {
                                 happiness = Math.max(0, happiness - 5);
@@ -495,6 +489,68 @@ public class PrivateCareerManager {
                         })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void beginInterview(Company c, int round, int score) {
+        String[] answers = round == 1
+                ? new String[]{"I analyse the problem and plan a solution",
+                               "I ask my team for guidance",
+                               "I avoid taking responsibility"}
+                : new String[]{"I can show measurable results",
+                               "I am ready to learn and improve",
+                               "I have no example to share"};
+        new AlertDialog.Builder(activity)
+                .setTitle("Interview Round " + round + " of 2")
+                .setMessage("Company: " + c.name + "\\nChoose your response.")
+                .setItems(answers, (dialog, which) -> {
+                    int points = which == 0 ? 20 : (which == 1 ? 10 : -10);
+                    if (round == 1) {
+                        beginInterview(c, 2, score + points);
+                    } else {
+                        int chance = Math.max(5, Math.min(95,
+                                45 + score + getInt("skills", 0) / 5
+                                        + getInt("experience", 0)));
+                        if (random.nextInt(100) < chance) {
+                            negotiateSalary(c, chance);
+                        } else {
+                            happiness = Math.max(0, happiness - 5);
+                            notifyUpdate("You did not pass the interview at " + c.name + ".");
+                            showCompanyDetails(c);
+                        }
+                    }
+                })
+                .setNegativeButton("Withdraw", null)
+                .show();
+    }
+
+    private void negotiateSalary(Company c, int interviewScore) {
+        String[] options = {"Accept original salary: ₹" + c.salary,
+                "Request 10% higher salary"};
+        new AlertDialog.Builder(activity)
+                .setTitle("Salary Negotiation")
+                .setMessage("You passed both interview rounds. Choose your offer.")
+                .setItems(options, (dialog, which) -> {
+                    int offered = c.salary;
+                    if (which == 1) {
+                        if (random.nextInt(100) < Math.min(90, 45 + interviewScore / 2)) {
+                            offered = (int) (c.salary * 1.10);
+                        } else {
+                            new AlertDialog.Builder(activity)
+                                    .setTitle("Negotiation Unsuccessful")
+                                    .setMessage("The company declined. Accept the original salary of ₹" + c.salary + "?")
+                                    .setPositiveButton("Accept", (d, w) -> {
+                                        setJob(c);
+                                        showJobRecord();
+                                    }).setNegativeButton("Decline", null).show();
+                            return;
+                        }
+                    }
+                    setJob(c);
+                    if (offered > c.salary) putInt("salary", offered);
+                    notifyUpdate("You joined " + c.name + " as " + c.positions[0]
+                            + " with monthly salary ₹" + offered + ".");
+                    showJobRecord();
+                }).show();
     }
 
     private void setJob(Company c) {
