@@ -107,6 +107,15 @@ public class MafiaManager {
     private String familyParent2 = "Not recorded";
     private String familyChild = "Not recorded";
     private String familySibling = "Not recorded";
+    // Bundle 8: diplomacy, global map, family ambitions, market simulation and campaigns.
+    private int diplomacyScore = 0;
+    private int peaceTreaties = 0;
+    private int familyAmbition = 35;
+    private int familyCouncilTrust = 60;
+    private int marketIndex = 100;
+    private int marketCycles = 0;
+    private int legendaryMissionStage = 0;
+    private int legendaryMissionWins = 0;
 
     public MafiaManager(Activity activity, SharedPreferences save,
                         int money, int health, int happiness, Callback callback) {
@@ -166,6 +175,14 @@ public class MafiaManager {
         familyParent2 = save.getString("mafia_family_parent2", "Not recorded");
         familyChild = save.getString("mafia_family_child", "Not recorded");
         familySibling = save.getString("mafia_family_sibling", "Not recorded");
+        diplomacyScore = save.getInt("mafia_diplomacy_score", 0);
+        peaceTreaties = save.getInt("mafia_peace_treaties", 0);
+        familyAmbition = save.getInt("mafia_family_ambition", 35);
+        familyCouncilTrust = save.getInt("mafia_family_council_trust", 60);
+        marketIndex = save.getInt("mafia_market_index", 100);
+        marketCycles = save.getInt("mafia_market_cycles", 0);
+        legendaryMissionStage = save.getInt("mafia_legendary_stage", 0);
+        legendaryMissionWins = save.getInt("mafia_legendary_wins", 0);
     }
 
     private void persist() {
@@ -216,6 +233,14 @@ public class MafiaManager {
             .putString("mafia_family_parent2", familyParent2)
             .putString("mafia_family_child", familyChild)
             .putString("mafia_family_sibling", familySibling)
+            .putInt("mafia_diplomacy_score", diplomacyScore)
+            .putInt("mafia_peace_treaties", peaceTreaties)
+            .putInt("mafia_family_ambition", familyAmbition)
+            .putInt("mafia_family_council_trust", familyCouncilTrust)
+            .putInt("mafia_market_index", marketIndex)
+            .putInt("mafia_market_cycles", marketCycles)
+            .putInt("mafia_legendary_stage", legendaryMissionStage)
+            .putInt("mafia_legendary_wins", legendaryMissionWins)
             .apply();
     }
 
@@ -293,6 +318,12 @@ public class MafiaManager {
             button(page, "⚖ MAJOR LIFE DECISIONS", this::majorLifeDecisions);
             button(page, "📈 LIFETIME EMPIRE STATISTICS", this::lifetimeStatistics);
             button(page, "♾ CONTINUE DYNASTY", this::continueDynasty);
+            button(page, "🗺 INTERACTIVE GLOBAL CITY MAP", this::globalCityMap);
+            button(page, "🕊 MAFIA DIPLOMACY & PEACE TREATIES", this::mafiaDiplomacy);
+            button(page, "👨‍👩‍👧 ADVANCED FAMILY COUNCIL AI", this::advancedFamilyAI);
+            button(page, "📉 DYNAMIC BUSINESS MARKET", this::dynamicBusinessMarket);
+            button(page, "🏅 WORLD LEADERBOARD", this::mafiaWorldLeaderboard);
+            button(page, "📜 LEGENDARY STORY CAMPAIGN", this::legendaryCampaign);
             button(page, "🤝 LEAVE CURRENT GANG", this::leaveGang);
         }
         button(page, "⬅ BACK TO LIFE", activity::recreate);
@@ -1319,6 +1350,218 @@ public class MafiaManager {
                 notifyChange(heirName + " has been recorded as the next generation's leader. Dynasty generation " + dynastyGenerations + " begins.");
                 showDashboard();
             }).setNegativeButton("CANCEL", null).show();
+    }
+
+
+    // Bundle 8: visual text map with selectable city investment and district status.
+    private void globalCityMap() {
+        final String[] cities = {"Mumbai", "Delhi", "Bengaluru", "Chennai", "Kolkata", "Dubai", "Singapore", "London", "Tokyo", "New York", "Zurich"};
+        StringBuilder report = new StringBuilder("DESILIFE GLOBAL NETWORK\n\n");
+        for (int i = 0; i < cities.length; i++) {
+            boolean established = i < internationalCities + 5;
+            report.append(established ? "🟨 ESTABLISHED  " : "⬜ AVAILABLE     ")
+                .append(cities[i]).append("\n");
+        }
+        report.append("\nLocal districts: ").append(controlledTerritories).append("/10")
+            .append("\nInternational hubs: ").append(internationalCities).append("/6")
+            .append("\nDiplomacy score: ").append(diplomacyScore);
+        String[] actions = {"View map again", "Develop next international hub", "Review city districts"};
+        new AlertDialog.Builder(activity).setTitle("🗺 Global City Map")
+            .setMessage(report.toString()).setItems(actions, (d, which) -> {
+                if (which == 0) { globalCityMap(); return; }
+                if (which == 2) { livingCityMap(); return; }
+                internationalNetwork();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void mafiaDiplomacy() {
+        String[] options = {
+            "Negotiate a peace treaty (₹3,000)",
+            "Host a diplomatic summit (₹2,000)",
+            "Offer a cultural/business exchange (₹4,000)",
+            "Review diplomatic standing"
+        };
+        new AlertDialog.Builder(activity).setTitle("🕊 Diplomacy & Peace")
+            .setMessage("Use dialogue, public partnerships and fair competition to reduce rival tensions.")
+            .setItems(options, (d, which) -> {
+                if (which == 3) {
+                    message("Diplomacy score: " + diplomacyScore + "/100"
+                        + "\nPeace treaties: " + peaceTreaties
+                        + "\nGlobal alliances: " + globalAlliances
+                        + "\nRival network power: " + rivalEmpirePower + "/100");
+                    return;
+                }
+                int[] costs = {3000, 2000, 4000};
+                if (money < costs[which]) { message("You need ₹" + costs[which] + "."); return; }
+                money -= costs[which];
+                if (which == 0) {
+                    peaceTreaties++;
+                    rivalEmpirePower = clamp(rivalEmpirePower - 5, 0, 100);
+                    diplomacyScore = clamp(diplomacyScore + 12, 0, 100);
+                    reputation = clamp(reputation + 3, 0, 100);
+                    notifyChange("A peaceful agreement reduced tensions between fictional organisations.");
+                } else if (which == 1) {
+                    diplomacyScore = clamp(diplomacyScore + 8, 0, 100);
+                    loyalty = clamp(loyalty + 3, 0, 100);
+                    familyCouncilTrust = clamp(familyCouncilTrust + 5, 0, 100);
+                    notifyChange("The diplomatic summit improved communication and cooperation.");
+                } else {
+                    diplomacyScore = clamp(diplomacyScore + 10, 0, 100);
+                    globalInfluence += 4;
+                    reputation = clamp(reputation + 4, 0, 100);
+                    notifyChange("A business and cultural exchange improved your global reputation.");
+                }
+                persist();
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void advancedFamilyAI() {
+        String[] members = {
+            "Senior lieutenant — wants greater responsibility",
+            "Family heir — wants leadership training",
+            "Trusted adviser — wants more council trust",
+            "Young relative — wants education support"
+        };
+        String[] actions = {"Discuss ambitions", "Support leadership training (₹2,500)",
+            "Hold a family council", "Review family dynamics"};
+        new AlertDialog.Builder(activity).setTitle("👨‍👩‍👧 Family Council")
+            .setMessage("Family ambitions: " + familyAmbition + "/100"
+                + "\nCouncil trust: " + familyCouncilTrust + "/100"
+                + "\n\n" + members[random.nextInt(members.length)])
+            .setItems(actions, (d, which) -> {
+                if (which == 3) {
+                    message("Family ambition: " + familyAmbition + "/100"
+                        + "\nCouncil trust: " + familyCouncilTrust + "/100"
+                        + "\nFamily bond: " + familyBond + "/100"
+                        + "\nLieutenants: " + lieutenants
+                        + "\nHeir: " + (heirName == null || heirName.trim().isEmpty() ? "Not named" : heirName));
+                    return;
+                }
+                if (which == 1) {
+                    if (money < 2500) { message("You need ₹2,500."); return; }
+                    money -= 2500;
+                    familyAmbition = clamp(familyAmbition + 12, 0, 100);
+                    familyCouncilTrust = clamp(familyCouncilTrust + 8, 0, 100);
+                    familyBond = clamp(familyBond + 5, 0, 100);
+                    notifyChange("You supported leadership education and helped a family member grow.");
+                } else if (which == 2) {
+                    familyCouncilTrust = clamp(familyCouncilTrust + 10, 0, 100);
+                    loyalty = clamp(loyalty + 4, 0, 100);
+                    familyBond = clamp(familyBond + 4, 0, 100);
+                    notifyChange("The family council resolved concerns through discussion.");
+                } else {
+                    familyAmbition = clamp(familyAmbition + 4, 0, 100);
+                    familyCouncilTrust = clamp(familyCouncilTrust + 3, 0, 100);
+                    notifyChange("You listened to your family's ambitions and agreed on future goals.");
+                }
+                persist();
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void dynamicBusinessMarket() {
+        String[] actions = {"Refresh market outlook", "Collect adjusted business income", "Review market report"};
+        new AlertDialog.Builder(activity).setTitle("📉 Dynamic Business Market")
+            .setMessage("Market index: " + marketIndex + "/150"
+                + "\nMarket cycles observed: " + marketCycles
+                + "\nBusiness level: " + businessLevel
+                + "\nIncome baseline: ₹" + (businessIncome * businessLevel)
+                + "\n\nMarket conditions change through a fictional simulation.")
+            .setItems(actions, (d, which) -> {
+                if (which == 0) {
+                    int movement = random.nextInt(21) - 10;
+                    marketIndex = clamp(marketIndex + movement, 60, 150);
+                    marketCycles++;
+                    persist();
+                    message("Market update: " + (movement >= 0 ? "+" : "") + movement
+                        + " points.\nNew market index: " + marketIndex + "/150");
+                    dynamicBusinessMarket();
+                } else if (which == 1) {
+                    if (businessLevel <= 0) { message("Establish a business hub first."); return; }
+                    int income = Math.max(0, (businessIncome * businessLevel * marketIndex) / 100);
+                    money += income;
+                    persist();
+                    notifyChange("Your diversified business portfolio generated ₹" + income
+                        + " at a market index of " + marketIndex + ".");
+                    showDashboard();
+                } else {
+                    message("Market index: " + marketIndex + "/150"
+                        + "\nCycles observed: " + marketCycles
+                        + "\nEstimated collection: ₹" + Math.max(0, (businessIncome * businessLevel * marketIndex) / 100)
+                        + "\nAsset portfolio units: " + assetPortfolio
+                        + "\nA higher index improves simulated business returns.");
+                }
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void mafiaWorldLeaderboard() {
+        int score = reputation * 2 + globalInfluence * 3 + controlledTerritories * 8
+            + internationalCities * 12 + globalAlliances * 7 + businessLevel * 4
+            + electionWins * 15 + dynastyGenerations * 5 + dominationScore
+            + diplomacyScore * 2 + peaceTreaties * 5 + legendaryMissionWins * 20;
+        String[] rivals = {"The Northern Union", "Eastern Crown Group", "Pacific Horizon", "The Meridian Circle"};
+        int[] rivalScores = {
+            rivalEmpirePower * 2 + 35,
+            rivalEmpirePower * 2 + 55,
+            rivalEmpirePower + globalAlliances * 8 + 65,
+            rivalEmpirePower + internationalCities * 10 + 45
+        };
+        StringBuilder board = new StringBuilder("GLOBAL ORGANISATION LEADERBOARD\n\n");
+        board.append("YOUR EMPIRE — ").append(score).append(" points\n\n");
+        for (int i = 0; i < rivals.length; i++) {
+            board.append(i + 1).append(". ").append(rivals[i])
+                .append(" — ").append(rivalScores[i]).append(" points\n");
+        }
+        int position = 1;
+        for (int value : rivalScores) if (value > score) position++;
+        board.append("\nYour current position: #").append(position)
+            .append("\nDiplomacy: ").append(diplomacyScore)
+            .append("\nLegendary campaign victories: ").append(legendaryMissionWins);
+        new AlertDialog.Builder(activity).setTitle("🏅 World Leaderboard")
+            .setMessage(board.toString()).setPositiveButton("OK", null).show();
+    }
+
+    private void legendaryCampaign() {
+        final String[] chapters = {
+            "Chapter 1 — The New Generation",
+            "Chapter 2 — The Global Partnership",
+            "Chapter 3 — The Family Council",
+            "Chapter 4 — The World Summit",
+            "Final Chapter — A Lasting Legacy"
+        };
+        if (legendaryMissionStage >= chapters.length) {
+            message("LEGENDARY CAMPAIGN COMPLETED!\nVictories: " + legendaryMissionWins
+                + "\nYour story has become part of the DesiLife world record.");
+            return;
+        }
+        final int stage = legendaryMissionStage;
+        String[] choices = {"Choose cooperation", "Choose a business strategy", "Review campaign"};
+        new AlertDialog.Builder(activity).setTitle("📜 " + chapters[stage])
+            .setMessage("A major chapter in your fictional life story awaits.\n\n"
+                + "Campaign progress: " + legendaryMissionStage + "/" + chapters.length
+                + "\nVictories: " + legendaryMissionWins
+                + "\n\nComplete each chapter through a thoughtful decision.")
+            .setItems(choices, (d, which) -> {
+                if (which == 2) { legendaryCampaign(); return; }
+                if (which == 1 && money < 1500) { message("You need ₹1,500 for the business strategy."); return; }
+                if (which == 1) {
+                    money -= 1500;
+                    globalInfluence += 5;
+                    influence += 4;
+                } else {
+                    familyBond = clamp(familyBond + 5, 0, 100);
+                    diplomacyScore = clamp(diplomacyScore + 6, 0, 100);
+                    reputation = clamp(reputation + 3, 0, 100);
+                }
+                legendaryMissionStage++;
+                legendaryMissionWins++;
+                legacyScore += 5;
+                dominationScore = clamp(dominationScore + 4, 0, 100);
+                persist();
+                notifyChange("You completed " + chapters[stage] + " through a considered life decision.");
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
     }
 
     private void notifyChange(String description) {
