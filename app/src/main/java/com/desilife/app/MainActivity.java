@@ -46,8 +46,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
 
-        getWindow().setStatusBarColor(bg);
-        getWindow().setNavigationBarColor(bg);
+        getWindow().setStatusBarColor(Color.rgb(12, 31, 27));
+        getWindow().setNavigationBarColor(Color.rgb(12, 31, 27));
         getWindow().getDecorView().setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_VISIBLE
         );
@@ -90,7 +90,7 @@ public class MainActivity extends Activity {
 
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(22,25,22,30);
+        root.setPadding(18,22,18,28);
         root.setGravity(Gravity.CENTER_HORIZONTAL);
         root.setBackgroundColor(bg);
 
@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
 
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(12,12,12,16);
+        root.setPadding(16,16,16,22);
         root.setGravity(Gravity.TOP);
         root.setBackgroundColor(bg);
 
@@ -142,10 +142,11 @@ public class MainActivity extends Activity {
     }
 
     void addButton(String label, Runnable action) {
-        TextView b = text(label,16,bg);
+        TextView b = text(label,15,Color.rgb(25,48,39));
         b.setTypeface(null,Typeface.BOLD);
-        b.setBackground(shape(gold,28));
-        b.setPadding(12,16,12,16);
+        b.setBackground(shape(Color.rgb(239,202,126),18));
+        b.setPadding(14,15,14,15);
+        b.setElevation(2);
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,-2);
@@ -196,7 +197,9 @@ public class MainActivity extends Activity {
         e.setHintTextColor(muted);
         e.setSingleLine(true);
         e.setPadding(15,10,15,10);
-        e.setBackground(shape(Color.rgb(35,48,44),14));
+        e.setBackground(shape(Color.rgb(28,58,50),16));
+        e.setTextSize(15);
+        e.setCompoundDrawablePadding(8);
 
         LinearLayout.LayoutParams p =
             new LinearLayout.LayoutParams(-1,55);
@@ -211,7 +214,8 @@ public class MainActivity extends Activity {
         nav.setOrientation(LinearLayout.HORIZONTAL);
         nav.setGravity(Gravity.CENTER);
         nav.setPadding(4,7,4,7);
-        nav.setBackground(shape(Color.rgb(5,83,145),12));
+        nav.setBackground(shape(Color.rgb(20,48,42),18));
+        nav.setElevation(8);
 
         addDashboardNav(nav,"👤","Life",() -> showDashboard());
         addDashboardNav(nav,"💰","Assets",() -> openAssets());
@@ -906,372 +910,218 @@ public class MainActivity extends Activity {
     void showDashboard() {
         setupDashboard();
 
+        // Premium brand header
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setPadding(14,12,14,12);
-        header.setBackground(shape(Color.rgb(218,48,25),18));
+        header.setPadding(18, 16, 18, 16);
+        header.setBackground(shape(Color.rgb(20, 48, 42), 22));
 
-        TextView menu = dashboardText("☰",25,white,true);
+        LinearLayout brandBlock = new LinearLayout(this);
+        brandBlock.setOrientation(LinearLayout.VERTICAL);
+
+        TextView brand = dashboardText("DESILIFE", 22, Color.rgb(239, 202, 126), true);
+        brand.setGravity(Gravity.LEFT);
+        TextView tagline = dashboardText("YOUR STORY. YOUR CHOICES.", 10, Color.rgb(190, 204, 195), true);
+        tagline.setGravity(Gravity.LEFT);
+        brandBlock.addView(brand);
+        brandBlock.addView(tagline);
+        header.addView(brandBlock, new LinearLayout.LayoutParams(0, -2, 1));
+
+        TextView menu = dashboardText("☰", 25, Color.WHITE, true);
+        menu.setPadding(14, 8, 8, 8);
         menu.setOnClickListener(v -> showDashboardMenu());
+        header.addView(menu);
+        root.addView(header, new LinearLayout.LayoutParams(-1, -2));
 
-        header.addView(menu,
-            new LinearLayout.LayoutParams(42,-2));
-
-        TextView brand = dashboardText(
-            "🇮🇳 DesiLife",25,Color.WHITE,true
-        );
-
-        brand.setGravity(Gravity.CENTER_VERTICAL);
-
-        header.addView(brand,
-            new LinearLayout.LayoutParams(0,-2,1));
-
-        TextView fame = dashboardText(
-            "★ 0",23,Color.rgb(255,220,70),true
-        );
-
-        header.addView(fame,
-            new LinearLayout.LayoutParams(-2,-2));
-
-        root.addView(header,
-            new LinearLayout.LayoutParams(-1,-2));
-
-        LinearLayout identity = new LinearLayout(this);
-        identity.setOrientation(LinearLayout.HORIZONTAL);
-        identity.setGravity(Gravity.CENTER_VERTICAL);
-        identity.setPadding(12,12,12,12);
-        identity.setBackground(shape(Color.rgb(229,237,243),14));
+        // Character profile card
+        LinearLayout profile = new LinearLayout(this);
+        profile.setOrientation(LinearLayout.HORIZONTAL);
+        profile.setGravity(Gravity.CENTER_VERTICAL);
+        profile.setPadding(16, 16, 16, 16);
+        profile.setBackground(shape(Color.rgb(28, 58, 50), 20));
+        LinearLayout.LayoutParams profileParams = new LinearLayout.LayoutParams(-1, -2);
+        profileParams.setMargins(0, 12, 0, 12);
+        root.addView(profile, profileParams);
 
         TextView avatar = dashboardText(
-            gender.equalsIgnoreCase("Female") ? "👩" : "👦",
-            42,Color.rgb(25,75,110),false
-        );
+                gender.equalsIgnoreCase("Female") ? "👩" : "👨",
+                36, Color.WHITE, true);
+        avatar.setBackground(shape(Color.rgb(54, 86, 72), 18));
+        avatar.setPadding(12, 10, 12, 10);
+        profile.addView(avatar);
 
-        identity.addView(avatar,
-            new LinearLayout.LayoutParams(58,-2));
+        LinearLayout profileInfo = new LinearLayout(this);
+        profileInfo.setOrientation(LinearLayout.VERTICAL);
+        profileInfo.setPadding(12, 0, 4, 0);
+        TextView player = dashboardText(playerName == null ? "Player" : playerName,
+                19, Color.WHITE, true);
+        player.setGravity(Gravity.LEFT);
+        TextView details = dashboardText(getFormattedAge() + "  •  " + gender + "  •  " + city,
+                11, Color.rgb(192, 207, 198), false);
+        details.setGravity(Gravity.LEFT);
+        profileInfo.addView(player);
+        profileInfo.addView(details);
+        profile.addView(profileInfo, new LinearLayout.LayoutParams(0, -2, 1));
 
-        LinearLayout identityInfo = new LinearLayout(this);
-        identityInfo.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout balanceBox = new LinearLayout(this);
+        balanceBox.setOrientation(LinearLayout.VERTICAL);
+        balanceBox.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        TextView balanceValue = dashboardText("₹" + money, 17,
+                Color.rgb(239, 202, 126), true);
+        balanceValue.setGravity(Gravity.RIGHT);
+        TextView balanceLabel = dashboardText("CASH", 10,
+                Color.rgb(192, 207, 198), true);
+        balanceLabel.setGravity(Gravity.RIGHT);
+        balanceBox.addView(balanceValue);
+        balanceBox.addView(balanceLabel);
+        profile.addView(balanceBox);
 
-        TextView nameView = dashboardText(
-            playerName,21,Color.rgb(12,78,126),true
-        );
+        // Main life progress card
+        LinearLayout journey = new LinearLayout(this);
+        journey.setOrientation(LinearLayout.VERTICAL);
+        journey.setPadding(17, 16, 17, 16);
+        journey.setBackground(shape(Color.rgb(245, 241, 231), 20));
+        TextView journeyTitle = dashboardText("✦  YOUR LIFE JOURNEY", 14,
+                Color.rgb(31, 73, 59), true);
+        journeyTitle.setGravity(Gravity.LEFT);
+        TextView journeyStory = dashboardText(
+                "Born in " + city + " • " + family + " family\n" + getCurrentLifeStory(),
+                13, Color.rgb(76, 83, 76), false);
+        journeyStory.setGravity(Gravity.LEFT);
+        journeyStory.setPadding(0, 7, 0, 0);
+        journey.addView(journeyTitle);
+        journey.addView(journeyStory);
+        LinearLayout.LayoutParams journeyParams = new LinearLayout.LayoutParams(-1, -2);
+        journeyParams.setMargins(0, 0, 0, 12);
+        root.addView(journey, journeyParams);
 
-        nameView.setGravity(Gravity.LEFT);
+        // Quick stats
+        LinearLayout statsCard = new LinearLayout(this);
+        statsCard.setOrientation(LinearLayout.VERTICAL);
+        statsCard.setPadding(16, 14, 16, 14);
+        statsCard.setBackground(shape(Color.rgb(28, 58, 50), 20));
+        TextView statsTitle = dashboardText("LIFE STATUS", 14,
+                Color.rgb(239, 202, 126), true);
+        statsTitle.setGravity(Gravity.LEFT);
+        statsCard.addView(statsTitle);
+        addDashboardStat(statsCard, "Happiness", "😊", happiness, Color.rgb(72, 181, 121));
+        addDashboardStat(statsCard, "Health", "❤️", health, Color.rgb(220, 100, 100));
+        addDashboardStat(statsCard, "Intelligence", "🧠", intelligence, Color.rgb(90, 153, 220));
+        addDashboardStat(statsCard, "Stress", "🌿", save.getInt("mental_stress", 20),
+                Color.rgb(222, 167, 83));
+        LinearLayout.LayoutParams statsParams = new LinearLayout.LayoutParams(-1, -2);
+        statsParams.setMargins(0, 0, 0, 12);
+        root.addView(statsCard, statsParams);
 
-        TextView detailView = dashboardText(
-            getFormattedAge()+" • "+gender+" • "+city,
-            12,Color.rgb(55,91,119),false
-        );
-
-        detailView.setGravity(Gravity.LEFT);
-
-        identityInfo.addView(nameView);
-        identityInfo.addView(detailView);
-
-        identity.addView(identityInfo,
-            new LinearLayout.LayoutParams(0,-2,1));
-
-        TextView balance = dashboardText(
-            "₹"+money+"\nBank Balance",
-            16,Color.rgb(12,78,126),true
-        );
-
-        identity.addView(balance,
-            new LinearLayout.LayoutParams(-2,-2));
-
-        LinearLayout.LayoutParams identityParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        identityParams.setMargins(0,8,0,8);
-        root.addView(identity,identityParams);
-
-        LinearLayout journal = new LinearLayout(this);
-        journal.setOrientation(LinearLayout.VERTICAL);
-        journal.setPadding(14,12,14,12);
-        journal.setBackground(shape(Color.WHITE,14));
-
-        TextView ageHeading = dashboardText(
-            "Age: "+getFormattedAge(),19,
-            Color.rgb(17,82,130),true
-        );
-
-        ageHeading.setGravity(Gravity.LEFT);
-        journal.addView(ageHeading);
-
-        TextView birthInfo = dashboardText(
-            "I was born in "+city+
-            ". My family background is "+family.toLowerCase()+".",
-            14,Color.rgb(95,95,95),false
-        );
-
-        birthInfo.setGravity(Gravity.LEFT);
-        journal.addView(birthInfo);
-
-        TextView storyHeading = dashboardText(
-            "YOUR LIFE JOURNEY",16,
-            Color.rgb(17,82,130),true
-        );
-
-        storyHeading.setGravity(Gravity.LEFT);
-        journal.addView(storyHeading);
-
-        TextView story = dashboardText(
-            getCurrentLifeStory(),14,
-            Color.rgb(95,95,95),false
-        );
-
-        story.setGravity(Gravity.LEFT);
-        journal.addView(story);
-
-        LinearLayout.LayoutParams journalParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        journalParams.setMargins(0,0,0,8);
-        root.addView(journal,journalParams);
+        // Primary action
+        TextView ageUp = dashboardText("＋   AGE UP", 16,
+                Color.rgb(25, 48, 39), true);
+        ageUp.setBackground(shape(Color.rgb(239, 202, 126), 18));
+        ageUp.setPadding(16, 16, 16, 16);
+        ageUp.setElevation(4);
+        LinearLayout.LayoutParams ageParams = new LinearLayout.LayoutParams(-1, -2);
+        ageParams.setMargins(0, 0, 0, 14);
+        root.addView(ageUp, ageParams);
+        ageUp.setOnClickListener(v -> showAgeUpOptions());
 
         addLifeEventsPanel();
 
-        TextView ageUpButton = dashboardText(
-            "＋\nAGE UP",18,Color.WHITE,true
-        );
-
-        ageUpButton.setBackground(
-            shape(Color.rgb(39,153,67),100)
-        );
-
-        ageUpButton.setElevation(8);
-
-        LinearLayout.LayoutParams ageUpParams =
-            new LinearLayout.LayoutParams(92,92);
-
-        ageUpParams.gravity = Gravity.CENTER_HORIZONTAL;
-        ageUpParams.setMargins(0,2,0,8);
-
-        root.addView(ageUpButton,ageUpParams);
-        ageUpButton.setOnClickListener(v -> showAgeUpOptions());
-
-        LinearLayout stats = new LinearLayout(this);
-        stats.setOrientation(LinearLayout.VERTICAL);
-        stats.setPadding(12,12,12,12);
-        stats.setBackground(shape(Color.WHITE,14));
-
-        TextView statsTitle = dashboardText(
-            "YOUR LIFE STATS",18,
-            Color.rgb(17,82,130),true
-        );
-
-        statsTitle.setGravity(Gravity.LEFT);
-        stats.addView(statsTitle);
-
-        addDashboardStat(stats,"Happiness","😊",happiness,
-            Color.rgb(42,157,75));
-
-        addDashboardStat(stats,"Stress","🧠",
-            save.getInt("mental_stress",20),
-            Color.rgb(220,100,70));
-
-        addDashboardStat(stats,"Health","❤️",health,
-            Color.rgb(42,157,75));
-
-        addDashboardStat(stats,"Smarts","🧠",intelligence,
-            Color.rgb(42,157,75));
-
-        addDashboardStat(stats,"Looks","✨",65,
-            Color.rgb(235,145,35));
-
-        root.addView(stats,
-            new LinearLayout.LayoutParams(-1,-2));
-
-        // HEALTH & WELLNESS BUTTON
-        TextView healthButton = dashboardText(
-            "❤️ HEALTH & WELLNESS",16,bg,true
-        );
-
-        healthButton.setBackground(
-            shape(Color.rgb(229,184,105),18)
-        );
-
-        healthButton.setPadding(12,14,12,14);
-
-        LinearLayout.LayoutParams healthParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        healthParams.setMargins(0,12,0,4);
-
-        root.addView(healthButton,healthParams);
-        healthButton.setOnClickListener(v -> openHealth());
-
-        // MENTAL HEALTH & WELLNESS BUTTON
-        TextView mentalHealthButton = dashboardText(
-            "🧠 MENTAL HEALTH & WELLNESS",16,bg,true
-        );
-
-        mentalHealthButton.setBackground(
-            shape(Color.rgb(229,184,105),18)
-        );
-
-        mentalHealthButton.setPadding(12,14,12,14);
-
-        LinearLayout.LayoutParams mentalHealthParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        mentalHealthParams.setMargins(0,8,0,4);
-
-        root.addView(mentalHealthButton,mentalHealthParams);
-        mentalHealthButton.setOnClickListener(v -> openMentalHealth());
-
-        // CRIME & JUSTICE BUTTON
-        TextView crimeButton = dashboardText(
-            "⚖️ CRIME & JUSTICE",16,bg,true
-        );
-
-        crimeButton.setBackground(
-            shape(Color.rgb(229,184,105),18)
-        );
-
-        crimeButton.setPadding(12,14,12,14);
-
-        LinearLayout.LayoutParams crimeParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        crimeParams.setMargins(0,8,0,4);
-
-        root.addView(crimeButton,crimeParams);
-        crimeButton.setOnClickListener(v -> openCrime());
-
-        // DRIVING & VEHICLES BUTTON
-        TextView vehicleButton = dashboardText(
-            "🚗 DRIVING & VEHICLES",16,bg,true
-        );
-
-        vehicleButton.setBackground(
-            shape(Color.rgb(229,184,105),18)
-        );
-
-        vehicleButton.setPadding(12,14,12,14);
-
-        LinearLayout.LayoutParams vehicleParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        vehicleParams.setMargins(0,8,0,4);
-
-        root.addView(vehicleButton,vehicleParams);
-        vehicleButton.setOnClickListener(v -> openVehicle());
-
-        // REAL ESTATE & PROPERTY BUTTON
-        TextView propertyButton = dashboardText(
-            "🏠 REAL ESTATE & PROPERTY",16,bg,true
-        );
-
-        propertyButton.setBackground(
-            shape(Color.rgb(229,184,105),18)
-        );
-
-        propertyButton.setPadding(12,14,12,14);
-
-        LinearLayout.LayoutParams propertyParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        propertyParams.setMargins(0,8,0,4);
-
-        root.addView(propertyButton,propertyParams);
-        propertyButton.setOnClickListener(v -> openProperty());
-
-        // BUSINESS & ENTREPRENEURSHIP BUTTON
-        TextView businessButton = dashboardText(
-            "🏢 BUSINESS & ENTREPRENEURSHIP",16,bg,true
-        );
-
-        businessButton.setBackground(
-            shape(Color.rgb(229,184,105),18)
-        );
-
-        businessButton.setPadding(12,14,12,14);
-
-        LinearLayout.LayoutParams businessParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        businessParams.setMargins(0,8,0,4);
-
-        root.addView(businessButton,businessParams);
-        businessButton.setOnClickListener(v -> openBusiness());
-
-        // STOCK MARKET BUTTON
-        TextView stockButton = dashboardText(
-            "📈 STOCK MARKET & INVESTMENTS",16,bg,true
-        );
-
-        stockButton.setBackground(
-            shape(Color.rgb(229,184,105),18)
-        );
-
-        stockButton.setPadding(12,14,12,14);
-
-        LinearLayout.LayoutParams stockParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        stockParams.setMargins(0,8,0,4);
-
-        root.addView(stockButton,stockParams);
-        stockButton.setOnClickListener(v -> openStockMarket());
-
-        TextView education = dashboardText(
-            "📚 EDUCATION",16,bg,true
-        );
-
-        education.setBackground(
-            shape(Color.rgb(229,184,105),18)
-        );
-
-        education.setPadding(12,14,12,14);
-
-        LinearLayout.LayoutParams educationParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        educationParams.setMargins(0,12,0,4);
-
-        root.addView(education,educationParams);
-        education.setOnClickListener(v -> showEducation());
-
-        TextView familyButton = dashboardText(
-            "👨‍👩‍👧 FAMILY & LEGACY",16,bg,true
-        );
-
-        familyButton.setBackground(
-            shape(Color.rgb(229,184,105),18)
-        );
-
-        familyButton.setPadding(12,14,12,14);
-
-        LinearLayout.LayoutParams familyParams =
-            new LinearLayout.LayoutParams(-1,-2);
-
-        familyParams.setMargins(0,8,0,4);
-
-        root.addView(familyButton,familyParams);
-        familyButton.setOnClickListener(v -> openFamily());
-
-        TextView saveButton = dashboardText(
-            "💾 SAVE GAME",15,white,true
-        );
-
-        saveButton.setBackground(
-            shape(Color.rgb(49,63,59),18)
-        );
-
-        saveButton.setPadding(12,13,12,13);
-
-        root.addView(saveButton,
-            new LinearLayout.LayoutParams(-1,-2));
-
+        // Premium section directory: every area has an icon AND a written name.
+        addPremiumSectionHeading("YOUR LIFE", "Personal growth and everyday decisions");
+        addPremiumSectionRow("📚", "Education", "Studies and examinations", () -> showEducation(),
+                "💼", "Career & Jobs", "Work and career progression", () -> openCareer());
+        addPremiumSectionRow("👨‍👩‍👧", "Family", "Family, children and legacy", () -> openFamily(),
+                "❤️", "Relationships", "Friends and relationships", () -> openRelations());
+        addPremiumSectionRow("🏥", "Health", "Physical health and wellness", () -> openHealth(),
+                "🧠", "Mental Wellness", "Stress and mental wellbeing", () -> openMentalHealth());
+
+        addPremiumSectionHeading("MONEY & ASSETS", "Build, manage and grow your wealth");
+        addPremiumSectionRow("💰", "Assets", "Your owned assets", () -> openAssets(),
+                "🏦", "Finance & Banking", "Accounts, loans and insurance", () -> openFinance());
+        addPremiumSectionRow("📈", "Stock Market", "Stocks and investments", () -> openStockMarket(),
+                "🏠", "Property", "Real estate and rental income", () -> openProperty());
+        addPremiumSectionRow("🏢", "Business", "Build your own business", () -> openBusiness(),
+                "📊", "Net Worth", "Assets, debts and net worth", () -> showNetWorthDashboard());
+
+        addPremiumSectionHeading("LIFESTYLE & ACTIVITIES", "Explore choices beyond work and money");
+        addPremiumSectionRow("🚗", "Vehicles", "Driving and vehicle ownership", () -> openVehicle(),
+                "⚖️", "Crime & Justice", "Legal choices and consequences", () -> openCrime());
+        addPremiumSectionRow("🎯", "Activities", "Hobbies and life activities", () -> openActivities(),
+                "🌟", "Life Statistics", "Your overall life progress", () -> showLifeStatistics());
+
+        TextView saveButton = dashboardText("💾   SAVE GAME", 14,
+                Color.rgb(239, 202, 126), true);
+        saveButton.setBackground(shape(Color.rgb(28, 58, 50), 16));
+        saveButton.setPadding(14, 15, 14, 15);
+        LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(-1, -2);
+        saveParams.setMargins(0, 12, 0, 12);
+        root.addView(saveButton, saveParams);
         saveButton.setOnClickListener(v -> {
             saveGame();
             message("Your life has been saved!");
         });
 
         dashboardShell.addView(createBottomNavigation());
+    }
+
+    void addPremiumSectionHeading(String title, String subtitle) {
+        LinearLayout block = new LinearLayout(this);
+        block.setOrientation(LinearLayout.VERTICAL);
+        block.setPadding(2, 8, 2, 5);
+        TextView heading = dashboardText(title, 15, Color.rgb(239, 202, 126), true);
+        heading.setGravity(Gravity.LEFT);
+        TextView description = dashboardText(subtitle, 11,
+                Color.rgb(181, 198, 188), false);
+        description.setGravity(Gravity.LEFT);
+        block.addView(heading);
+        block.addView(description);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
+        p.setMargins(0, 7, 0, 3);
+        root.addView(block, p);
+    }
+
+    void addPremiumSectionRow(
+            String icon1, String title1, String subtitle1, Runnable action1,
+            String icon2, String title2, String subtitle2, Runnable action2) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.TOP);
+
+        addPremiumSectionCard(row, icon1, title1, subtitle1, action1);
+        addPremiumSectionCard(row, icon2, title2, subtitle2, action2);
+
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
+        p.setMargins(0, 3, 0, 3);
+        root.addView(row, p);
+    }
+
+    void addPremiumSectionCard(
+            LinearLayout row, String icon, String title,
+            String subtitle, Runnable action) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(12, 13, 10, 13);
+        card.setBackground(shape(Color.rgb(28, 58, 50), 17));
+        card.setElevation(2);
+
+        TextView iconView = dashboardText(icon, 23, Color.WHITE, true);
+        iconView.setGravity(Gravity.LEFT);
+        TextView titleView = dashboardText(title, 13,
+                Color.rgb(239, 202, 126), true);
+        titleView.setGravity(Gravity.LEFT);
+        TextView subtitleView = dashboardText(subtitle, 10,
+                Color.rgb(190, 204, 195), false);
+        subtitleView.setGravity(Gravity.LEFT);
+        card.addView(iconView);
+        card.addView(titleView);
+        card.addView(subtitleView);
+
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, -2, 1);
+        p.setMargins(3, 3, 3, 3);
+        row.addView(card, p);
+        card.setOnClickListener(v -> action.run());
     }
 
     TextView dashboardText(
@@ -1298,11 +1148,11 @@ public class MainActivity extends Activity {
         item.setPadding(2,4,2,4);
 
         TextView iconView = dashboardText(
-            icon,23,Color.WHITE,true
+            icon,22,Color.rgb(239,202,126),true
         );
 
         TextView labelView = dashboardText(
-            label,11,Color.WHITE,false
+            label,10,Color.rgb(231,236,229),true
         );
 
         item.addView(iconView);
