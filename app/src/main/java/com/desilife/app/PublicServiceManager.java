@@ -512,65 +512,79 @@ public class PublicServiceManager {
             return;
         }
 
-        int performance = getInt("performance", 50);
+        String departmentName = getString("department", "");
+        Department department = findDepartment(departmentName);
         int level = getInt("level", 0);
 
-        if (level >= 3) {
-            message("You have reached the highest position in this career path.");
+        if (department == null || level < 0
+                || level + 1 >= department.positions.length) {
+            message("You have reached the highest position in this government career path.");
             return;
         }
 
+        int performance = getInt("performance", 50);
         int serviceYears = getInt("service_years", 0);
         int requiredYears = 1 + (level * 2);
         int requiredPerformance = 60 + (level * 5);
+        String nextPosition = department.positions[level + 1];
 
         if (serviceYears < requiredYears) {
             message("Promotion requirement not met.\n\n"
-                    + "Required service: " + requiredYears + " years"
-                    + "\nYour service: " + serviceYears + " years.");
+                    + "Current Position: " + job
+                    + "\nNext Position: " + nextPosition
+                    + "\nRequired Service: " + requiredYears + " years"
+                    + "\nYour Service: " + serviceYears + " years.");
             return;
         }
 
         if (performance < requiredPerformance) {
             message("Promotion requirement not met.\n\n"
-                    + "Required performance: " + requiredPerformance + "%"
-                    + "\nYour performance: " + performance + "%.");
+                    + "Current Position: " + job
+                    + "\nNext Position: " + nextPosition
+                    + "\nRequired Performance: " + requiredPerformance + "%"
+                    + "\nYour Performance: " + performance + "%.");
             return;
         }
 
-        int chance = Math.min(90, 30 + performance / 2);
+        final int promotionChance = Math.min(90, 30 + performance / 2);
+        final int nextLevel = level + 1;
 
-        if (random.nextInt(100) < chance) {
-            String department = getString("department", "");
-            Department d = findDepartment(department);
+        new AlertDialog.Builder(activity)
+                .setTitle("Government Promotion")
+                .setMessage("Department: " + departmentName
+                        + "\nCurrent Grade: " + job
+                        + "\nNext Grade: " + nextPosition
+                        + "\n\nEligibility: QUALIFIED"
+                        + "\nRequired Service: " + requiredYears + " years"
+                        + "\nYour Service: " + serviceYears + " years"
+                        + "\nRequired Performance: " + requiredPerformance + "%"
+                        + "\nYour Performance: " + performance + "%"
+                        + "\n\nEstimated Promotion Chance: "
+                        + promotionChance + "%"
+                        + "\n\nSubmit promotion request?")
+                .setPositiveButton("Request", (dialog, which) -> {
+                    if (random.nextInt(100) < promotionChance) {
+                        putInt("level", nextLevel);
+                        putString("job", department.positions[nextLevel]);
 
-            if (d != null && level + 1 < d.positions.length) {
-                level++;
+                        int salary = getInt("salary", department.salary);
+                        int updatedSalary = (int) Math.min(
+                                Integer.MAX_VALUE,
+                                (long) salary + Math.max(3000, salary / 5)
+                        );
+                        putInt("salary", updatedSalary);
 
-                putInt("level", level);
-                putString("job", d.positions[level]);
-
-                int salary = getInt("salary", d.salary);
-                salary = (int) Math.min(
-                        Integer.MAX_VALUE,
-                        (long) salary + Math.max(3000, salary / 5)
-                );
-
-                putInt("salary", salary);
-
-                notifyUpdate("Promotion approved! You are now "
-                        + d.positions[level] + ".");
-            } else {
-                message("No further position is available in this career path.");
-            }
-
-        } else {
-            happiness = Math.max(0, happiness - 3);
-
-            notifyUpdate("Your promotion request was not approved.");
-        }
-
-        showServiceRecord();
+                        notifyUpdate("Promotion approved! You are now "
+                                + department.positions[nextLevel]
+                                + ". New monthly salary: ₹" + updatedSalary + ".");
+                    } else {
+                        happiness = Math.max(0, happiness - 3);
+                        notifyUpdate("Your government promotion request was not approved.");
+                    }
+                    showServiceRecord();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private Department findDepartment(String name) {
