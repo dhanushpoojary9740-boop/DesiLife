@@ -65,6 +65,10 @@ public class MafiaManager {
     private int money;
     private int health;
     private int happiness;
+    private int businessLevel;
+    private int businessIncome;
+    private int prisonYears;
+    private int dominationScore;
 
     public MafiaManager(Activity activity, SharedPreferences save,
                         int money, int health, int happiness, Callback callback) {
@@ -86,6 +90,10 @@ public class MafiaManager {
         controlledTerritories = save.getInt("mafia_territories", 0);
         rivalWins = save.getInt("mafia_rival_wins", 0);
         heat = save.getInt("mafia_heat", 0);
+        businessLevel = save.getInt("mafia_business_level", 0);
+        businessIncome = save.getInt("mafia_business_income", 0);
+        prisonYears = save.getInt("mafia_prison_years", 0);
+        dominationScore = save.getInt("mafia_domination", 0);
     }
 
     private void persist() {
@@ -98,6 +106,10 @@ public class MafiaManager {
             .putInt("mafia_territories", controlledTerritories)
             .putInt("mafia_rival_wins", rivalWins)
             .putInt("mafia_heat", heat)
+            .putInt("mafia_business_level", businessLevel)
+            .putInt("mafia_business_income", businessIncome)
+            .putInt("mafia_prison_years", prisonYears)
+            .putInt("mafia_domination", dominationScore)
             .apply();
     }
 
@@ -145,6 +157,9 @@ public class MafiaManager {
             button(page, "⚔ RIVAL GANG CHALLENGE", this::rivalChallenge);
             button(page, "👥 GANG MANAGEMENT", this::gangManagement);
             button(page, "🏆 RANK & EMPIRE PROGRESS", this::showProgress);
+            button(page, "🏢 UNDERGROUND BUSINESS NETWORK", this::businessNetwork);
+            button(page, "🚨 POLICE ATTENTION & PRISON", this::policeAndPrison);
+            button(page, "👑 MAFIA WORLD DOMINATION", this::worldDomination);
             button(page, "🤝 LEAVE CURRENT GANG", this::leaveGang);
         }
         button(page, "⬅ BACK TO LIFE", activity::recreate);
@@ -175,6 +190,7 @@ public class MafiaManager {
     }
 
     private void showMissions() {
+        if (prisonYears > 0) { message("Your character is serving a prison sentence. Visit Police Attention & Prison first."); return; }
         String[] missions = {
             "Earn trust at a community event",
             "Negotiate a fictional business partnership",
@@ -202,6 +218,7 @@ public class MafiaManager {
         reputation = clamp(reputation + rep, 0, 100);
         influence += 4 + random.nextInt(5);
         completedMissions++;
+        dominationScore = clamp(dominationScore + 2, 0, 100);
         happiness = clamp(happiness + 2, 0, 100);
         heat = Math.max(0, heat - 2);
         checkPromotion();
@@ -211,6 +228,7 @@ public class MafiaManager {
     }
 
     private void expandTerritory() {
+        if (prisonYears > 0) { message("Your character is serving a prison sentence. Visit Police Attention & Prison first."); return; }
         if (controlledTerritories >= districts.length) {
             new AlertDialog.Builder(activity).setTitle("Empire Complete")
                 .setMessage("You already control every available district in this city map.")
@@ -232,6 +250,7 @@ public class MafiaManager {
                 }
                 money -= cost;
                 controlledTerritories++;
+                dominationScore = clamp(dominationScore + 8, 0, 100);
                 influence += 12;
                 reputation = clamp(reputation + 4, 0, 100);
                 checkPromotion();
@@ -242,6 +261,7 @@ public class MafiaManager {
     }
 
     private void rivalChallenge() {
+        if (prisonYears > 0) { message("Your character is serving a prison sentence. Visit Police Attention & Prison first."); return; }
         if (controlledTerritories == 0 && reputation < 20) {
             message("Build more reputation or establish your first territory before challenging a rival.");
             return;
@@ -258,6 +278,7 @@ public class MafiaManager {
                 boolean won = random.nextInt(100) < Math.min(90, chance);
                 if (won) {
                     rivalWins++;
+                    dominationScore = clamp(dominationScore + 5, 0, 100);
                     reputation = clamp(reputation + 7, 0, 100);
                     influence += 10;
                     money += 1200;
@@ -276,6 +297,7 @@ public class MafiaManager {
     }
 
     private void gangManagement() {
+        if (prisonYears > 0) { message("Your character is serving a prison sentence. Visit Police Attention & Prison first."); return; }
         String[] actions = {
             "Recruit a new member (₹1,000)",
             "Train your members (₹1,500)",
@@ -303,6 +325,128 @@ public class MafiaManager {
                 }
                 checkPromotion(); persist(); showDashboard();
             }).setNegativeButton("BACK", null).show();
+    }
+
+
+    /**
+     * Fictional, abstract business-management loop. No real-world criminal
+     * methods are described; businesses are represented as strategy-game assets.
+     */
+    private void businessNetwork() {
+        if (prisonYears > 0) {
+            message("Your character is serving a sentence. Resolve the prison status before managing the network.");
+            return;
+        }
+        String[] options = {
+            "Invest in a fictional business hub (₹3,000)",
+            "Upgrade business network (₹5,000)",
+            "Collect business income (₹" + (businessIncome * Math.max(1, businessLevel)) + ")",
+            "Review business portfolio"
+        };
+        new AlertDialog.Builder(activity).setTitle("Underground Business Network")
+            .setItems(options, (dialog, which) -> {
+                if (which == 0) {
+                    if (money < 3000) { message("You need ₹3,000 to establish a business hub."); return; }
+                    money -= 3000;
+                    businessLevel = Math.min(10, businessLevel + 1);
+                    businessIncome = Math.max(700, businessIncome + 700);
+                    reputation = clamp(reputation + 2, 0, 100);
+                    dominationScore = clamp(dominationScore + 3, 0, 100);
+                    notifyChange("You established a fictional business hub. Your network now has " + businessLevel + " level(s).");
+                } else if (which == 1) {
+                    if (businessLevel == 0) { message("Establish a business hub first."); return; }
+                    if (money < 5000) { message("You need ₹5,000 for the network upgrade."); return; }
+                    money -= 5000;
+                    businessLevel = Math.min(10, businessLevel + 1);
+                    businessIncome += 900;
+                    influence += 6;
+                    dominationScore = clamp(dominationScore + 5, 0, 100);
+                    notifyChange("Your business network was upgraded and its fictional income potential increased.");
+                } else if (which == 2) {
+                    if (businessLevel == 0) { message("You do not own a business hub yet."); return; }
+                    int income = businessIncome * businessLevel;
+                    money += income;
+                    notifyChange("Your business network generated ₹" + income + " in game income.");
+                } else {
+                    message("Business network level: " + businessLevel +
+                        "\nIncome per collection: ₹" + (businessIncome * businessLevel) +
+                        "\nInfluence: " + influence + "\nReputation: " + reputation);
+                }
+                persist();
+                showDashboard();
+            }).setNegativeButton("BACK", (d, w) -> showDashboard()).show();
+    }
+
+    private void policeAndPrison() {
+        String[] options = prisonYears > 0
+            ? new String[]{"Serve one year of your sentence", "Apply for a legal review (₹2,500)", "View legal status"}
+            : new String[]{"Keep a low profile", "Hire legal representation (₹2,000)", "View legal status"};
+        new AlertDialog.Builder(activity).setTitle("Police Attention & Legal Status")
+            .setItems(options, (dialog, which) -> {
+                if (prisonYears > 0) {
+                    if (which == 0) {
+                        prisonYears = Math.max(0, prisonYears - 1);
+                        heat = Math.max(0, heat - 12);
+                        happiness = Math.max(0, happiness - 3);
+                        notifyChange(prisonYears == 0
+                            ? "Your character completed the sentence and returned to the city."
+                            : "One year served. " + prisonYears + " year(s) remain.");
+                    } else if (which == 1) {
+                        if (money < 2500) { message("You need ₹2,500 for legal representation."); return; }
+                        money -= 2500;
+                        if (random.nextInt(100) < 45) {
+                            prisonYears = Math.max(0, prisonYears - 1);
+                            notifyChange("The legal review reduced your sentence by one year.");
+                        } else {
+                            notifyChange("The legal review did not change the sentence.");
+                        }
+                    } else {
+                        message("Remaining sentence: " + prisonYears + " year(s)\nPolice heat: " + heat + "/100");
+                    }
+                } else {
+                    if (which == 0) {
+                        heat = Math.max(0, heat - 15);
+                        reputation = clamp(reputation + 1, 0, 100);
+                        notifyChange("You stepped away from the spotlight. Police attention decreased.");
+                    } else if (which == 1) {
+                        if (money < 2000) { message("You need ₹2,000 for legal representation."); return; }
+                        money -= 2000;
+                        heat = Math.max(0, heat - 25);
+                        notifyChange("Your character received fictional legal advice and police attention decreased.");
+                    } else {
+                        message("Police heat: " + heat + "/100\n" +
+                            (heat >= 75 ? "Status: Critical attention" : heat >= 40 ? "Status: Elevated attention" : "Status: Low attention") +
+                            "\nPrison sentence: None");
+                        return;
+                    }
+                    // High heat creates a non-graphic, chance-based story consequence.
+                    if (heat >= 85 && random.nextInt(100) < 30) {
+                        prisonYears = 1 + random.nextInt(3);
+                        heat = 45;
+                        notifyChange("A fictional investigation resulted in a prison sentence of " + prisonYears + " years. You can serve time or request a legal review.");
+                    }
+                }
+                persist();
+                showDashboard();
+            }).setNegativeButton("BACK", (d, w) -> showDashboard()).show();
+    }
+
+    private void worldDomination() {
+        int score = clamp(dominationScore + rank * 5 + controlledTerritories * 3 +
+            rivalWins * 2 + businessLevel * 2, 0, 100);
+        String status = score >= 90 && rank >= 7
+            ? "MAFIA EMPEROR — You have achieved complete fictional world domination!"
+            : score >= 65 ? "International influence is within reach."
+            : score >= 35 ? "Your organisation is becoming a major power."
+            : "Your empire is still growing. Build influence, reputation and territories.";
+        new AlertDialog.Builder(activity).setTitle("👑 Mafia World Domination")
+            .setMessage(status + "\n\nDomination rating: " + score + "/100" +
+                "\nCurrent rank: " + (gang.isEmpty() ? "No gang" : ranks[Math.min(rank, ranks.length - 1)]) +
+                "\nTerritories: " + controlledTerritories + "/10" +
+                "\nBusiness levels: " + businessLevel +
+                "\nRival victories: " + rivalWins +
+                "\n\nReach rank Mafia Emperor and a domination rating of 90 to complete the storyline.")
+            .setPositiveButton("OK", null).show();
     }
 
     private void showProgress() {
