@@ -89,6 +89,11 @@ public class MafiaManager {
     private String heirName;
     private boolean successionCompleted;
     private int dynastyGenerations;
+    // Bundle 6: city map, family bonds, economic ledger and story choices.
+    private int familyBond = 65;
+    private int economyReports;
+    private int storyChoicesMade;
+    private String lastStoryChoice = "No major story choice yet";
 
     public MafiaManager(Activity activity, SharedPreferences save,
                         int money, int health, int happiness, Callback callback) {
@@ -132,6 +137,10 @@ public class MafiaManager {
         heirName = save.getString("mafia_heir_name", "");
         successionCompleted = save.getBoolean("mafia_succession_completed", false);
         dynastyGenerations = save.getInt("mafia_dynasty_generations", 1);
+        familyBond = save.getInt("mafia_family_bond", 65);
+        economyReports = save.getInt("mafia_economy_reports", 0);
+        storyChoicesMade = save.getInt("mafia_story_choices", 0);
+        lastStoryChoice = save.getString("mafia_last_story_choice", "No major story choice yet");
     }
 
     private void persist() {
@@ -166,6 +175,10 @@ public class MafiaManager {
             .putString("mafia_heir_name", heirName)
             .putBoolean("mafia_succession_completed", successionCompleted)
             .putInt("mafia_dynasty_generations", dynastyGenerations)
+            .putInt("mafia_family_bond", familyBond)
+            .putInt("mafia_economy_reports", economyReports)
+            .putInt("mafia_story_choices", storyChoicesMade)
+            .putString("mafia_last_story_choice", lastStoryChoice)
             .apply();
     }
 
@@ -232,6 +245,11 @@ public class MafiaManager {
             button(page, "🗳 GLOBAL UNDERWORLD ELECTION", this::mafiaElection);
             button(page, "👑 HEIR & GENERATIONAL SUCCESSION", this::successionMenu);
             button(page, "🌐 RIVAL EMPIRE AI", this::rivalEmpireReport);
+            button(page, "🗺 LIVING CITY WORLD MAP", this::livingCityMap);
+            button(page, "👨‍👩‍👧 FAMILY RELATIONSHIPS", this::familyRelationships);
+            button(page, "📊 EMPIRE ECONOMY REPORT", this::empireEconomyReport);
+            button(page, "🥇 GLOBAL WORLD RANKING", this::worldRanking);
+            button(page, "📖 DYNAMIC STORY CHOICES", this::dynamicStoryChoices);
             button(page, "🤝 LEAVE CURRENT GANG", this::leaveGang);
         }
         button(page, "⬅ BACK TO LIFE", activity::recreate);
@@ -950,6 +968,163 @@ public class MafiaManager {
                 globalInfluence += which == 1 ? 5 : 3;
                 reputation = clamp(reputation + 2, 0, 100);
                 persist(); notifyChange(which == 1 ? "Your alliances strengthened and rival influence declined." : "Your public reputation campaign reduced the rival network's standing.");
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+
+    // Bundle 6: an abstract, choice-driven city map. Territory ownership is
+    // represented as game progression and does not describe real-world activity.
+    private void livingCityMap() {
+        StringBuilder map = new StringBuilder();
+        map.append("CITY CONTROL MAP\n\n");
+        for (int i = 0; i < districts.length; i++) {
+            map.append(i < controlledTerritories ? "🟨 OWNED  " : "⬜ OPEN   ")
+                .append(districts[i]).append("\n");
+        }
+        map.append("\nOwned districts: ").append(controlledTerritories)
+            .append("/").append(districts.length)
+            .append("\nGlobal cities: ").append(internationalCities).append("/6")
+            .append("\nRival power: ").append(rivalEmpirePower).append("/100");
+        String[] options = {"Review city map", "Develop the next open district (₹4,000)", "View international footprint"};
+        new AlertDialog.Builder(activity).setTitle("🗺 Living World Map")
+            .setMessage(map.toString())
+            .setItems(options, (d, which) -> {
+                if (which == 0) { livingCityMap(); return; }
+                if (which == 2) {
+                    message("International cities established: " + internationalCities + "/6"
+                        + "\nGlobal alliances: " + globalAlliances + "/5"
+                        + "\nGlobal influence: " + globalInfluence);
+                    return;
+                }
+                if (controlledTerritories >= districts.length) {
+                    message("You have completed the available city map."); return;
+                }
+                if (money < 4000) { message("You need ₹4,000 to develop the next district."); return; }
+                money -= 4000;
+                controlledTerritories++;
+                influence += 5;
+                dominationScore = clamp(dominationScore + 4, 0, 100);
+                persist();
+                notifyChange("You developed " + districts[controlledTerritories - 1]
+                    + " through a public-facing business and community investment.");
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void familyRelationships() {
+        String familyStatus = heirName.isEmpty() ? "No named heir" : "Heir: " + heirName;
+        String[] choices = {"Spend time with family (₹500)", "Support a family member (₹1,500)", "Hold a family council", "Review relationships"};
+        new AlertDialog.Builder(activity).setTitle("Family Relationships")
+            .setMessage(familyStatus + "\nFamily bond: " + familyBond + "/100"
+                + "\nDynasty generations: " + dynastyGenerations
+                + "\n\nYour decisions shape trust and succession stability.")
+            .setItems(choices, (d, which) -> {
+                if (which == 3) {
+                    message("Family bond: " + familyBond + "/100\nHeir: "
+                        + (heirName.isEmpty() ? "Not appointed" : heirName)
+                        + "\nSuccession completed: " + (successionCompleted ? "Yes" : "No"));
+                    return;
+                }
+                if (which == 0 || which == 1) {
+                    int cost = which == 0 ? 500 : 1500;
+                    if (money < cost) { message("You need ₹" + cost + "."); return; }
+                    money -= cost;
+                    familyBond = clamp(familyBond + (which == 0 ? 6 : 12), 0, 100);
+                    happiness = clamp(happiness + 3, 0, 100);
+                    lastStoryChoice = which == 0 ? "Made time for family" : "Supported a family member";
+                    storyChoicesMade++;
+                    persist();
+                    notifyChange(which == 0 ? "You made time for family. Trust improved." : "Your support strengthened family relationships.");
+                    showDashboard();
+                    return;
+                }
+                int change = familyBond >= 60 ? 5 : 10;
+                familyBond = clamp(familyBond + change, 0, 100);
+                loyalty = clamp(loyalty + 2, 0, 100);
+                lastStoryChoice = "Held a family council";
+                storyChoicesMade++;
+                persist();
+                notifyChange("A calm family council helped resolve disagreements and strengthen trust.");
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void empireEconomyReport() {
+        int gross = businessIncome * businessLevel;
+        int portfolioValue = assetPortfolio * 5000;
+        int estimatedExpenses = businessLevel * 250 + internationalCities * 350
+            + safehouseLevel * 150 + lieutenants * 100;
+        int net = gross - estimatedExpenses;
+        economyReports++;
+        persist();
+        new AlertDialog.Builder(activity).setTitle("Empire Economy — Financial Report")
+            .setMessage("BUSINESS & ASSET SUMMARY\n"
+                + "Business hubs: " + businessLevel + "/10\n"
+                + "Estimated business revenue: ₹" + gross + "\n"
+                + "Estimated operating expenses: ₹" + estimatedExpenses + "\n"
+                + "Estimated operating balance: ₹" + net + "\n\n"
+                + "International cities: " + internationalCities + "\n"
+                + "Asset portfolio units: " + assetPortfolio + "\n"
+                + "Estimated portfolio value: ₹" + portfolioValue + "\n"
+                + "Cash on hand: ₹" + money + "\n\n"
+                + "This is an in-game estimate, not real financial advice.")
+            .setPositiveButton("CLOSE", null).show();
+    }
+
+    private void worldRanking() {
+        int score = reputation * 2 + globalInfluence * 3 + controlledTerritories * 8
+            + internationalCities * 12 + globalAlliances * 7 + businessLevel * 4
+            + electionWins * 15 + dynastyGenerations * 5 + dominationScore;
+        int rivalScore = rivalEmpirePower * 2 + 40;
+        String rankLabel = score >= rivalScore + 100 ? "Global #1 — Legendary" :
+            score >= rivalScore + 30 ? "Global #2 — Elite" :
+            score >= rivalScore ? "Global #3 — Rising" : "Global #4 — Challenger";
+        new AlertDialog.Builder(activity).setTitle("🥇 Global Empire Ranking")
+            .setMessage(rankLabel + "\n\nYour empire score: " + score
+                + "\nRival network score: " + rivalScore
+                + "\nReputation: " + reputation + "/100"
+                + "\nGlobal influence: " + globalInfluence
+                + "\nTerritories: " + controlledTerritories + "/10"
+                + "\nInternational cities: " + internationalCities + "/6"
+                + "\nElection wins: " + electionWins
+                + "\nDynasty generations: " + dynastyGenerations
+                + "\n\nRankings update as your empire develops.")
+            .setPositiveButton("OK", null).show();
+    }
+
+    private void dynamicStoryChoices() {
+        String[] events = {
+            "A trusted lieutenant wants to retire and return to family life.",
+            "A rival organisation proposes a peaceful business competition.",
+            "Your heir asks for a greater role in the family legacy.",
+            "A city community group requests support for a public project."
+        };
+        String event = events[random.nextInt(events.length)];
+        String[] options = {"Choose a people-first response", "Choose a business-focused response", "Delay the decision"};
+        new AlertDialog.Builder(activity).setTitle("📖 A New Chapter")
+            .setMessage(event + "\n\nYour choice will affect family trust, reputation and the organisation's future.")
+            .setItems(options, (d, which) -> {
+                if (which == 2) {
+                    lastStoryChoice = "Delayed: " + event;
+                    message("You decided to revisit this situation later.");
+                } else if (which == 0) {
+                    familyBond = clamp(familyBond + 8, 0, 100);
+                    loyalty = clamp(loyalty + 5, 0, 100);
+                    happiness = clamp(happiness + 2, 0, 100);
+                    reputation = clamp(reputation + 2, 0, 100);
+                    lastStoryChoice = "People-first: " + event;
+                    notifyChange("Your people-first decision strengthened relationships and public trust.");
+                } else {
+                    if (money < 1000) { message("You need ₹1,000 for the business-focused response."); return; }
+                    money -= 1000;
+                    influence += 4;
+                    globalInfluence += 2;
+                    lastStoryChoice = "Business-focused: " + event;
+                    notifyChange("Your business-focused decision improved influence and global standing.");
+                }
+                storyChoicesMade++;
+                persist();
                 showDashboard();
             }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
     }
