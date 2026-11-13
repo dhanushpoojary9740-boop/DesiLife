@@ -50,8 +50,8 @@ public class PropertyManager {
     private final PropertyCallback callback;
     private final Random random = new Random();
 
-    private final int gold = Color.rgb(226, 184, 105);
-    private final int dark = Color.rgb(12, 25, 23);
+    private final int gold = Color.rgb(239, 202, 126);
+    private final int dark = Color.rgb(12, 31, 27);
     private final int white = Color.WHITE;
     private final int grey = Color.rgb(185, 190, 185);
 
@@ -162,7 +162,7 @@ public class PropertyManager {
     private void showMainMenu() {
         LinearLayout root = createLayout();
 
-        addTitle(root, "REAL ESTATE & PROPERTY");
+        addTitle(root, "🏠  REAL ESTATE & PROPERTY");
 
         addText(root, "Age: " + age + " years", 14, grey);
         addText(root, "Available Money: " + formatMoney(money), 19, gold);
@@ -616,6 +616,7 @@ public class PropertyManager {
 
     private ScrollView wrap(LinearLayout root) {
         ScrollView scroll = new ScrollView(activity);
+        scroll.setBackgroundColor(Color.rgb(12, 31, 27));
         scroll.setFillViewport(true);
         scroll.addView(root);
         return scroll;
@@ -648,7 +649,7 @@ public class PropertyManager {
 
     private void addDivider(LinearLayout root) {
         TextView divider = new TextView(activity);
-        divider.setBackgroundColor(Color.rgb(65, 80, 72));
+        divider.setBackgroundColor(Color.rgb(55, 83, 69));
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, 1);
         params.setMargins(0, 14, 0, 14);
@@ -665,6 +666,7 @@ public class PropertyManager {
         button.setGravity(Gravity.CENTER);
         button.setPadding(12, 16, 12, 16);
         button.setBackground(background(gold, 16));
+        button.setElevation(3);
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);

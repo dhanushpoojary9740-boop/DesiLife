@@ -217,7 +217,7 @@ public class InsuranceManager {
         TextView t = new TextView(activity);
         t.setText(value);
         t.setTextSize(size);
-        t.setTextColor(Color.WHITE);
+        t.setTextColor(bold ? Color.rgb(239, 202, 126) : Color.rgb(222, 231, 222));
 
         if (bold) {
             t.setTypeface(null, Typeface.BOLD);
@@ -250,7 +250,8 @@ public class InsuranceManager {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(18, 16, 18, 16);
-        card.setBackground(background(Color.rgb(39, 48, 65)));
+        card.setBackground(background(Color.rgb(28, 58, 50)));
+        card.setElevation(3);
 
         card.addView(text(title, 14, false));
         card.addView(text(value, 21, true));
@@ -267,9 +268,10 @@ public class InsuranceManager {
 
         Button button = new Button(activity);
         button.setText(label);
-        button.setTextColor(Color.WHITE);
+        button.setTextColor(Color.rgb(25, 48, 39));
         button.setAllCaps(false);
-        button.setBackground(background(Color.rgb(54, 91, 143)));
+        button.setBackground(background(Color.rgb(239, 202, 126)));
+        button.setElevation(3);
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
@@ -285,14 +287,16 @@ public class InsuranceManager {
     public void show() {
 
         ScrollView scroll = new ScrollView(activity);
+        scroll.setBackgroundColor(Color.rgb(12, 31, 27));
 
         content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(20, 20, 20, 30);
+        content.setPadding(18, 18, 18, 26);
+        content.setBackgroundColor(Color.rgb(12, 31, 27));
 
         scroll.addView(content);
 
-        content.addView(text("🛡️ INSURANCE", 25, true));
+        content.addView(text("🛡️  INSURANCE", 25, true));
 
         content.addView(text(
                 "Protect your health, family, vehicle and property",
@@ -851,6 +855,7 @@ public class InsuranceManager {
         view.setPadding(20, 20, 20, 20);
 
         ScrollView scroll = new ScrollView(activity);
+        scroll.setBackgroundColor(Color.rgb(12, 31, 27));
         scroll.addView(view);
 
         new AlertDialog.Builder(activity)

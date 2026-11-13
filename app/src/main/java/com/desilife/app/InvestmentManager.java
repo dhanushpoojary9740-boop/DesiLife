@@ -253,7 +253,7 @@ public class InvestmentManager {
 
         t.setText(value);
         t.setTextSize(size);
-        t.setTextColor(Color.WHITE);
+        t.setTextColor(bold ? Color.rgb(239, 202, 126) : Color.rgb(222, 231, 222));
 
         if (bold) {
             t.setTypeface(null, Typeface.BOLD);
@@ -287,7 +287,7 @@ public class InvestmentManager {
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(18, 16, 18, 16);
         card.setBackground(background(
-                Color.rgb(39, 48, 65)));
+                Color.rgb(28, 58, 50)));
 
         card.addView(text(title, 14, false));
         card.addView(text(value, 22, true));
@@ -306,10 +306,11 @@ public class InvestmentManager {
         Button button = new Button(activity);
 
         button.setText(label);
-        button.setTextColor(Color.WHITE);
+        button.setTextColor(Color.rgb(25, 48, 39));
         button.setAllCaps(false);
         button.setBackground(background(
-                Color.rgb(54, 91, 143)));
+                Color.rgb(239, 202, 126)));
+        button.setElevation(3);
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
@@ -326,14 +327,16 @@ public class InvestmentManager {
     public void show() {
 
         ScrollView scroll = new ScrollView(activity);
+        scroll.setBackgroundColor(Color.rgb(12, 31, 27));
 
         content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(20, 20, 20, 30);
+        content.setPadding(18, 18, 18, 26);
+        content.setBackgroundColor(Color.rgb(12, 31, 27));
 
         scroll.addView(content);
 
-        content.addView(text("INVESTMENTS", 25, true));
+        content.addView(text("📈  INVESTMENTS", 25, true));
 
         content.addView(text(
                 "Build wealth through stocks, funds and gold",
@@ -998,6 +1001,7 @@ public class InvestmentManager {
         view.setPadding(20, 20, 20, 20);
 
         ScrollView scroll = new ScrollView(activity);
+        scroll.setBackgroundColor(Color.rgb(12, 31, 27));
         scroll.addView(view);
 
         new AlertDialog.Builder(activity)

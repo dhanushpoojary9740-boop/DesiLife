@@ -18,8 +18,8 @@ public class AssetsManager {
     SharedPreferences save;
     int money;
 
-    int gold = Color.rgb(226,184,105);
-    int bg = Color.rgb(12,25,23);
+    int gold = Color.rgb(239,202,126);
+    int bg = Color.rgb(12,31,27);
     int white = Color.WHITE;
 
     AlertDialog dialog;
@@ -138,6 +138,7 @@ public class AssetsManager {
 
     void show() {
         ScrollView scroll = new ScrollView(activity);
+        scroll.setBackgroundColor(Color.rgb(12, 31, 27));
 
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -146,7 +147,7 @@ public class AssetsManager {
 
         scroll.addView(root);
 
-        heading(root,"💰 ASSETS & FINANCES");
+        heading(root,"💰  ASSETS & FINANCES");
 
         int savings = get("savingsBalance",0);
         int debt = get("loanDebt",0);

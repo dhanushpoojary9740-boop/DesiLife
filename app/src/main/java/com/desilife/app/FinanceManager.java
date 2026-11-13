@@ -220,14 +220,16 @@ public class FinanceManager {
         syncCash();
 
         ScrollView scroll = new ScrollView(activity);
+        scroll.setBackgroundColor(Color.rgb(12, 31, 27));
 
         content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(20, 20, 20, 30);
+        content.setPadding(18, 18, 18, 26);
+        content.setBackgroundColor(Color.rgb(12, 31, 27));
 
         scroll.addView(content);
 
-        content.addView(text("BANK & FINANCE", 26, true));
+        content.addView(text("🏦  BANK & FINANCE", 26, true));
 
         content.addView(text(
                 "Your complete financial life",
@@ -381,7 +383,7 @@ public class FinanceManager {
                 "\nTransactions recorded: " + entries.size()
         );
 
-        summary.setTextColor(Color.rgb(45, 55, 65));
+        summary.setTextColor(Color.rgb(224, 231, 222));
         summary.setTextSize(14);
         summary.setLineSpacing(3, 1.0f);
         summary.setPadding(12, 10, 12, 10);
@@ -402,7 +404,7 @@ public class FinanceManager {
         assetContent.setText(assetHistory.isEmpty()
                 ? "No bank or investment asset changes recorded yet."
                 : assetHistory.replace("\\n", "\n"));
-        assetContent.setTextColor(Color.rgb(45, 55, 65));
+        assetContent.setTextColor(Color.rgb(224, 231, 222));
         assetContent.setTextSize(12);
         assetContent.setLineSpacing(3, 1.0f);
         assetContent.setPadding(12, 10, 12, 10);
@@ -461,7 +463,7 @@ public class FinanceManager {
                 month.setPadding(10, 9, 10, 9);
 
                 month.setBackground(
-                        background(Color.rgb(247, 248, 249)));
+                        background(Color.rgb(28, 58, 50)));
 
                 LinearLayout.LayoutParams monthParams =
                         new LinearLayout.LayoutParams(-1, -2);
@@ -661,12 +663,12 @@ public class FinanceManager {
         filter.setTextColor(
                 selected
                         ? Color.WHITE
-                        : Color.rgb(45, 55, 65));
+                        : Color.rgb(224, 231, 222));
 
         filter.setBackground(background(
                 selected
-                        ? Color.rgb(42, 91, 135)
-                        : Color.rgb(232, 237, 241)));
+                        ? Color.rgb(239, 202, 126)
+                        : Color.rgb(42, 67, 57)));
     }
 
     // ---------------- TRANSACTION ROW ----------------
@@ -688,11 +690,11 @@ public class FinanceManager {
         card.setPadding(12, 10, 12, 10);
 
         card.setBackground(
-                background(Color.rgb(247, 248, 249)));
+                background(Color.rgb(28, 58, 50)));
 
         TextView description = new TextView(activity);
         description.setText(entry.trim());
-        description.setTextColor(Color.rgb(50, 58, 65));
+        description.setTextColor(Color.rgb(240, 242, 235));
         description.setTextSize(13);
         description.setLineSpacing(3, 1.0f);
 
@@ -973,7 +975,7 @@ public class FinanceManager {
 
         t.setText(value);
         t.setTextSize(size);
-        t.setTextColor(Color.WHITE);
+        t.setTextColor(bold ? Color.rgb(239, 202, 126) : Color.rgb(222, 231, 222));
 
         if (bold) {
             t.setTypeface(null, Typeface.BOLD);
@@ -1012,7 +1014,7 @@ public class FinanceManager {
         card.setPadding(18, 16, 18, 16);
 
         card.setBackground(background(
-                Color.rgb(39, 48, 65)));
+                Color.rgb(28, 58, 50)));
 
         card.addView(text(title, 14, false));
         card.addView(text(value, 22, true));
@@ -1032,11 +1034,12 @@ public class FinanceManager {
         Button button = new Button(activity);
 
         button.setText(label);
-        button.setTextColor(Color.WHITE);
+        button.setTextColor(Color.rgb(25, 48, 39));
         button.setAllCaps(false);
 
         button.setBackground(background(
-                Color.rgb(54, 91, 143)));
+                Color.rgb(239, 202, 126)));
+        button.setElevation(3);
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);

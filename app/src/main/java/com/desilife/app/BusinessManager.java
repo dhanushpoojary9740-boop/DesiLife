@@ -53,8 +53,8 @@ public class BusinessManager {
     private int loan;
     private ArrayList<String> businesses = new ArrayList<>();
 
-    private final int gold = Color.rgb(226,184,105);
-    private final int dark = Color.rgb(12,25,23);
+    private final int gold = Color.rgb(239,202,126);
+    private final int dark = Color.rgb(12,31,27);
     private final int white = Color.WHITE;
 
     private final String[] types = {
@@ -162,6 +162,7 @@ public class BusinessManager {
         button.setTypeface(null, Typeface.BOLD);
         button.setGravity(Gravity.CENTER);
         button.setBackground(shape(gold, 18));
+        button.setElevation(3);
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(
@@ -188,11 +189,13 @@ public class BusinessManager {
             LinearLayout content
     ) {
         ScrollView scroll = new ScrollView(activity);
+        scroll.setBackgroundColor(Color.rgb(12, 31, 27));
         scroll.setBackgroundColor(dark);
 
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(18, 20, 18, 25);
+        root.setBackgroundColor(Color.rgb(12, 31, 27));
 
         TextView heading = makeText(title, 24, gold);
         heading.setTypeface(null, Typeface.BOLD);
@@ -239,7 +242,7 @@ public class BusinessManager {
         addButton(content, "💼 SELL A BUSINESS",
                 this::sellBusiness);
 
-        showScreen("🏢 BUSINESS & ENTREPRENEURSHIP", content);
+        showScreen("🏢  BUSINESS & ENTREPRENEURSHIP", content);
     }
 
     private void chooseBusiness() {
