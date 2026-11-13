@@ -360,6 +360,7 @@ public class MainActivity extends Activity {
             "Start New Life",
             "Save Game",
             "Life Statistics",
+            "Net Worth Dashboard",
             "Main Menu"
         };
 
@@ -390,11 +391,106 @@ public class MainActivity extends Activity {
                 } else if (which == 3) {
                     showLifeStatistics();
 
+                } else if (which == 4) {
+                    showNetWorthDashboard();
+
                 } else {
                     showHome();
                 }
             })
             .show();
+    }
+
+    void showNetWorthDashboard() {
+        long cash = Math.max(0, money);
+
+        long bankAssets = 0;
+        android.content.SharedPreferences bankPrefs =
+                getSharedPreferences("desilife_bank_data", MODE_PRIVATE);
+        bankAssets += Math.max(0, bankPrefs.getLong("savings", 0));
+        bankAssets += Math.max(0, bankPrefs.getLong("current", 0));
+        bankAssets += Math.max(0, bankPrefs.getLong("fd_principal", 0));
+        bankAssets += Math.max(0, bankPrefs.getLong("rd_balance", 0));
+
+        long investmentAssets = 0;
+        android.content.SharedPreferences investmentPrefs =
+                getSharedPreferences("desilife_investment_data", MODE_PRIVATE);
+        int investmentCount = investmentPrefs.getInt("investment_count", 0);
+        for (int i = 0; i < investmentCount; i++) {
+            investmentAssets += Math.max(0,
+                    investmentPrefs.getLong("investment_value_" + i, 0));
+        }
+
+        long propertyAssets = 0;
+        int propertyCount = save.getInt("property_count", 0);
+        for (int i = 0; i < propertyCount; i++) {
+            propertyAssets += Math.max(0,
+                    save.getInt("property_" + i + "_value", 0));
+        }
+
+        long businessAssets = 0;
+        int businessCount = save.getInt("business_count", 0);
+        for (int i = 0; i < businessCount; i++) {
+            String business = save.getString("business_" + i, "");
+            if (business == null || business.isEmpty()) continue;
+            String[] fields = business.split("\\|", -1);
+            if (fields.length > 6) {
+                try {
+                    businessAssets += Math.max(0, Long.parseLong(fields[6]));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
+        long personalAssets = 0;
+        personalAssets += Math.max(0, save.getInt("houseValue", 0));
+        personalAssets += Math.max(0, save.getInt("vehicleValue", 0));
+
+        long legacyDebt = Math.max(0, save.getInt("loanDebt", 0));
+        long businessDebt = Math.max(0, save.getInt("business_loan", 0));
+        android.content.SharedPreferences loanPrefs =
+                getSharedPreferences("desilife_loan_data", MODE_PRIVATE);
+        long loanDebt = Math.max(0, loanPrefs.getLong("outstanding", 0));
+        long financeDebt = Math.max(0, legacyDebt + businessDebt + loanDebt);
+
+        long totalAssets = cash + bankAssets + investmentAssets
+                + propertyAssets + businessAssets + personalAssets;
+        long netWorth = totalAssets - financeDebt;
+
+        java.text.NumberFormat inr =
+                java.text.NumberFormat.getCurrencyInstance(
+                        new java.util.Locale("en", "IN"));
+
+        String report =
+                "TOTAL ASSETS\n" +
+                "Cash: " + inr.format(cash) + "\n" +
+                "Bank balances: " + inr.format(bankAssets) + "\n" +
+                "Investments: " + inr.format(investmentAssets) + "\n" +
+                "Properties: " + inr.format(propertyAssets) + "\n" +
+                "Businesses: " + inr.format(businessAssets) + "\n" +
+                "Other owned assets: " + inr.format(personalAssets) + "\n" +
+                "------------------------------\n" +
+                "Total assets: " + inr.format(totalAssets) + "\n\n" +
+                "LIABILITIES\n" +
+                "Outstanding loans: " + inr.format(financeDebt) + "\n" +
+                "------------------------------\n" +
+                "NET WORTH: " + inr.format(netWorth) + "\n\n" +
+                "Figures are calculated from saved game balances and asset values. " +
+                "Some items may not be included if their value is not stored.";
+
+        ScrollView scroll = new ScrollView(this);
+        TextView content = new TextView(this);
+        content.setText(report);
+        content.setTextSize(16);
+        content.setTextColor(Color.rgb(45, 45, 45));
+        content.setPadding(22, 20, 22, 20);
+        scroll.addView(content);
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("📊 Net Worth Dashboard")
+                .setView(scroll)
+                .setPositiveButton("CLOSE", null)
+                .show();
     }
 
     void showLifeStatistics() {
