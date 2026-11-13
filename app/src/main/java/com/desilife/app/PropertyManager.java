@@ -471,6 +471,8 @@ public class PropertyManager {
         }
 
         int total = taxes + maintenance;
+        final int taxAmount = taxes;
+        final int maintenanceAmount = maintenance;
 
         new AlertDialog.Builder(activity)
                 .setTitle("Property Expenses")
@@ -488,9 +490,9 @@ public class PropertyManager {
                     }
 
                     money -= total;
-                    recordEvent("Property tax", -taxes,
+                    recordEvent("Property tax", -taxAmount,
                             "Property tax paid", true);
-                    recordEvent("Property maintenance", -maintenance,
+                    recordEvent("Property maintenance", -maintenanceAmount,
                             "Maintenance paid; property condition improved", true);
 
                     for (Property p : properties) {
