@@ -659,8 +659,6 @@ public class EmploymentManager {
                                 + "\nSector: " + sector
                                 + "\nRequired Qualification: " + getJobRequirement(selectedJob)
                                 + "\nYour Qualification: " + getPlayerQualification()
-                                + "\nEligibility Status: ELIGIBLE"
-                                + "\nYour Work Experience: " + experience + " years"
                                 + "\nMonthly Salary: ₹" + salary
                                 + "\nEstimated Selection Chance: "
                                 + finalChance + "%"
@@ -1113,6 +1111,13 @@ public class EmploymentManager {
 
         if (!employed) return;
 
+        if ("Executive".equalsIgnoreCase(jobLevel)) {
+            showMessage("Career Level Completed",
+                    "You have reached the highest employment grade: Executive."
+                            + "\nNo further promotion is available in this career path.");
+            return;
+        }
+
         int requiredYears = 1 + (promotions * 2);
         int requiredPerformance = 60 + (promotions * 5);
 
@@ -1144,9 +1149,16 @@ public class EmploymentManager {
         new AlertDialog.Builder(activity)
                 .setTitle("Promotion Request")
                 .setMessage(
-                        "Your promotion chance is approximately "
-                                + promotionChance + "%."
-                                + "\n\nRequest a promotion?"
+                        "Current Grade: " + jobLevel
+                                + "\nNext Grade: " + nextLevel(jobLevel)
+                                + "\n\nEligibility: QUALIFIED"
+                                + "\nRequired Service: " + requiredYears + " years"
+                                + "\nYour Service: " + yearsInJob + " years"
+                                + "\nRequired Performance: " + requiredPerformance + "%"
+                                + "\nYour Performance: " + performance + "%"
+                                + "\n\nEstimated Promotion Chance: "
+                                + promotionChance + "%"
+                                + "\n\nSubmit promotion request?"
                 )
                 .setPositiveButton("Request", (dialog, which) -> {
 
