@@ -182,18 +182,17 @@ public class CareerDashboardManager {
     }
 
     private void showCareerRecord(String job, String organization,
-                                  String grade, String salary, String status) {
+                                  String grade, String salary, String status,
+                                  int experience, int performance, int promotions) {
         String details = "Current Position: " + job
-                + "\nOrganization: " + organization
-                + "\nGrade / Level: " + grade
-                + "\nMonthly Salary: " + salary
-                + "\nStatus: " + status
-                + "\n\nCareer experience: " + save.getInt("employment_experience", 0)
-                + " years"
-                + "\nPerformance: " + save.getInt("employment_performance", 50) + "%"
-                + "\nReputation: " + save.getInt("employment_reputation", 50) + "%"
-                + "\nPromotions: " + save.getInt("employment_promotions", 0)
-                + "\n\nUse the relevant career path below to manage work, request promotions, train skills or apply for another position.";
+                + "\\nOrganization: " + organization
+                + "\\nGrade / Level: " + grade
+                + "\\nMonthly Salary: " + salary
+                + "\\nStatus: " + status
+                + "\\n\\nCareer Experience / Service: " + experience + " years"
+                + "\\nPerformance: " + performance + "%"
+                + "\\nGrade Level / Promotions: " + promotions
+                + "\\n\\nUse the relevant career path below to manage work, request promotions, train skills or apply for another position.";
         new android.app.AlertDialog.Builder(activity)
                 .setTitle("Current Occupation Record")
                 .setMessage(details)
