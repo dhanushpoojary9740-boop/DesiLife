@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
     int schoolStudyEffort = 0;
     int pucStudyEffort = 0;
     int pucStudySessions = 0;
+    int pucStartAge = -1;
     int degreeStudyEffort = 0;
     int degreeStudySessions = 0;
     int degreeStartAge = -1;
@@ -852,6 +853,81 @@ public class MainActivity extends Activity {
         financeManager = null;
     }
 
+    void processAutomaticEducationExams() {
+        // Board and university examinations are automatically held when the
+        // registered course duration is completed.
+        if (!sslcPassed && !schoolType.isEmpty() && age >= 15) {
+            sslcAttempted = true;
+            examMarks = Math.min(100, 20 + intelligence / 3
+                    + schoolStudyEffort / 3 + (int)(Math.random() * 26));
+            sslcPassed = examMarks >= 40;
+            educationStatus = sslcPassed ? "SSLC Passed" : "SSLC Failed – retake next year";
+            addLifeEvent("Automatic SSLC board examination: "
+                    + (sslcPassed ? "PASSED" : "FAILED") + " with " + examMarks + "/100.");
+            message("SSLC board examination completed automatically. Result: "
+                    + (sslcPassed ? "PASS" : "FAIL") + " (" + examMarks + "/100).");
+        }
+
+        if (sslcPassed && !pucPassed && !pucStream.isEmpty()
+                && pucStartAge >= 0 && age >= pucStartAge + 2) {
+            pucAttempted = true;
+            examMarks = Math.min(100, 18 + intelligence / 3
+                    + pucStudyEffort / 3 + (int)(Math.random() * 26));
+            pucPassed = examMarks >= 40;
+            educationStatus = pucPassed ? "PUC Passed" : "PUC Failed – repeat year";
+            addLifeEvent("Automatic PUC board examination: "
+                    + (pucPassed ? "PASSED" : "FAILED") + " with " + examMarks + "/100.");
+            message("PUC board examination completed automatically. Result: "
+                    + (pucPassed ? "PASS" : "FAIL") + " (" + examMarks + "/100).");
+        }
+
+        if (pucPassed && !degreeCourse.isEmpty() && !degreeCompleted
+                && degreeStartAge >= 0
+                && age >= degreeStartAge + getDegreeDuration(degreeCourse)) {
+            examMarks = Math.min(100, 15 + intelligence / 3
+                    + degreeStudyEffort / 3 + (int)(Math.random() * 26));
+            if (examMarks >= 40) {
+                degreeCompleted = true;
+                educationStatus = "Undergraduate Degree Completed";
+                intelligence = Math.min(100, intelligence + 10);
+                happiness = Math.min(100, happiness + 10);
+                addLifeEvent("Automatic final degree examination: graduated in "
+                        + degreeCourse + " with " + examMarks + "/100.");
+                message("🎓 Final degree examination completed automatically! "
+                        + degreeCourse + " – PASS (" + examMarks + "/100).");
+            } else {
+                educationStatus = "Degree final exam failed – retake next year";
+                addLifeEvent("Automatic final degree examination: failed with "
+                        + examMarks + "/100. Retake next year.");
+                message("Final degree examination completed automatically. "
+                        + "Result: FAIL (" + examMarks + "/100). You can retake next year.");
+            }
+        }
+
+        if (degreeCompleted && !masterCourse.isEmpty() && !masterCompleted
+                && masterStartAge >= 0
+                && age >= masterStartAge + getMasterDuration(masterCourse)) {
+            examMarks = Math.min(100, 15 + intelligence / 3
+                    + masterStudyEffort / 3 + (int)(Math.random() * 26));
+            if (examMarks >= 40) {
+                masterCompleted = true;
+                educationStatus = "Postgraduate Degree Completed";
+                intelligence = Math.min(100, intelligence + 12);
+                happiness = Math.min(100, happiness + 10);
+                addLifeEvent("Automatic postgraduate final examination: completed "
+                        + masterCourse + " with " + examMarks + "/100.");
+                message("🏆 Postgraduate final examination completed automatically! "
+                        + masterCourse + " – PASS (" + examMarks + "/100).");
+            } else {
+                educationStatus = "Postgraduate final exam failed – retake next year";
+                addLifeEvent("Automatic postgraduate final examination: failed with "
+                        + examMarks + "/100. Retake next year.");
+                message("Postgraduate final examination completed automatically. "
+                        + "Result: FAIL (" + examMarks + "/100). You can retake next year.");
+            }
+        }
+    }
+
     void saveGame() {
         save.edit()
             .putBoolean("created",true)
@@ -867,6 +943,7 @@ public class MainActivity extends Activity {
             .putInt("schoolStudyEffort",schoolStudyEffort)
             .putInt("pucStudyEffort",pucStudyEffort)
             .putInt("pucStudySessions",pucStudySessions)
+            .putInt("pucStartAge",pucStartAge)
             .putInt("degreeStudyEffort",degreeStudyEffort)
             .putInt("degreeStudySessions",degreeStudySessions)
             .putInt("degreeStartAge",degreeStartAge)
@@ -915,6 +992,7 @@ public class MainActivity extends Activity {
         schoolStudyEffort = save.getInt("schoolStudyEffort",0);
         pucStudyEffort = save.getInt("pucStudyEffort",0);
         pucStudySessions = save.getInt("pucStudySessions",0);
+        pucStartAge = save.getInt("pucStartAge",-1);
         degreeStudyEffort = save.getInt("degreeStudyEffort",0);
         degreeStudySessions = save.getInt("degreeStudySessions",0);
         degreeStartAge = save.getInt("degreeStartAge",-1);
@@ -1452,7 +1530,7 @@ public class MainActivity extends Activity {
                 addText("Your school years are complete. Prepare and attempt the SSLC examination.",16,muted);
                 addText("Intelligence: " + intelligence + "/100",16,white);
                 addButton("📖 STUDY HARD FOR SSLC",() -> studyEducation("School"));
-                addButton("TAKE SSLC EXAM",() -> takeExam("SSLC"));
+                addText("Your SSLC board examination will be conducted automatically at the end of Class 10.",14,gold);
             }
         } else if (!pucPassed) {
             addText("🎓 PRE-UNIVERSITY COURSE (PUC)",21,gold);
@@ -1463,6 +1541,7 @@ public class MainActivity extends Activity {
                     pucStream = stream.getSelectedItem().toString();
                     pucStudyEffort = 0;
                     pucStudySessions = 0;
+                    pucStartAge = age;
                     educationStatus = "PUC " + pucStream + " – Year 1";
                     money = Math.max(0,money-(family.equals("Poor") ? 500 : 3000));
                     addLifeEvent("You joined the " + pucStream + " PUC stream.");
@@ -1476,7 +1555,7 @@ public class MainActivity extends Activity {
                 addText("Study preparation: " + pucStudyEffort + "/100",16,muted);
                 addButton("📖 STUDY HARD",() -> studyEducation("PUC"));
                 if (year >= 2) {
-                    addButton("📝 TAKE PUC BOARD EXAM",() -> takeExam("PUC"));
+                    addText("Your PUC board examination will be conducted automatically after the full two-year course.",14,gold);
                 } else {
                     addText("Complete your first PUC year. Your second year begins on your next birthday.",14,muted);
                 }
@@ -1523,11 +1602,7 @@ public class MainActivity extends Activity {
                 addButton("📖 STUDY HARD",() -> studyEducation("Degree"));
                 if (years >= duration) {
                     addText("Course duration completed. You are eligible for the final university examination.",15,gold);
-                    if (degreeExamLastAge != age) {
-                        addButton("📝 TAKE FINAL DEGREE EXAM",() -> takeExam("DEGREE"));
-                    } else {
-                        addText("Final exam attempt used this year. You can retake next academic year.",14,muted);
-                    }
+                    addText("Your final university examination will be conducted automatically when you complete this academic year.",14,muted);
                 } else {
                     addText("Your course continues automatically as you advance through birthdays.",14,muted);
                 }
@@ -1547,9 +1622,7 @@ public class MainActivity extends Activity {
                 addButton("📖 STUDY HARD",() -> studyEducation("Master"));
                 if (years >= duration) {
                     addText("Course duration completed. You can take your final postgraduate examination.",15,gold);
-                    if (masterExamLastAge != age) {
-                        addButton("📝 TAKE FINAL MASTER'S EXAM",() -> takeExam("MASTER"));
-                    }
+                    addText("Your final postgraduate examination will be conducted automatically when you complete this academic year.",14,muted);
                 } else {
                     addText("Your postgraduate course continues with each completed year of life.",14,muted);
                 }
@@ -2357,6 +2430,7 @@ public class MainActivity extends Activity {
                     Math.min(getMasterDuration(masterCourse), completedYears + 1);
         }
 
+        processAutomaticEducationExams();
         saveGame();
     }
 
