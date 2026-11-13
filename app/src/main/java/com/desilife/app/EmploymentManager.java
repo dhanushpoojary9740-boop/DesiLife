@@ -937,6 +937,7 @@ public class EmploymentManager {
             String sector
     ) {
 
+        boolean firstCareerJob = !employed;
         employed = true;
 
         jobName = selectedJob;
