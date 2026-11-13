@@ -48,6 +48,11 @@ public class LoanManager {
     private long lateFees;
     private long totalInterestPaid;
 
+    // Cash-flow breakdown for the most recently processed month.
+    private long lastMonthPrincipalPaid;
+    private long lastMonthInterestPaid;
+    private long lastMonthLateFeeAccrued;
+
     private boolean repossessed;
 
     private LinearLayout content;
@@ -170,6 +175,18 @@ public class LoanManager {
 
     public long getOutstanding() {
         return outstanding;
+    }
+
+    public long getLastMonthPrincipalPaid() {
+        return lastMonthPrincipalPaid;
+    }
+
+    public long getLastMonthInterestPaid() {
+        return lastMonthInterestPaid;
+    }
+
+    public long getLastMonthLateFeeAccrued() {
+        return lastMonthLateFeeAccrued;
     }
 
     public int getCreditScore() {
@@ -523,6 +540,10 @@ public class LoanManager {
 
     public void applyMonthlyLoanPayment() {
 
+        lastMonthPrincipalPaid = 0;
+        lastMonthInterestPaid = 0;
+        lastMonthLateFeeAccrued = 0;
+
         if (!hasActiveLoan()) return;
 
         if (scheduledEmi <= 0) {
@@ -543,6 +564,8 @@ public class LoanManager {
             updateCash(cash - payment);
 
             long interestCovered = Math.min(payment, interest);
+            lastMonthInterestPaid = interestCovered;
+            lastMonthPrincipalPaid = Math.max(0, payment - interestCovered);
 
             totalInterestPaid = safeAdd(
                     totalInterestPaid, interestCovered);
@@ -589,6 +612,7 @@ public class LoanManager {
 
             outstanding = safeAdd(outstanding, penalty);
             lateFees = safeAdd(lateFees, penalty);
+            lastMonthLateFeeAccrued = penalty;
 
             creditScore = Math.max(300, creditScore - 25);
 
