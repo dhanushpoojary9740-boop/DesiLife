@@ -1029,10 +1029,10 @@ public class PrivateCareerManager {
         // Record this game age before notifying the main game.
         putInt("salary_paid_age", age);
 
-        putInt("experience", getInt("experience", 0) + 1)
-            int careerYears = getInt("experience", 0);
+        putInt("experience", getInt("experience", 0) + 1);
+        int careerYears = getInt("experience", 0);
             if (careerYears >= 5) unlockAchievement("service_5", "5-Year Service Milestone");
-            if (careerYears >= 10) unlockAchievement("service_10", "10-Year Service Milestone");;
+            if (careerYears >= 10) unlockAchievement("service_10", "10-Year Service Milestone");
         putInt("years_in_grade", getInt("years_in_grade",
                 getInt("experience", 0)) + 1);
 
