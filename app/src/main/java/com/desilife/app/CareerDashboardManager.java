@@ -84,28 +84,27 @@ public class CareerDashboardManager {
         String salary = "₹0 / month";
         String status = "No active occupation";
 
-        // Government service record
-        String governmentJob = save.getString("job", "");
-        String department = save.getString("department", "");
-        String company = save.getString("company", "");
-
-        if (!department.isEmpty() && !governmentJob.isEmpty()
-                && "Active".equals(save.getString("status", "Active"))) {
-            activeJob = governmentJob;
-            organization = department;
-            grade = "Grade " + (save.getInt("level", 0) + 1);
-            salary = "₹" + save.getInt("salary", 0) + " / month";
+        // Read each career system from its actual, namespaced save keys.
+        String publicJob = save.getString("public_service_job", "");
+        if (!publicJob.isEmpty()
+                && "Active".equals(save.getString("public_service_status", "Active"))) {
+            activeJob = publicJob;
+            organization = save.getString("public_service_department", "Government Department");
+            grade = "Grade " + (save.getInt("public_service_level", 0) + 1);
+            salary = "₹" + save.getInt("public_service_salary", 0) + " / month";
             status = "Active Government Service";
-        } else if (!company.isEmpty() && !governmentJob.isEmpty()
-                && "Active".equals(save.getString("status", "Active"))) {
-            activeJob = governmentJob;
-            organization = company;
-            grade = "Grade " + (save.getInt("level", 0) + 1);
-            salary = "₹" + save.getInt("salary", 0) + " / month";
+        }
+
+        String privateJob = save.getString("private_career_job", "");
+        if (!privateJob.isEmpty()
+                && "Active".equals(save.getString("private_career_status", "Active"))) {
+            activeJob = privateJob;
+            organization = save.getString("private_career_company", "Private Company");
+            grade = "Grade " + (save.getInt("private_career_level", 0) + 1);
+            salary = "₹" + save.getInt("private_career_salary", 0) + " / month";
             status = "Active Private-Sector Job";
         }
 
-        // General employment has independent employment_* save keys.
         if (save.getBoolean("employment_employed", false)) {
             activeJob = save.getString("employment_job_name", "Employee");
             organization = save.getString("employment_job_sector", "General Employment");
@@ -114,7 +113,6 @@ public class CareerDashboardManager {
             status = "Active General Employment";
         }
 
-        // General CareerManager has its own namespaced career record.
         SharedPreferences generalCareer = activity.getSharedPreferences(
                 "desilife_career_data", Activity.MODE_PRIVATE);
         String generalTitle = generalCareer.getString("jobTitle", "");
@@ -127,13 +125,6 @@ public class CareerDashboardManager {
             salary = "₹" + generalCareer.getLong("monthlySalary", 0) + " / month";
             status = "Active General Career";
         }
-
-        addSection(root, "CURRENT OCCUPATION");
-        addInfo(root, "Position", activeJob);
-        addInfo(root, "Organization / Department", organization);
-        addInfo(root, "Current Grade / Level", grade);
-        addInfo(root, "Monthly Salary", salary);
-        addInfo(root, "Employment Status", status);
 
         final String currentJob = activeJob;
         final String currentOrganization = organization;
@@ -156,6 +147,15 @@ public class CareerDashboardManager {
         addButton(root, "👔 General Employment", actions::employment);
 
         addSection(root, "POLITICAL CAREER");
+        String politicalOffice = save.getString("political_office", "Ordinary Citizen");
+        String politicalParty = save.getString("political_party", "");
+        addInfo(root, "Political Position", politicalOffice);
+        addInfo(root, "Political Party",
+                politicalParty.isEmpty() ? "Not affiliated" : politicalParty);
+        addInfo(root, "Public Approval",
+                save.getInt("political_popularity", 0) + "%");
+        addInfo(root, "Election Wins",
+                String.valueOf(save.getInt("political_election_wins", 0)));
         addButton(root, "🏛️ Political Career & Elections", actions::politics);
 
         addButton(root, "⬅ BACK TO LIFE", actions::back);
