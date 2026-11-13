@@ -439,12 +439,12 @@ public class PoliticalManager {
                 || politicalYears < requiredYears) {
             showMessage("Promotion Requirements",
                     "Next position: " + nextPosition
-                            + "\\\nRequired public approval: " + requiredPopularity + "%"
-                            + "\\\nYour public approval: " + popularity + "%"
-                            + "\\\nRequired election wins: " + requiredWins
-                            + "\\\nYour election wins: " + electionWins
-                            + "\\\nRequired political experience: " + requiredYears + " years"
-                            + "\\\nYour experience: " + politicalYears + " years");
+                            + "\nRequired public approval: " + requiredPopularity + "%"
+                            + "\nYour public approval: " + popularity + "%"
+                            + "\nRequired election wins: " + requiredWins
+                            + "\nYour election wins: " + electionWins
+                            + "\nRequired political experience: " + requiredYears + " years"
+                            + "\nYour experience: " + politicalYears + " years");
             return;
         }
 
