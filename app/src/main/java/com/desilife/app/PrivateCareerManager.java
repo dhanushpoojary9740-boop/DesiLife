@@ -319,6 +319,8 @@ public class PrivateCareerManager {
 
         addButton(root, "Career Awards & Recognition",
                 this::showAwardHistory);
+        addButton(root, "Career Achievements & Milestones",
+                this::showAchievements);
 
         addButton(root, "Workplace and Performance",
                 this::showWorkplace);
@@ -493,7 +495,7 @@ public class PrivateCareerManager {
                 .show();
     }
 
-    private void setJob(Company c) {
+    private void setJob(Company c) {\n        boolean firstCareerJob = !getBoolean("first_job_earned", false);
         putString("company", c.name);
         putString("sector", c.sector);
         putString("location", c.location);
@@ -505,7 +507,7 @@ public class PrivateCareerManager {
         putInt("skills", getInt("skills", 0));
         putInt("appraisals", 0);
         putInt("bonuses", 0);
-        putString("status", "Active");
+        putString("status", "Active");\n        if (firstCareerJob) { putBoolean("first_job_earned", true); unlockAchievement("first_job", "First Job"); }
 
         putBoolean("health_benefit", false);
         putBoolean("insurance_benefit", false);
@@ -735,7 +737,7 @@ public class PrivateCareerManager {
                     if (random.nextInt(100) < chance) {
                         String previousGrade = getString("job", "");
                         putInt("level", nextLevel);
-                        putString("job", company.positions[nextLevel]);
+                        putString("job", company.positions[nextLevel]);\n                        unlockAchievement("first_promotion", "First Promotion");
                         putInt("years_in_grade", 0);
 
                         int salary = getInt("salary", 0);
@@ -965,6 +967,25 @@ public class PrivateCareerManager {
         saveAll();
     }
 
+    private void unlockAchievement(String id, String title) {
+        String flag = "achievement_" + id;
+        if (getBoolean(flag, false)) return;
+        String history = getString("achievement_history", "");
+        String entry = "Age " + age + " — " + title;
+        putBoolean(flag, true);
+        putInt("achievement_count", getInt("achievement_count", 0) + 1);
+        putString("achievement_history", history.isEmpty()
+                ? entry : history + "\\n" + entry);
+        message("Achievement Unlocked: " + title);
+    }
+
+    private void showAchievements() {
+        String history = getString("achievement_history", "");
+        if (history.isEmpty()) history = "No achievements unlocked yet. Start your career, earn promotions, and build long service.";
+        message("CAREER ACHIEVEMENTS & MILESTONES\\n\\nUnlocked: "
+                + getInt("achievement_count", 0) + "\\n\\n" + history);
+    }
+
     private void showAwardHistory() {
         String history = getString("award_history", "");
         if (history.isEmpty()) history = "No career awards earned yet. Receive Good or Excellent ratings for three consecutive annual reviews to earn the Consistent Excellence Award.";
@@ -1005,7 +1026,10 @@ public class PrivateCareerManager {
         // Record this game age before notifying the main game.
         putInt("salary_paid_age", age);
 
-        putInt("experience", getInt("experience", 0) + 1);
+        putInt("experience", getInt("experience", 0) + 1)
+            int careerYears = getInt("experience", 0);
+            if (careerYears >= 5) unlockAchievement("service_5", "5-Year Service Milestone");
+            if (careerYears >= 10) unlockAchievement("service_10", "10-Year Service Milestone");;
         putInt("years_in_grade", getInt("years_in_grade",
                 getInt("experience", 0)) + 1);
 

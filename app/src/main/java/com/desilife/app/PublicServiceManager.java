@@ -283,6 +283,8 @@ public class PublicServiceManager {
 
         addButton(root, "Career Awards & Recognition",
                 this::showAwardHistory);
+        addButton(root, "Career Achievements & Milestones",
+                this::showAchievements);
 
         addButton(root, "Work Assignments",
                 this::showAssignments);
@@ -428,7 +430,7 @@ public class PublicServiceManager {
                         (dialog, which) -> {
 
                             if (random.nextInt(100) < finalChance) {
-                                putString("job", d.positions[0]);
+                                boolean firstCareerJob = !getBoolean("first_job_earned", false);\n                                putString("job", d.positions[0]);
                                 putString("department", d.name);
                                 putString("category", d.category);
                                 putString("location", d.location);
@@ -438,7 +440,7 @@ public class PublicServiceManager {
                                 putInt("service_years", 0);
                                 putInt("years_in_grade", 0);
                                 putString("promotion_history", "");
-                                putInt("performance", 50);
+                                putInt("performance", 50);\n                                if (firstCareerJob) { putBoolean("first_job_earned", true); unlockAchievement("first_job", "First Job"); }
                                 putInt("assignments_completed", 0);
                                 putInt("assignments_failed", 0);
 
@@ -594,7 +596,7 @@ public class PublicServiceManager {
                     if (random.nextInt(100) < promotionChance) {
                         String previousGrade = getString("job", "");
                         putInt("level", nextLevel);
-                        putString("job", department.positions[nextLevel]);
+                        putString("job", department.positions[nextLevel]);\n                        unlockAchievement("first_promotion", "First Promotion");
                         putInt("years_in_grade", 0);
 
                         int salary = getInt("salary", department.salary);
@@ -944,6 +946,25 @@ public class PublicServiceManager {
         saveAll();
     }
 
+    private void unlockAchievement(String id, String title) {
+        String flag = "achievement_" + id;
+        if (getBoolean(flag, false)) return;
+        String history = getString("achievement_history", "");
+        String entry = "Age " + age + " — " + title;
+        putBoolean(flag, true);
+        putInt("achievement_count", getInt("achievement_count", 0) + 1);
+        putString("achievement_history", history.isEmpty()
+                ? entry : history + "\\n" + entry);
+        message("Achievement Unlocked: " + title);
+    }
+
+    private void showAchievements() {
+        String history = getString("achievement_history", "");
+        if (history.isEmpty()) history = "No achievements unlocked yet. Start your career, earn promotions, and build long service.";
+        message("CAREER ACHIEVEMENTS & MILESTONES\\n\\nUnlocked: "
+                + getInt("achievement_count", 0) + "\\n\\n" + history);
+    }
+
     private void showAwardHistory() {
         String history = getString("award_history", "");
         if (history.isEmpty()) history = "No career awards earned yet. Receive Good or Excellent ratings for three consecutive annual reviews to earn the Consistent Excellence Award.";
@@ -973,7 +994,7 @@ public class PublicServiceManager {
         String status = getString("status", "Active");
 
         if (status.equals("Active")) {
-            putInt("service_years", getInt("service_years", 0) + 1);
+            putInt("service_years", getInt("service_years", 0) + 1);\n            int careerYears = getInt("service_years", 0);\n            if (careerYears >= 5) unlockAchievement("service_5", "5-Year Service Milestone");\n            if (careerYears >= 10) unlockAchievement("service_10", "10-Year Service Milestone");
             putInt("years_in_grade", getInt("years_in_grade",
                     getInt("service_years", 0) - 1) + 1);
 

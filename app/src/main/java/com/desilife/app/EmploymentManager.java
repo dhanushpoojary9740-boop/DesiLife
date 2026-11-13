@@ -287,6 +287,8 @@ public class EmploymentManager {
 
             addButton(root, "🏅 Career Awards & Recognition",
                     this::showAwardHistory);
+            addButton(root, "🏆 Career Achievements & Milestones",
+                    this::showAchievements);
 
             addButton(root, "🎁 Request Performance Bonus",
                     this::requestBonus);
@@ -947,7 +949,7 @@ public class EmploymentManager {
 
         jobLevel = "Entry Level";
 
-        performance = Math.max(performance, 50);
+        performance = Math.max(performance, 50);\n        if (firstCareerJob) { save.edit().putBoolean("employment_first_job_earned", true).apply(); unlockAchievement("first_job", "First Job"); }
 
         yearsInJob = 0;
         unemploymentYears = 0;
@@ -1351,6 +1353,27 @@ public class EmploymentManager {
         notifyUpdate(
                 "You were terminated from " + oldJob + "."
         );
+    }
+
+    private void unlockAchievement(String id, String title) {
+        String key = "employment_achievement_" + id;
+        if (save.getBoolean(key, false)) return;
+        String history = save.getString("employment_achievement_history", "");
+        String entry = "Age " + age + " — " + title;
+        save.edit().putBoolean(key, true)
+                .putInt("employment_achievement_count",
+                        save.getInt("employment_achievement_count", 0) + 1)
+                .putString("employment_achievement_history",
+                        history.isEmpty() ? entry : history + "\\n" + entry).apply();
+        notifyUpdate("Achievement unlocked: " + title + "!");
+    }
+
+    private void showAchievements() {
+        String history = save.getString("employment_achievement_history", "");
+        if (history.isEmpty()) history = "No achievements unlocked yet. Start working, earn promotions, and build long service.";
+        showMessage("CAREER ACHIEVEMENTS & MILESTONES",
+                "Unlocked: " + save.getInt("employment_achievement_count", 0)
+                        + "\\n\\n" + history);
     }
 
     // ---------------- ANNUAL UPDATE ----------------
