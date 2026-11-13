@@ -94,6 +94,19 @@ public class MafiaManager {
     private int economyReports;
     private int storyChoicesMade;
     private String lastStoryChoice = "No major story choice yet";
+    // Bundle 7: character identity, family tree, rival personalities and lifetime records.
+    private int respect = 50;
+    private int fear = 10;
+    private int popularity = 50;
+    private int lifetimeWealthPeak;
+    private int lifetimeInfluencePeak;
+    private int lifetimeTerritoriesPeak;
+    private int permanentDecisions;
+    private String rivalPersonality = "Strategic";
+    private String familyParent1 = "Not recorded";
+    private String familyParent2 = "Not recorded";
+    private String familyChild = "Not recorded";
+    private String familySibling = "Not recorded";
 
     public MafiaManager(Activity activity, SharedPreferences save,
                         int money, int health, int happiness, Callback callback) {
@@ -141,6 +154,18 @@ public class MafiaManager {
         economyReports = save.getInt("mafia_economy_reports", 0);
         storyChoicesMade = save.getInt("mafia_story_choices", 0);
         lastStoryChoice = save.getString("mafia_last_story_choice", "No major story choice yet");
+        respect = save.getInt("mafia_respect", 50);
+        fear = save.getInt("mafia_fear", 10);
+        popularity = save.getInt("mafia_popularity", 50);
+        lifetimeWealthPeak = save.getInt("mafia_lifetime_wealth_peak", 0);
+        lifetimeInfluencePeak = save.getInt("mafia_lifetime_influence_peak", 0);
+        lifetimeTerritoriesPeak = save.getInt("mafia_lifetime_territories_peak", 0);
+        permanentDecisions = save.getInt("mafia_permanent_decisions", 0);
+        rivalPersonality = save.getString("mafia_rival_personality", "Strategic");
+        familyParent1 = save.getString("mafia_family_parent1", "Not recorded");
+        familyParent2 = save.getString("mafia_family_parent2", "Not recorded");
+        familyChild = save.getString("mafia_family_child", "Not recorded");
+        familySibling = save.getString("mafia_family_sibling", "Not recorded");
     }
 
     private void persist() {
@@ -179,6 +204,18 @@ public class MafiaManager {
             .putInt("mafia_economy_reports", economyReports)
             .putInt("mafia_story_choices", storyChoicesMade)
             .putString("mafia_last_story_choice", lastStoryChoice)
+            .putInt("mafia_respect", respect)
+            .putInt("mafia_fear", fear)
+            .putInt("mafia_popularity", popularity)
+            .putInt("mafia_lifetime_wealth_peak", Math.max(lifetimeWealthPeak, money))
+            .putInt("mafia_lifetime_influence_peak", Math.max(lifetimeInfluencePeak, globalInfluence))
+            .putInt("mafia_lifetime_territories_peak", Math.max(lifetimeTerritoriesPeak, controlledTerritories))
+            .putInt("mafia_permanent_decisions", permanentDecisions)
+            .putString("mafia_rival_personality", rivalPersonality)
+            .putString("mafia_family_parent1", familyParent1)
+            .putString("mafia_family_parent2", familyParent2)
+            .putString("mafia_family_child", familyChild)
+            .putString("mafia_family_sibling", familySibling)
             .apply();
     }
 
@@ -250,6 +287,12 @@ public class MafiaManager {
             button(page, "📊 EMPIRE ECONOMY REPORT", this::empireEconomyReport);
             button(page, "🥇 GLOBAL WORLD RANKING", this::worldRanking);
             button(page, "📖 DYNAMIC STORY CHOICES", this::dynamicStoryChoices);
+            button(page, "🎭 CHARACTER REPUTATION", this::characterReputation);
+            button(page, "🌳 MAFIA FAMILY TREE", this::mafiaFamilyTree);
+            button(page, "🧠 RIVAL BOSS PERSONALITY", this::rivalPersonalityReport);
+            button(page, "⚖ MAJOR LIFE DECISIONS", this::majorLifeDecisions);
+            button(page, "📈 LIFETIME EMPIRE STATISTICS", this::lifetimeStatistics);
+            button(page, "♾ CONTINUE DYNASTY", this::continueDynasty);
             button(page, "🤝 LEAVE CURRENT GANG", this::leaveGang);
         }
         button(page, "⬅ BACK TO LIFE", activity::recreate);
@@ -1127,6 +1170,155 @@ public class MafiaManager {
                 persist();
                 showDashboard();
             }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    // Bundle 7: reputation is multidimensional rather than a single score.
+    private void characterReputation() {
+        String status = "Respect: " + respect + "/100\\nFear: " + fear + "/100\\nPopularity: "
+            + popularity + "/100\\nLoyalty: " + loyalty + "/100\\nPublic reputation: " + reputation + "/100";
+        new AlertDialog.Builder(activity).setTitle("🎭 Character Reputation")
+            .setMessage(status + "\\n\\nChoose the leadership style you want to develop.")
+            .setItems(new String[]{"Earn respect through fair leadership", "Build a feared but unstable image", "Improve popularity through community support"}, (d, which) -> {
+                if (which == 0) {
+                    respect = clamp(respect + 8, 0, 100);
+                    loyalty = clamp(loyalty + 4, 0, 100);
+                    reputation = clamp(reputation + 2, 0, 100);
+                } else if (which == 1) {
+                    fear = clamp(fear + 8, 0, 100);
+                    popularity = clamp(popularity - 3, 0, 100);
+                    loyalty = clamp(loyalty - 2, 0, 100);
+                } else {
+                    if (money < 750) { message("You need ₹750 for the community initiative."); return; }
+                    money -= 750;
+                    popularity = clamp(popularity + 8, 0, 100);
+                    respect = clamp(respect + 3, 0, 100);
+                    reputation = clamp(reputation + 3, 0, 100);
+                    happiness = clamp(happiness + 2, 0, 100);
+                }
+                permanentDecisions++;
+                persist();
+                notifyChange("Your leadership style changed how people see your character.");
+                showDashboard();
+            }).setNegativeButton("CLOSE", (d,w) -> showDashboard()).show();
+    }
+
+    private void mafiaFamilyTree() {
+        String tree = "MAFIA FAMILY TREE\\n"
+            + "Parent 1: " + familyParent1 + "\\nParent 2: " + familyParent2
+            + "\\nSibling: " + familySibling + "\\nChild / Heir: " + familyChild
+            + "\\nNamed successor: " + (heirName == null || heirName.isEmpty() ? "Not selected" : heirName)
+            + "\\nDynasty generation: " + dynastyGenerations;
+        String[] options = {"Add / update parent 1", "Add / update parent 2", "Add / update sibling", "Add / update child"};
+        new AlertDialog.Builder(activity).setTitle("🌳 Family Tree").setMessage(tree)
+            .setItems(options, (d, which) -> {
+                EditText input = new EditText(activity);
+                input.setSingleLine(true);
+                input.setHint("Enter family member name");
+                new AlertDialog.Builder(activity).setTitle("Family member name").setView(input)
+                    .setPositiveButton("SAVE", (x,y) -> {
+                        String name = input.getText().toString().trim();
+                        if (name.isEmpty()) { message("Please enter a name."); return; }
+                        if (which == 0) familyParent1 = name;
+                        else if (which == 1) familyParent2 = name;
+                        else if (which == 2) familySibling = name;
+                        else { familyChild = name; if (heirName == null || heirName.isEmpty()) heirName = name; }
+                        familyBond = clamp(familyBond + 2, 0, 100);
+                        persist();
+                        showDashboard();
+                    }).setNegativeButton("CANCEL", (x,y) -> mafiaFamilyTree()).show();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void rivalPersonalityReport() {
+        String[] personalities = {"Aggressive", "Strategic", "Diplomatic", "Unpredictable"};
+        String[] descriptions = {
+            "Aggressive rivals compete quickly and create sudden pressure.",
+            "Strategic rivals grow steadily and prioritise influence.",
+            "Diplomatic rivals seek alliances and avoid unnecessary conflict.",
+            "Unpredictable rivals change their priorities often."
+        };
+        if (random.nextInt(100) < 35) {
+            rivalPersonality = personalities[random.nextInt(personalities.length)];
+            persist();
+        }
+        int index = 0;
+        for (int i = 0; i < personalities.length; i++) if (personalities[i].equals(rivalPersonality)) index = i;
+        new AlertDialog.Builder(activity).setTitle("🧠 Rival Boss Profile")
+            .setMessage("Current rival style: " + rivalPersonality + "\\n\\n" + descriptions[index]
+                + "\\n\\nRival power: " + rivalEmpirePower + "/100"
+                + "\\nYour influence: " + globalInfluence)
+            .setPositiveButton("OK", null).show();
+    }
+
+    private void majorLifeDecisions() {
+        String[] choices = {
+            "Prioritise family stability",
+            "Invest in legitimate businesses",
+            "Seek reconciliation with a rival",
+            "Focus on personal wellbeing"
+        };
+        new AlertDialog.Builder(activity).setTitle("⚖ A Defining Life Decision")
+            .setMessage("This decision becomes part of your permanent life record. Choose carefully.")
+            .setItems(choices, (d, which) -> {
+                if (which == 0) {
+                    familyBond = clamp(familyBond + 12, 0, 100);
+                    loyalty = clamp(loyalty + 5, 0, 100);
+                    happiness = clamp(happiness + 5, 0, 100);
+                } else if (which == 1) {
+                    if (money < 1500) { message("You need ₹1,500 to make this investment."); return; }
+                    money -= 1500;
+                    businessLevel = clamp(businessLevel + 1, 0, 10);
+                    businessIncome += 250;
+                    reputation = clamp(reputation + 3, 0, 100);
+                } else if (which == 2) {
+                    rivalEmpirePower = clamp(rivalEmpirePower - 5, 0, 100);
+                    globalAlliances = clamp(globalAlliances + 1, 0, 10);
+                    respect = clamp(respect + 4, 0, 100);
+                } else {
+                    health = clamp(health + 8, 0, 100);
+                    happiness = clamp(happiness + 8, 0, 100);
+                    fear = clamp(fear - 2, 0, 100);
+                }
+                permanentDecisions++;
+                lastStoryChoice = "Major decision: " + choices[which];
+                persist();
+                notifyChange("Your decision has been added to your permanent life history.");
+                showDashboard();
+            }).setNegativeButton("LATER", (d,w) -> showDashboard()).show();
+    }
+
+    private void lifetimeStatistics() {
+        int score = reputation * 2 + globalInfluence * 3 + controlledTerritories * 8
+            + internationalCities * 12 + electionWins * 15 + legacyScore + dominationScore;
+        new AlertDialog.Builder(activity).setTitle("📈 Lifetime Empire Statistics")
+            .setMessage("Peak cash recorded: ₹" + Math.max(lifetimeWealthPeak, money)
+                + "\\nPeak global influence: " + Math.max(lifetimeInfluencePeak, globalInfluence)
+                + "\\nMost territories held: " + Math.max(lifetimeTerritoriesPeak, controlledTerritories)
+                + "\\nMissions completed: " + completedMissions
+                + "\\nBoss victories: " + bossVictories
+                + "\\nElection victories: " + electionWins
+                + "\\nPermanent decisions: " + permanentDecisions
+                + "\\nDynasty generations: " + dynastyGenerations
+                + "\\nLifetime empire score: " + score)
+            .setPositiveButton("CLOSE", null).show();
+    }
+
+    private void continueDynasty() {
+        if (heirName == null || heirName.trim().isEmpty()) {
+            message("First select an heir in the Heir & Generational Succession section.");
+            return;
+        }
+        new AlertDialog.Builder(activity).setTitle("♾ Continue the Dynasty?")
+            .setMessage("Record " + heirName + " as the next generation's leader? Your current empire records will remain saved.")
+            .setPositiveButton("CONTINUE", (d,w) -> {
+                dynastyGenerations++;
+                successionCompleted = true;
+                legacyScore += 25;
+                respect = clamp(respect + 3, 0, 100);
+                persist();
+                notifyChange(heirName + " has been recorded as the next generation's leader. Dynasty generation " + dynastyGenerations + " begins.");
+                showDashboard();
+            }).setNegativeButton("CANCEL", null).show();
     }
 
     private void notifyChange(String description) {
