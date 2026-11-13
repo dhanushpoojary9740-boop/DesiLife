@@ -282,6 +282,8 @@ public class EmploymentManager {
 
             addButton(root, "📜 Promotion History",
                     this::showPromotionHistory);
+            addButton(root, "🗂 Career History",
+                    this::showCareerHistory);
             addButton(root, "⭐ Performance Appraisals",
                     this::showAppraisalHistory);
 
@@ -938,6 +940,10 @@ public class EmploymentManager {
     ) {
 
         boolean firstCareerJob = !employed;
+        if (employed) {
+            appendCareerHistory(jobName, jobSector, jobLevel,
+                    monthlySalary, "Changed to another job");
+        }
         employed = true;
 
         jobName = selectedJob;
@@ -1289,6 +1295,26 @@ public class EmploymentManager {
                 .show();
     }
 
+
+    private void appendCareerHistory(String role, String sector,
+                                     String level, int salary, String reason) {
+        String entry = "Age " + age + " — " + role
+                + " (" + sector + ", " + level + ")"
+                + " | Monthly salary: ₹" + salary
+                + " | " + reason;
+        String history = save.getString("employment_career_history", "");
+        save.edit().putString("employment_career_history",
+                history.isEmpty() ? entry : entry + "\n\n" + history).apply();
+    }
+
+    private void showCareerHistory() {
+        String history = save.getString("employment_career_history", "");
+        if (history.isEmpty()) {
+            history = "No previous jobs recorded yet. Your past jobs will appear here when you resign or change jobs.";
+        }
+        showMessage("Career History", history);
+    }
+
     // ---------------- RESIGN ----------------
 
     private void resign() {
@@ -1302,6 +1328,8 @@ public class EmploymentManager {
                 .setPositiveButton("Resign", (dialog, which) -> {
 
                     String oldJob = jobName;
+                    appendCareerHistory(oldJob, jobSector, jobLevel,
+                            monthlySalary, "Resigned");
 
                     employed = false;
 

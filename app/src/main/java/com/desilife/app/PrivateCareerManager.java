@@ -314,6 +314,8 @@ public class PrivateCareerManager {
 
         addButton(root, "Promotion History",
                 this::showPromotionHistory);
+        addButton(root, "Career History",
+                this::showCareerHistory);
         addButton(root, "Performance Appraisals",
                 this::showAppraisalHistory);
 
@@ -496,6 +498,11 @@ public class PrivateCareerManager {
     }
 
     private void setJob(Company c) {
+        String previousJob = getString("job", "");
+        if (!previousJob.isEmpty() && getString("status", "Active").equals("Active")) {
+            appendCareerHistory(previousJob, getString("company", ""),
+                    getInt("salary", 0), "Changed to another company");
+        }
         boolean firstCareerJob = !getBoolean("first_job_earned", false);
         putString("company", c.name);
         putString("sector", c.sector);
@@ -877,6 +884,29 @@ public class PrivateCareerManager {
                 .show();
     }
 
+
+    private void appendCareerHistory(String role, String employer,
+                                     int salary, String reason) {
+        String entry = "Age " + age + " — " + role
+                + " at " + employer + " | Monthly salary: ₹" + salary
+                + " | " + reason;
+        String history = getString("career_history", "");
+        putString("career_history", history.isEmpty()
+                ? entry : entry + "\n\n" + history);
+    }
+
+    private void showCareerHistory() {
+        String history = getString("career_history", "");
+        if (history.isEmpty()) {
+            history = "No previous private-sector jobs recorded yet. Your past jobs will appear here when you resign or change companies.";
+        }
+        new AlertDialog.Builder(activity)
+                .setTitle("Private Career History")
+                .setMessage(history)
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
     private void resign() {
         String job = getString("job", "");
 
@@ -891,6 +921,8 @@ public class PrivateCareerManager {
                         + getString("company", "") + " as " + job + "?")
                 .setPositiveButton("Resign",
                         (dialog, which) -> {
+                            appendCareerHistory(job, getString("company", ""),
+                                    getInt("salary", 0), "Resigned");
                             putString("last_company",
                                     getString("company", ""));
                             putString("last_job", job);

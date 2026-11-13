@@ -278,6 +278,8 @@ public class PublicServiceManager {
 
         addButton(root, "Promotion History",
                 this::showPromotionHistory);
+        addButton(root, "Career History",
+                this::showCareerHistory);
         addButton(root, "Performance Appraisals",
                 this::showAppraisalHistory);
 
@@ -297,6 +299,10 @@ public class PublicServiceManager {
 
         addButton(root, "Retirement and Pension",
                 this::showRetirement);
+        if (!job.isEmpty() && getString("status", "Active").equals("Active")) {
+            addButton(root, "Resign from Government Service",
+                    this::resign);
+        }
 
         addButton(root, "Back to Game",
                 () -> activity.recreate());
@@ -430,6 +436,14 @@ public class PublicServiceManager {
                         (dialog, which) -> {
 
                             if (random.nextInt(100) < finalChance) {
+                                String previousJob = getString("job", "");
+                                if (!previousJob.isEmpty()
+                                        && getString("status", "Active").equals("Active")) {
+                                    appendCareerHistory(previousJob,
+                                            getString("department", ""),
+                                            getInt("salary", 0),
+                                            "Changed government department");
+                                }
                                 boolean firstCareerJob = !getBoolean("first_job_earned", false);
                                 putString("job", d.positions[0]);
                                 putString("department", d.name);
@@ -873,6 +887,55 @@ public class PublicServiceManager {
                     .setPositiveButton("OK", null)
                     .show();
         }
+    }
+
+
+    private void appendCareerHistory(String role, String department,
+                                     int salary, String reason) {
+        String entry = "Age " + age + " — " + role
+                + " at " + department + " | Monthly salary: ₹" + salary
+                + " | " + reason;
+        String history = getString("career_history", "");
+        putString("career_history", history.isEmpty()
+                ? entry : entry + "\n\n" + history);
+    }
+
+    private void showCareerHistory() {
+        String history = getString("career_history", "");
+        if (history.isEmpty()) {
+            history = "No previous government service recorded yet. Your past posts will appear here when you resign or change departments.";
+        }
+        new AlertDialog.Builder(activity)
+                .setTitle("Government Career History")
+                .setMessage(history)
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    private void resign() {
+        String job = getString("job", "");
+        if (job.isEmpty() || !getString("status", "Active").equals("Active")) {
+            message("You do not have active government service to resign from.");
+            return;
+        }
+        new AlertDialog.Builder(activity)
+                .setTitle("Resign from Government Service")
+                .setMessage("Are you sure you want to resign from "
+                        + getString("department", "") + " as " + job + "?\n\nYour service history will be preserved.")
+                .setPositiveButton("Resign", (dialog, which) -> {
+                    appendCareerHistory(job, getString("department", ""),
+                            getInt("salary", 0), "Resigned from government service");
+                    putString("last_job", job);
+                    putString("last_department", getString("department", ""));
+                    putString("job", "");
+                    putString("department", "");
+                    putString("status", "Resigned");
+                    notifyUpdate("You resigned from " + job
+                            + ". Your government service history has been saved.");
+                    showDashboard();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void retire(int pension) {
