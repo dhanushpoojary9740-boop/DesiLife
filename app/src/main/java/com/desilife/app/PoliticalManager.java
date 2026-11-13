@@ -91,6 +91,29 @@ public class PoliticalManager {
                 .apply();
     }
 
+
+    // Called once whenever the player advances to a new game year.
+    // Political experience grows only while the player holds an active office.
+    public void applyAnnualUpdate() {
+        if (party == null || party.trim().isEmpty()
+                || office == null
+                || office.trim().isEmpty()
+                || office.equalsIgnoreCase("Ordinary Citizen")) {
+            return;
+        }
+
+        int lastUpdatedAge = save.getInt("political_last_updated_age", -1);
+        if (lastUpdatedAge == age) {
+            return;
+        }
+
+        politicalYears++;
+        save.edit()
+                .putInt("political_years", politicalYears)
+                .putInt("political_last_updated_age", age)
+                .apply();
+    }
+
     public void open() {
         showDashboard();
     }

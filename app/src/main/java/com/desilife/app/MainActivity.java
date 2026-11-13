@@ -1819,6 +1819,19 @@ public class MainActivity extends Activity {
         );
         employment.applyAnnualEmploymentUpdate();
 
+        // Political experience advances once per game year while holding office.
+        PoliticalManager political = new PoliticalManager(
+                this, save, age, money, health, happiness,
+                (newMoney, newHealth, newHappiness, description) -> {
+                    money = Math.max(0, newMoney);
+                    health = Math.max(0, Math.min(100, newHealth));
+                    happiness = Math.max(0, Math.min(100, newHappiness));
+                    addLifeEvent(description);
+                    saveGame();
+                }
+        );
+        political.applyAnnualUpdate();
+
         // Preserve the existing General Careers annual processing.
         processCareerSalary();
     }
