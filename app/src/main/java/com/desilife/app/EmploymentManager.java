@@ -881,53 +881,81 @@ public class EmploymentManager {
             int salary,
             String sector
     ) {
+        showEmploymentInterviewRound(selectedJob, salary, sector, 1, 0);
+    }
 
-        String[] options = {
-                "Confident and professional",
-                "Nervous but honest",
-                "Unprepared",
-                "Highly experienced and confident"
-        };
+    private void showEmploymentInterviewRound(
+            String selectedJob,
+            int salary,
+            String sector,
+            int round,
+            int accumulatedScore
+    ) {
+        String[] options;
+        String question;
+        if (round == 1) {
+            question = "How would you handle an unexpected problem at work?";
+            options = new String[]{
+                    "Stay calm, understand the issue and solve it",
+                    "Ask a senior colleague for guidance",
+                    "Ignore it and continue working",
+                    "Blame someone else"
+            };
+        } else {
+            question = "Why should the employer select you for this position?";
+            options = new String[]{
+                    "I can contribute, learn quickly and take responsibility",
+                    "I need a job, so please select me",
+                    "I am not sure what I can contribute",
+                    "I can deliver results and support the team"
+            };
+        }
 
         new AlertDialog.Builder(activity)
-                .setTitle("Job Interview")
-                .setMessage("You have been shortlisted for "
-                        + selectedJob + ". Choose your interview approach.")
+                .setTitle("Interview Round " + round + " of 2")
+                .setMessage("Position: " + selectedJob
+                        + "\\nEmployer sector: " + sector
+                        + "\\n\\n" + question)
                 .setItems(options, (dialog, which) -> {
-
-                    int bonus = 0;
-
-                    if (which == 0) bonus = 15;
-                    if (which == 1) bonus = 5;
-                    if (which == 2) bonus = -20;
-                    if (which == 3) bonus = 25;
-
-                    int interviewChance = clamp(
-                            50 + bonus + performance / 5,
-                            10,
-                            95
-                    );
-
-                    if (random.nextInt(100) < interviewChance) {
-
-                        acceptJob(
-                                selectedJob,
-                                salary,
-                                sector
-                        );
-
+                    int points;
+                    if (round == 1) {
+                        points = (which == 0) ? 20 : (which == 1 ? 10 : -10);
                     } else {
-
-                        saveData();
-
-                        notifyUpdate(
-                                "You did not pass the interview for "
-                                        + selectedJob
-                                        + ". Keep improving your skills."
-                        );
+                        points = (which == 0 || which == 3) ? 20
+                                : (which == 1 ? 0 : -10);
+                    }
+                    int total = accumulatedScore + points;
+                    if (round == 1) {
+                        showEmploymentInterviewRound(
+                                selectedJob, salary, sector, 2, total);
+                    } else {
+                        int finalChance = clamp(
+                                45 + total + performance / 5
+                                        + reputation / 10
+                                        + Math.min(10, experience),
+                                5, 95);
+                        if (random.nextInt(100) < finalChance) {
+                            new AlertDialog.Builder(activity)
+                                    .setTitle("Interview Successful")
+                                    .setMessage("You passed both interview rounds for "
+                                            + selectedJob + ".\\nSelection chance: "
+                                            + finalChance + "%\\n\\nAccept the monthly salary of ₹"
+                                            + salary + "?")
+                                    .setPositiveButton("Accept Offer", (d, w) ->
+                                            acceptJob(selectedJob, salary, sector))
+                                    .setNegativeButton("Decline Offer", (d, w) ->
+                                            notifyUpdate("You declined the job offer for "
+                                                    + selectedJob + "."))
+                                    .show();
+                        } else {
+                            reputation = Math.max(0, reputation - 1);
+                            saveData();
+                            notifyUpdate("You were not selected for " + selectedJob
+                                    + " after two interview rounds. Improve your skills and try again.");
+                        }
                     }
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton("Withdraw", null)
                 .show();
     }
 
