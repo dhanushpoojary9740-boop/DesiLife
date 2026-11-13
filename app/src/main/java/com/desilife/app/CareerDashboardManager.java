@@ -83,6 +83,9 @@ public class CareerDashboardManager {
         String grade = "Not assigned";
         String salary = "₹0 / month";
         String status = "No active occupation";
+        int careerExperience = 0;
+        int careerPerformance = 0;
+        int careerPromotions = 0;
 
         // Read each career system from its actual, namespaced save keys.
         String publicJob = save.getString("public_service_job", "");
@@ -93,6 +96,9 @@ public class CareerDashboardManager {
             grade = "Grade " + (save.getInt("public_service_level", 0) + 1);
             salary = "₹" + save.getInt("public_service_salary", 0) + " / month";
             status = "Active Government Service";
+            careerExperience = save.getInt("public_service_service_years", 0);
+            careerPerformance = save.getInt("public_service_performance", 50);
+            careerPromotions = save.getInt("public_service_level", 0);
         }
 
         String privateJob = save.getString("private_career_job", "");
@@ -103,6 +109,9 @@ public class CareerDashboardManager {
             grade = "Grade " + (save.getInt("private_career_level", 0) + 1);
             salary = "₹" + save.getInt("private_career_salary", 0) + " / month";
             status = "Active Private-Sector Job";
+            careerExperience = save.getInt("private_career_experience", 0);
+            careerPerformance = save.getInt("private_career_performance", 50);
+            careerPromotions = save.getInt("private_career_level", 0);
         }
 
         if (save.getBoolean("employment_employed", false)) {
@@ -111,6 +120,9 @@ public class CareerDashboardManager {
             grade = save.getString("employment_job_level", "Entry Level");
             salary = "₹" + save.getInt("employment_salary", 0) + " / month";
             status = "Active General Employment";
+            careerExperience = save.getInt("employment_experience", 0);
+            careerPerformance = save.getInt("employment_performance", 50);
+            careerPromotions = save.getInt("employment_promotions", 0);
         }
 
         SharedPreferences generalCareer = activity.getSharedPreferences(
@@ -124,6 +136,9 @@ public class CareerDashboardManager {
             grade = "Grade " + (generalCareer.getInt("promotions", 0) + 1);
             salary = "₹" + generalCareer.getLong("monthlySalary", 0) + " / month";
             status = "Active General Career";
+            careerExperience = generalCareer.getInt("experience", 0);
+            careerPerformance = generalCareer.getInt("performance", 50);
+            careerPromotions = generalCareer.getInt("promotions", 0);
         }
 
         final String currentJob = activeJob;
@@ -131,11 +146,15 @@ public class CareerDashboardManager {
         final String currentGrade = grade;
         final String currentSalary = salary;
         final String currentStatus = status;
+        final int currentExperience = careerExperience;
+        final int currentPerformance = careerPerformance;
+        final int currentPromotions = careerPromotions;
 
         addSection(root, "CAREER DEVELOPMENT");
         addButton(root, "📋 Current Job & Grade Dashboard", () ->
                 showCareerRecord(currentJob, currentOrganization,
-                        currentGrade, currentSalary, currentStatus));
+                        currentGrade, currentSalary, currentStatus,
+                        currentExperience, currentPerformance, currentPromotions));
         addButton(root, "🎓 Education & Qualifications", () ->
                 showEducationSummary());
 
