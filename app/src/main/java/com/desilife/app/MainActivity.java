@@ -1058,9 +1058,11 @@ public class MainActivity extends Activity {
 
         addPremiumSectionHeading("LIFESTYLE & ACTIVITIES", "Explore choices beyond work and money");
         addPremiumSectionRow("🚗", "Vehicles", "Driving and vehicle ownership", () -> openVehicle(),
-                "⚖️", "Crime & Justice", "Legal choices and consequences", () -> openCrime());
-        addPremiumSectionRow("🎯", "Activities", "Hobbies and life activities", () -> openActivities(),
-                "🌟", "Life Statistics", "Your overall life progress", () -> showLifeStatistics());
+                "♛", "Mafia Empire", "Join gangs, rise through ranks and expand influence", () -> openMafia());
+        addPremiumSectionRow("⚖️", "Crime & Justice", "Legal choices and consequences", () -> openCrime(),
+                "🎯", "Activities", "Hobbies and life activities", () -> openActivities());
+        addPremiumSectionRow("🌟", "Life Statistics", "Your overall life progress", () -> showLifeStatistics(),
+                "📖", "Life History", "Review your personal journey", () -> showFullLifeHistory());
 
         TextView saveButton = dashboardText("💾   SAVE GAME", 14,
                 Color.rgb(239, 202, 126), true);
@@ -2382,6 +2384,26 @@ public class MainActivity extends Activity {
         );
 
         crimeManager.open();
+    }
+
+
+    // FICTIONAL MAFIA EMPIRE CAREER
+    void openMafia() {
+        MafiaManager mafiaManager = new MafiaManager(
+            this,
+            save,
+            money,
+            health,
+            happiness,
+            (newMoney, newHealth, newHappiness, description) -> {
+                money = Math.max(0, newMoney);
+                health = Math.max(0, Math.min(100, newHealth));
+                happiness = Math.max(0, Math.min(100, newHappiness));
+                addLifeEvent(description);
+                saveGame();
+            }
+        );
+        mafiaManager.open();
     }
 
     // DRIVING & VEHICLES SYSTEM
