@@ -8,6 +8,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -78,6 +79,16 @@ public class MafiaManager {
     private int globalAlliances;
     private int assetPortfolio;
     private int globalInfluence;
+    // Bundle 5: living-world, elections, succession and rival AI.
+    private int rivalEmpirePower;
+    private int lastRivalUpdateAge;
+    private int lastWorldEventAge;
+    private int worldEventsExperienced;
+    private int electionWins;
+    private int electionAttempts;
+    private String heirName;
+    private boolean successionCompleted;
+    private int dynastyGenerations;
 
     public MafiaManager(Activity activity, SharedPreferences save,
                         int money, int health, int happiness, Callback callback) {
@@ -112,6 +123,15 @@ public class MafiaManager {
         globalAlliances = save.getInt("mafia_global_alliances", 0);
         assetPortfolio = save.getInt("mafia_global_assets", 0);
         globalInfluence = save.getInt("mafia_global_influence", 0);
+        rivalEmpirePower = save.getInt("mafia_rival_empire_power", 20);
+        lastRivalUpdateAge = save.getInt("mafia_rival_update_age", -1);
+        lastWorldEventAge = save.getInt("mafia_world_event_age", -1);
+        worldEventsExperienced = save.getInt("mafia_world_events", 0);
+        electionWins = save.getInt("mafia_election_wins", 0);
+        electionAttempts = save.getInt("mafia_election_attempts", 0);
+        heirName = save.getString("mafia_heir_name", "");
+        successionCompleted = save.getBoolean("mafia_succession_completed", false);
+        dynastyGenerations = save.getInt("mafia_dynasty_generations", 1);
     }
 
     private void persist() {
@@ -137,6 +157,15 @@ public class MafiaManager {
             .putInt("mafia_global_alliances", globalAlliances)
             .putInt("mafia_global_assets", assetPortfolio)
             .putInt("mafia_global_influence", globalInfluence)
+            .putInt("mafia_rival_empire_power", rivalEmpirePower)
+            .putInt("mafia_rival_update_age", lastRivalUpdateAge)
+            .putInt("mafia_world_event_age", lastWorldEventAge)
+            .putInt("mafia_world_events", worldEventsExperienced)
+            .putInt("mafia_election_wins", electionWins)
+            .putInt("mafia_election_attempts", electionAttempts)
+            .putString("mafia_heir_name", heirName)
+            .putBoolean("mafia_succession_completed", successionCompleted)
+            .putInt("mafia_dynasty_generations", dynastyGenerations)
             .apply();
     }
 
@@ -148,6 +177,7 @@ public class MafiaManager {
                 .setPositiveButton("OK", null).show();
             return;
         }
+        processLivingWorld();
         showDashboard();
     }
 
@@ -173,7 +203,10 @@ public class MafiaManager {
             "\n🏙 Territories: " + controlledTerritories + "/10" +
             "\n🎯 Missions completed: " + completedMissions +
             "\n⚔ Rivalry victories: " + rivalWins +
-            "\n🚨 Police heat: " + heat + "/100");
+            "\n🚨 Police heat: " + heat + "/100" +
+            "\n🌐 Rival empire power: " + rivalEmpirePower + "/100" +
+            "\n🗳 Election victories: " + electionWins +
+            "\n👑 Dynasty generations: " + dynastyGenerations);
 
         if (gang.isEmpty()) {
             button(page, "🤝 CHOOSE A GANG & JOIN", this::showGangSelection);
@@ -195,6 +228,10 @@ public class MafiaManager {
             button(page, "🤝 GLOBAL ALLIANCES", this::globalAlliancesMenu);
             button(page, "💎 WEALTH & ASSET PORTFOLIO", this::globalAssetPortfolio);
             button(page, "🏆 EMPEROR ACHIEVEMENTS", this::emperorAchievements);
+            button(page, "🌦 DYNAMIC WORLD EVENTS", this::worldEventsReport);
+            button(page, "🗳 GLOBAL UNDERWORLD ELECTION", this::mafiaElection);
+            button(page, "👑 HEIR & GENERATIONAL SUCCESSION", this::successionMenu);
+            button(page, "🌐 RIVAL EMPIRE AI", this::rivalEmpireReport);
             button(page, "🤝 LEAVE CURRENT GANG", this::leaveGang);
         }
         button(page, "⬅ BACK TO LIFE", activity::recreate);
@@ -764,6 +801,157 @@ public class MafiaManager {
             .append("\nGlobal influence: ").append(globalInfluence);
         new AlertDialog.Builder(activity).setTitle("Mafia Emperor Achievements")
             .setMessage(report.toString()).setPositiveButton("OK", null).show();
+    }
+
+    // Bundle 5: age-based world simulation. Events are fictional and non-violent.
+    private void processLivingWorld() {
+        int age = save.getInt("age", 0);
+        if (gang.isEmpty() || age < 18) return;
+        if (lastRivalUpdateAge < 0) lastRivalUpdateAge = age;
+        if (age > lastRivalUpdateAge) {
+            int years = Math.min(10, age - lastRivalUpdateAge);
+            rivalEmpirePower = clamp(rivalEmpirePower + years * (1 + random.nextInt(3)), 5, 100);
+            lastRivalUpdateAge = age;
+            persist();
+        }
+        if (lastWorldEventAge != age) {
+            lastWorldEventAge = age;
+            worldEventsExperienced++;
+            int event = random.nextInt(5);
+            String headline;
+            if (event == 0) {
+                int gain = 800 + random.nextInt(1700); money += gain;
+                reputation = clamp(reputation + 2, 0, 100);
+                headline = "A respected community initiative attracts positive attention. Game funds +₹" + gain + ".";
+            } else if (event == 1) {
+                rivalEmpirePower = clamp(rivalEmpirePower - 5, 5, 100);
+                influence += 4;
+                headline = "A rival organisation faces an internal leadership dispute. Your influence grows.";
+            } else if (event == 2) {
+                int cost = Math.min(money, 1000 + random.nextInt(1500)); money -= cost;
+                loyalty = clamp(loyalty + 4, 0, 100);
+                headline = "A city-wide economic slowdown affects your fictional business portfolio. Costs: ₹" + cost + ". Team loyalty improves after your support.";
+            } else if (event == 3) {
+                globalInfluence += 5; reputation = clamp(reputation + 3, 0, 100);
+                headline = "An international cultural summit improves your organisation's public reputation and global influence.";
+            } else {
+                rivalEmpirePower = clamp(rivalEmpirePower + 4, 5, 100);
+                heat = Math.max(0, heat - 3);
+                headline = "A new rival leadership group emerges. Competition increases, but public attention around you cools.";
+            }
+            persist();
+            new AlertDialog.Builder(activity).setTitle("🌦 WORLD EVENT — AGE " + age)
+                .setMessage(headline + "\n\nThe world continues to change while your empire grows.")
+                .setPositiveButton("CONTINUE", null).show();
+        }
+    }
+
+    private void worldEventsReport() {
+        new AlertDialog.Builder(activity).setTitle("Dynamic World Events")
+            .setMessage("World events experienced: " + worldEventsExperienced +
+                "\nCurrent age: " + save.getInt("age", 0) +
+                "\nRival empire power: " + rivalEmpirePower + "/100" +
+                "\n\nEvents can influence finances, reputation, loyalty, global influence and rival strength. New events are generated as your character ages.")
+            .setPositiveButton("OK", null).show();
+    }
+
+    private void mafiaElection() {
+        if (prisonYears > 0) { message("You cannot campaign while serving a sentence. Resolve your legal status first."); return; }
+        if (rank < 4 || reputation < 45 || globalInfluence < 20) {
+            message("Election eligibility requires Underboss rank, 45 reputation and 20 global influence.\n\nCurrent rank: " + ranks[Math.min(rank, ranks.length - 1)] +
+                "\nReputation: " + reputation + "/100\nGlobal influence: " + globalInfluence + "/20");
+            return;
+        }
+        String[] choices = {"Build a broad alliance campaign (₹5,000)", "Present a strong public leadership record (₹3,000)", "Withdraw and prepare for the next election"};
+        new AlertDialog.Builder(activity).setTitle("Global Underworld Leadership Election")
+            .setMessage("A fictional, non-violent leadership contest decided by reputation, alliances and influence.\n\nRival candidate strength: " + rivalEmpirePower + "/100")
+            .setItems(choices, (d, which) -> {
+                if (which == 2) { message("You withdrew from this election and can try again later."); return; }
+                int cost = which == 0 ? 5000 : 3000;
+                if (money < cost) { message("You need ₹" + cost + " to run this campaign."); return; }
+                money -= cost; electionAttempts++;
+                int chance = 35 + reputation / 3 + globalInfluence / 4 + globalAlliances * 3 + electionWins * 2 - rivalEmpirePower / 4;
+                if (which == 0) chance += 12;
+                boolean won = random.nextInt(100) < clamp(chance, 10, 90);
+                if (won) {
+                    electionWins++; rank = Math.max(rank, 7); globalInfluence += 12;
+                    dominationScore = clamp(dominationScore + 15, 0, 100);
+                    legacyScore += 12; reputation = clamp(reputation + 5, 0, 100);
+                    notifyChange("You won the global leadership election and were recognised as the leading Mafia Emperor. Election victories: " + electionWins + ".");
+                } else {
+                    reputation = Math.max(0, reputation - 3); rivalEmpirePower = clamp(rivalEmpirePower + 5, 5, 100);
+                    notifyChange("You did not win this election. The rival candidate gained momentum; strengthen your reputation and alliances before trying again.");
+                }
+                persist(); showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void successionMenu() {
+        String status = heirName.isEmpty() ? "No heir appointed" : "Named heir: " + heirName;
+        new AlertDialog.Builder(activity).setTitle("Generational Succession")
+            .setMessage(status + "\nDynasty generations: " + dynastyGenerations +
+                "\nSuccession: " + (successionCompleted ? "Completed" : "Not yet completed") +
+                "\n\nAppoint a trusted heir now. When your character reaches age 60, you can pass on the family legacy and continue with the next generation.")
+            .setPositiveButton(heirName.isEmpty() ? "APPOINT HEIR" : "CHANGE HEIR", (d,w) -> promptHeirName())
+            .setNeutralButton("COMPLETE SUCCESSION", (d,w) -> completeSuccession())
+            .setNegativeButton("CLOSE", null).show();
+    }
+
+    private void promptHeirName() {
+        final EditText input = new EditText(activity);
+        input.setSingleLine(true); input.setHint("Enter heir's name");
+        if (!heirName.isEmpty()) input.setText(heirName);
+        new AlertDialog.Builder(activity).setTitle("Appoint Your Heir")
+            .setView(input).setNegativeButton("CANCEL", null)
+            .setPositiveButton("SAVE HEIR", (d,w) -> {
+                String value = input.getText().toString().trim();
+                if (value.isEmpty()) { message("Please enter a name for your heir."); return; }
+                heirName = value; successionCompleted = false; persist();
+                notifyChange(heirName + " has been appointed as the next generation's heir.");
+                showDashboard();
+            }).show();
+    }
+
+    private void completeSuccession() {
+        int age = save.getInt("age", 0);
+        if (heirName.isEmpty()) { message("Appoint an heir before completing succession."); return; }
+        if (age < 60) { message("Your character must reach age 60 before passing on the empire. Current age: " + age + "."); return; }
+        if (successionCompleted) { message("This generation has already completed its succession."); return; }
+        new AlertDialog.Builder(activity).setTitle("Pass the Legacy to " + heirName + "?")
+            .setMessage("Your achievements, family legacy, assets and global standing will be recorded. The next generation will inherit the dynasty.")
+            .setNegativeButton("NOT YET", null).setPositiveButton("PASS THE LEGACY", (d,w) -> {
+                successionCompleted = true; dynastyGenerations++;
+                legacyScore += 20; globalInfluence += 5;
+                // The dynasty continues; the new generation starts with a modest leadership reset.
+                rank = Math.max(2, rank - 2); reputation = Math.max(25, reputation - 10);
+                heirName = heirName + " (Generation " + dynastyGenerations + ")";
+                persist(); notifyChange("A new generation has inherited the family legacy. " + heirName + " now leads the continuing dynasty.");
+                showDashboard();
+            }).show();
+    }
+
+    private void rivalEmpireReport() {
+        String level = rivalEmpirePower >= 80 ? "Dominant global competitor" : rivalEmpirePower >= 55 ? "Powerful rival network" : rivalEmpirePower >= 30 ? "Growing rival organisation" : "Emerging competitor";
+        String[] actions = {"Study rival strengths", "Strengthen your public alliances (₹2,500)", "Compete through a reputation campaign (₹3,500)"};
+        new AlertDialog.Builder(activity).setTitle("Rival Empire AI")
+            .setMessage(level + "\nRival power: " + rivalEmpirePower + "/100" +
+                "\nYour global influence: " + globalInfluence +
+                "\n\nRival organisations develop over time as your character ages. Choose peaceful, strategy-based responses.")
+            .setItems(actions, (d,which) -> {
+                if (which == 0) {
+                    message("Rival strength: " + rivalEmpirePower + "/100\nYour advantage: " + (globalInfluence - rivalEmpirePower) + " global influence points.");
+                    return;
+                }
+                int cost = which == 1 ? 2500 : 3500;
+                if (money < cost) { message("You need ₹" + cost + "."); return; }
+                money -= cost;
+                int reduction = which == 1 ? 5 : 8;
+                rivalEmpirePower = clamp(rivalEmpirePower - reduction, 5, 100);
+                globalInfluence += which == 1 ? 5 : 3;
+                reputation = clamp(reputation + 2, 0, 100);
+                persist(); notifyChange(which == 1 ? "Your alliances strengthened and rival influence declined." : "Your public reputation campaign reduced the rival network's standing.");
+                showDashboard();
+            }).setNegativeButton("BACK", (d,w) -> showDashboard()).show();
     }
 
     private void notifyChange(String description) {
