@@ -659,6 +659,8 @@ public class EmploymentManager {
                                 + "\nSector: " + sector
                                 + "\nRequired Qualification: " + getJobRequirement(selectedJob)
                                 + "\nYour Qualification: " + getPlayerQualification()
+                                + "\nEligibility Status: ELIGIBLE"
+                                + "\nYour Work Experience: " + experience + " years"
                                 + "\nMonthly Salary: ₹" + salary
                                 + "\nEstimated Selection Chance: "
                                 + finalChance + "%"
