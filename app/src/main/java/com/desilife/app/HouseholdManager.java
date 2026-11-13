@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.LinkedHashMap;
 
 public class HouseholdManager {
 
@@ -145,6 +146,28 @@ public class HouseholdManager {
         return rent + maintenance + electricity
                 + water + internet + groceries
                 + transport + medical;
+    }
+
+    /**
+     * Returns the configured monthly household expenses as separate items.
+     * Annual property tax is included only when requested.
+     */
+    public LinkedHashMap<String, Long> getMonthlyExpenseBreakdown(
+            boolean includeAnnualPropertyTax) {
+
+        LinkedHashMap<String, Long> items = new LinkedHashMap<>();
+        items.put("Rent", Math.max(0, rent));
+        items.put("Home maintenance", Math.max(0, maintenance));
+        items.put("Electricity bill", Math.max(0, electricity));
+        items.put("Water bill", Math.max(0, water));
+        items.put("Internet and mobile", Math.max(0, internet));
+        items.put("Food and groceries", Math.max(0, groceries));
+        items.put("Transport", Math.max(0, transport));
+        items.put("Medical expenses", Math.max(0, medical));
+        if (includeAnnualPropertyTax && propertyTax > 0) {
+            items.put("Annual property tax", propertyTax);
+        }
+        return items;
     }
 
     public long getAnnualExpenses() {
