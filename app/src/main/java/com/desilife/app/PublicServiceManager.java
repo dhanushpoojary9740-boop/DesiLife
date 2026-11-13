@@ -275,6 +275,8 @@ public class PublicServiceManager {
 
         addButton(root, "My Service Record",
                 this::showServiceRecord);
+        addButton(root, "Recruitment Exam & Interview History",
+                this::showRecruitmentHistory);
 
         addButton(root, "Promotion History",
                 this::showPromotionHistory);
@@ -390,98 +392,161 @@ public class PublicServiceManager {
             message("You are already employed in a public service department. Resign before applying for another department.");
             return;
         }
-
         if (age < d.minimumAge || age > 60) {
             message("You do not meet the game's age requirement.");
             return;
         }
-
         if (getQualificationLevel() < d.minimumEducation) {
-            message("Required qualification: "
-                    + qualificationName(d.minimumEducation));
+            message("Required qualification: " + qualificationName(d.minimumEducation));
             return;
         }
 
-        int preparation = getInt("preparation", 0);
-
-        final int finalChance = Math.min(
-                95,
-                25 + preparation / 2 + random.nextInt(26)
-        );
-
         String currentEducation = save.getString("education_level", "");
-        if (currentEducation.isEmpty()) {
-            currentEducation = save.getString("edu_level", "Not recorded");
-        }
+        if (currentEducation.isEmpty()) currentEducation = save.getString("edu_level", "Not recorded");
         String course = save.getString("edu_course", "");
-        if (!course.isEmpty()) {
-            currentEducation += " - " + course;
-        }
+        if (!course.isEmpty()) currentEducation += " - " + course;
 
         new AlertDialog.Builder(activity)
-                .setTitle("Government Department Application")
+                .setTitle("Government Recruitment")
                 .setMessage("Department: " + d.name
-                        + "\nStarting Position: " + d.positions[0]
-                        + "\nStarting Salary: ₹" + d.salary
-                        + "\n\nEDUCATION REQUIREMENTS"
-                        + "\nRequired Qualification: " + qualificationName(d.minimumEducation)
-                        + "\nYour Qualification: " + currentEducation
-                        + "\n\nAGE REQUIREMENTS"
-                        + "\nRequired Age: " + d.minimumAge + "–60 years"
-                        + "\nYour Age: " + age
-                        + "\n\nEligibility: QUALIFIED"
-                        + "\nSelection Probability: " + finalChance + "%"
-                        + "\n\nSubmit your government service application?")
-                .setPositiveButton("Apply",
-                        (dialog, which) -> {
-
-                            if (random.nextInt(100) < finalChance) {
-                                String previousJob = getString("job", "");
-                                if (!previousJob.isEmpty()
-                                        && getString("status", "Active").equals("Active")) {
-                                    appendCareerHistory(previousJob,
-                                            getString("department", ""),
-                                            getInt("salary", 0),
-                                            "Changed government department");
-                                }
-                                boolean firstCareerJob = !getBoolean("first_job_earned", false);
-                                putString("job", d.positions[0]);
-                                putString("department", d.name);
-                                putString("category", d.category);
-                                putString("location", d.location);
-
-                                putInt("salary", d.salary);
-                                putInt("level", 0);
-                                putInt("service_years", 0);
-                                putInt("years_in_grade", 0);
-                                putString("promotion_history", "");
-                                putInt("performance", 50);
-                                if (firstCareerJob) { putBoolean("first_job_earned", true); unlockAchievement("first_job", "First Job"); }
-                                putInt("assignments_completed", 0);
-                                putInt("assignments_failed", 0);
-
-                                putBoolean("accommodation", false);
-                                putBoolean("vehicle_benefit", false);
-                                putBoolean("medical_benefit", false);
-
-                                putString("status", "Active");
-
-                                notifyUpdate("Congratulations! You joined "
-                                        + d.name + " as "
-                                        + d.positions[0] + ".");
-
-                                showServiceRecord();
-
-                            } else {
-                                happiness = Math.max(0, happiness - 5);
-
-                                notifyUpdate("Your application to "
-                                        + d.name + " was unsuccessful.");
-
-                                showDepartmentDetails(d);
-                            }
-                        })
+                        + "\nPosition: " + d.positions[0]
+                        + "\nMonthly salary: ₹" + d.salary
+                        + "\nRequired qualification: " + qualificationName(d.minimumEducation)
+                        + "\nYour qualification: " + currentEducation
+                        + "\nAge requirement: " + d.minimumAge + "–60"
+                        + "\nYour age: " + age
+                        + "\n\nRecruitment stages:\n1. Written examination (3 questions)"
+                        + "\n2. Personal interview (2 rounds)"
+                        + "\n\nStart the recruitment process?")
+                .setPositiveButton("Start Exam", (dialog, which) -> startGovernmentExam(d, 0, 0))
                 .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void startGovernmentExam(Department d, int question, int score) {
+        final String[] prompts = {
+                "A citizen reports an urgent public service issue. What should you do first?",
+                "Which principle should guide a public servant?",
+                "You notice an error in an official record. What is the best action?"
+        };
+        final String[][] choices = {
+                {"Record it and follow the proper response process", "Ignore it", "Share it publicly"},
+                {"Fairness and accountability", "Personal benefit", "Favoritism"},
+                {"Report and correct it through official procedure", "Hide the error", "Blame a colleague"}
+        };
+        final int[] correct = {0, 0, 0};
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Written Examination — Question " + (question + 1) + "/3")
+                .setMessage(prompts[question])
+                .setSingleChoiceItems(choices[question], -1, (dialog, selected) -> {
+                    dialog.dismiss();
+                    int nextScore = score + (selected == correct[question] ? 1 : 0);
+                    if (question < 2) {
+                        startGovernmentExam(d, question + 1, nextScore);
+                    } else {
+                        putString("government_exam_history", getString("government_exam_history", "") + "Age " + age + ": " + nextScore + "/3 — " + d.name + "\n");
+                        if (nextScore >= 2) {
+                            notifyUpdate("Written examination passed: " + nextScore + "/3. Proceed to interview.");
+                            startGovernmentInterview(d, 0, nextScore);
+                        } else {
+                            happiness = Math.max(0, happiness - 3);
+                            notifyUpdate("You scored " + nextScore + "/3 and did not qualify for the interview. You may prepare and reapply.");
+                            showDepartmentDetails(d);
+                        }
+                    }
+                })
+                .setNegativeButton("Withdraw", null)
+                .show();
+    }
+
+    private void startGovernmentInterview(Department d, int round, int examScore) {
+        final String[] questions = {
+                "How would you handle a citizen who is upset about a delay?",
+                "What would you do if someone asked you to bypass an official rule?"
+        };
+        final String[][] answers = {
+                {"Listen respectfully, explain the process and help find a solution",
+                 "Argue with the citizen", "Ignore the complaint"},
+                {"Politely refuse and follow the official procedure",
+                 "Agree to the request", "Ask for a personal benefit"}
+        };
+        new AlertDialog.Builder(activity)
+                .setTitle("Government Interview — Round " + (round + 1) + "/2")
+                .setMessage(questions[round])
+                .setItems(answers[round], (dialog, selected) -> {
+                    int points = selected == 0 ? 1 : 0;
+                    if (round == 0) {
+                        startGovernmentInterview(d, 1, examScore + points);
+                    } else {
+                        int total = examScore + points;
+                        putString("government_interview_history", getString("government_interview_history", "") + "Age " + age + ": Exam " + examScore + "/3, interview " + total + "/2 — " + d.name + "\n");
+                        if (total >= 4) {
+                            offerGovernmentPosition(d, total);
+                        } else {
+                            happiness = Math.max(0, happiness - 4);
+                            notifyUpdate("You were not selected by " + d.name + ". Your exam and interview results have been saved.");
+                            showDepartmentDetails(d);
+                        }
+                    }
+                })
+                .setNegativeButton("Withdraw", null)
+                .show();
+    }
+
+    private void offerGovernmentPosition(Department d, int score) {
+        new AlertDialog.Builder(activity)
+                .setTitle("Government Job Offer")
+                .setMessage("Congratulations! You passed the written examination and interview.\n\n"
+                        + "Department: " + d.name
+                        + "\nPosition: " + d.positions[0]
+                        + "\nMonthly salary: ₹" + d.salary
+                        + "\nSelection score: " + score + "/5"
+                        + "\n\nDo you accept this appointment?")
+                .setPositiveButton("Accept Offer", (dialog, which) -> {
+                    boolean firstCareerJob = !getBoolean("first_job_earned", false);
+                    putString("job", d.positions[0]);
+                    putString("department", d.name);
+                    putString("category", d.category);
+                    putString("location", d.location);
+                    putInt("salary", d.salary);
+                    putInt("level", 0);
+                    putInt("service_years", 0);
+                    putInt("years_in_grade", 0);
+                    putString("promotion_history", "");
+                    putInt("performance", 50);
+                    if (firstCareerJob) {
+                        putBoolean("first_job_earned", true);
+                        unlockAchievement("first_job", "First Job");
+                    }
+                    putInt("assignments_completed", 0);
+                    putInt("assignments_failed", 0);
+                    putBoolean("accommodation", false);
+                    putBoolean("vehicle_benefit", false);
+                    putBoolean("medical_benefit", false);
+                    putString("status", "Active");
+                    notifyUpdate("You were appointed as " + d.positions[0] + " at " + d.name
+                            + ". Monthly salary: ₹" + d.salary + ".");
+                    showServiceRecord();
+                })
+                .setNegativeButton("Decline", (dialog, which) -> {
+                    notifyUpdate("You declined the government job offer from " + d.name + ".");
+                    showDepartmentDetails(d);
+                })
+                .show();
+    }
+
+    private void showRecruitmentHistory() {
+        String exam = getString("government_exam_history", "");
+        String interview = getString("government_interview_history", "");
+        String details = "WRITTEN EXAMINATIONS\n"
+                + (exam.isEmpty() ? "No examination attempts recorded." : exam)
+                + "\nINTERVIEWS\n"
+                + (interview.isEmpty() ? "No interview attempts recorded." : interview);
+        new AlertDialog.Builder(activity)
+                .setTitle("Recruitment History")
+                .setMessage(details)
+                .setPositiveButton("Close", null)
                 .show();
     }
 
