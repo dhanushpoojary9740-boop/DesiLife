@@ -430,7 +430,8 @@ public class PublicServiceManager {
                         (dialog, which) -> {
 
                             if (random.nextInt(100) < finalChance) {
-                                boolean firstCareerJob = !getBoolean("first_job_earned", false);\n                                putString("job", d.positions[0]);
+                                boolean firstCareerJob = !getBoolean("first_job_earned", false);
+                                putString("job", d.positions[0]);
                                 putString("department", d.name);
                                 putString("category", d.category);
                                 putString("location", d.location);
@@ -440,7 +441,8 @@ public class PublicServiceManager {
                                 putInt("service_years", 0);
                                 putInt("years_in_grade", 0);
                                 putString("promotion_history", "");
-                                putInt("performance", 50);\n                                if (firstCareerJob) { putBoolean("first_job_earned", true); unlockAchievement("first_job", "First Job"); }
+                                putInt("performance", 50);
+                                if (firstCareerJob) { putBoolean("first_job_earned", true); unlockAchievement("first_job", "First Job"); }
                                 putInt("assignments_completed", 0);
                                 putInt("assignments_failed", 0);
 
@@ -596,7 +598,8 @@ public class PublicServiceManager {
                     if (random.nextInt(100) < promotionChance) {
                         String previousGrade = getString("job", "");
                         putInt("level", nextLevel);
-                        putString("job", department.positions[nextLevel]);\n                        unlockAchievement("first_promotion", "First Promotion");
+                        putString("job", department.positions[nextLevel]);
+                        unlockAchievement("first_promotion", "First Promotion");
                         putInt("years_in_grade", 0);
 
                         int salary = getInt("salary", department.salary);
@@ -994,7 +997,10 @@ public class PublicServiceManager {
         String status = getString("status", "Active");
 
         if (status.equals("Active")) {
-            putInt("service_years", getInt("service_years", 0) + 1);\n            int careerYears = getInt("service_years", 0);\n            if (careerYears >= 5) unlockAchievement("service_5", "5-Year Service Milestone");\n            if (careerYears >= 10) unlockAchievement("service_10", "10-Year Service Milestone");
+            putInt("service_years", getInt("service_years", 0) + 1);
+            int careerYears = getInt("service_years", 0);
+            if (careerYears >= 5) unlockAchievement("service_5", "5-Year Service Milestone");
+            if (careerYears >= 10) unlockAchievement("service_10", "10-Year Service Milestone");
             putInt("years_in_grade", getInt("years_in_grade",
                     getInt("service_years", 0) - 1) + 1);
 

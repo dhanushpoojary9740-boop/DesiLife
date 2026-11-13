@@ -495,7 +495,8 @@ public class PrivateCareerManager {
                 .show();
     }
 
-    private void setJob(Company c) {\n        boolean firstCareerJob = !getBoolean("first_job_earned", false);
+    private void setJob(Company c) {
+        boolean firstCareerJob = !getBoolean("first_job_earned", false);
         putString("company", c.name);
         putString("sector", c.sector);
         putString("location", c.location);
@@ -507,7 +508,8 @@ public class PrivateCareerManager {
         putInt("skills", getInt("skills", 0));
         putInt("appraisals", 0);
         putInt("bonuses", 0);
-        putString("status", "Active");\n        if (firstCareerJob) { putBoolean("first_job_earned", true); unlockAchievement("first_job", "First Job"); }
+        putString("status", "Active");
+        if (firstCareerJob) { putBoolean("first_job_earned", true); unlockAchievement("first_job", "First Job"); }
 
         putBoolean("health_benefit", false);
         putBoolean("insurance_benefit", false);
@@ -737,7 +739,8 @@ public class PrivateCareerManager {
                     if (random.nextInt(100) < chance) {
                         String previousGrade = getString("job", "");
                         putInt("level", nextLevel);
-                        putString("job", company.positions[nextLevel]);\n                        unlockAchievement("first_promotion", "First Promotion");
+                        putString("job", company.positions[nextLevel]);
+                        unlockAchievement("first_promotion", "First Promotion");
                         putInt("years_in_grade", 0);
 
                         int salary = getInt("salary", 0);

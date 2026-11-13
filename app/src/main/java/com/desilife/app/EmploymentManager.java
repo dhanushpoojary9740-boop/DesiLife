@@ -949,7 +949,8 @@ public class EmploymentManager {
 
         jobLevel = "Entry Level";
 
-        performance = Math.max(performance, 50);\n        if (firstCareerJob) { save.edit().putBoolean("employment_first_job_earned", true).apply(); unlockAchievement("first_job", "First Job"); }
+        performance = Math.max(performance, 50);
+        if (firstCareerJob) { save.edit().putBoolean("employment_first_job_earned", true).apply(); unlockAchievement("first_job", "First Job"); }
 
         yearsInJob = 0;
         unemploymentYears = 0;
