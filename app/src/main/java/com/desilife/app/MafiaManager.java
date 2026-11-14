@@ -288,6 +288,11 @@ public class MafiaManager {
             text(page, "Choose an organisation to unlock the Mafia Empire management center.", 13, muted);
         } else {
             text(page, "Choose a category to see each feature's purpose and open it directly.", 13, muted);
+            button(page, "🔎 SEARCH FEATURES", this::searchFeatures);
+            button(page, "⭐ QUICK ACCESS", this::showQuickAccess);
+            button(page, "🕘 RECENTLY USED", this::showRecentlyUsed);
+            button(page, "🔔 EMPIRE NOTIFICATIONS", this::showSmartNotifications);
+            button(page, "📊 EMPIRE OVERVIEW", this::showEmpireOverview);
             button(page, "📜 STORY & MISSIONS  ·  3 OPTIONS", this::openStoryCategory);
             button(page, "🏴 GANG & FAMILY MANAGEMENT  ·  6 OPTIONS", this::openFamilyCategory);
             button(page, "🌍 TERRITORY & GLOBAL NETWORK  ·  6 OPTIONS", this::openTerritoryCategory);
@@ -379,11 +384,150 @@ public class MafiaManager {
             desc.setPadding(25, 5, 0, 0);
             item.addView(desc);
             item.setOnClickListener(v -> {
+                rememberFeature(names[index]);
                 dialog.dismiss();
                 actions[index].run();
             });
+            item.setOnLongClickListener(v -> {
+                toggleQuickAccess(names[index]);
+                return true;
+            });
+            name.setText("▶  " + names[i] + "  ⋮");
+            desc.setText(descriptions[i] + "\\n(Long-press to pin/unpin in Quick Access)");
         }
         dialog.show();
+    }
+
+
+    private String[] featureNames() {
+        return new String[]{
+            "Story Missions","Legendary Story Campaign","Dynamic Story Choices",
+            "Gang Management","Loyalty & Family Hierarchy","Family Relationships","Mafia Family Tree","Advanced Family Council","Leave Current Gang",
+            "Expand Into a New Territory","Living City World Map","Interactive Global City Map","International Network","Global Alliances","Mafia Diplomacy & Peace Treaties",
+            "Underground Business Network","Wealth & Asset Portfolio","Empire Economy Report","Dynamic Business Market",
+            "Rival Gang Challenge","Rival Boss Showdown","Rival Boss Personality","Rival Empire AI","Police Attention & Prison",
+            "Mafia World Domination","Global Underworld Election","Rank & Empire Progress","Emperor Achievements","Character Reputation","Lifetime Empire Statistics","World Leaderboard","Legacy & Generation Record","Heir & Generational Succession","Continue Dynasty","Safehouse Network",
+            "Dynamic World Events","Major Life Decisions"
+        };
+    }
+
+    private String[] featureDescriptions() {
+        return new String[]{
+            "Complete individual objectives and collect rewards.","Play a multi-chapter campaign with choices and milestone rewards.","Make story decisions that change reputation, family trust and influence.",
+            "Recruit, train and manage organisation members.","Review member loyalty, appoint lieutenants and manage leadership.","Improve and review bonds between family members.","View recorded parents, siblings, children and heirs.","Hold family discussions and address ambitions or disagreements.","Leave your current organisation.",
+            "Invest in and establish influence in the next available city district.","Review local districts and current territory coverage.","Explore the wider city network and international locations.","Develop your organisation's presence in international cities.","Create and manage fictional partnerships.","Negotiate diplomatic agreements and peaceful settlements.",
+            "Establish and manage fictional businesses and their income.","Review and manage assets and investments.","See simulated income, expenses, cash and financial performance.","Check market changes affecting simulated business values and income.",
+            "Compete with another gang through abstract strategy and negotiation.","Take on a rival boss in a fictional leadership contest.","Review personality traits shaping rival-boss encounters.","Monitor rival organisations' simulated power and development.","Review police attention, legal consequences and prison sentence.",
+            "Track your overall fictional empire score.","Compete for leadership in the simulated global organisation election.","Review your current rank and promotion requirements.","View unlocked achievements and milestones.","Track respect, fear, popularity and loyalty scores.","Review lifetime wealth, influence, territories and records.","Compare your organisation's score with rival organisations.","Review family legacy and generation records.","Choose or manage an heir and succession progress.","Continue the story into the next generation when eligible.","Purchase and upgrade safehouses.",
+            "View changing events and participate in available activities.","Make important choices affecting your character and organisation."
+        };
+    }
+
+    private Runnable[] featureActions() {
+        return new Runnable[]{
+            this::showMissions,this::legendaryCampaign,this::dynamicStoryChoices,
+            this::gangManagement,this::familyHierarchy,this::familyRelationships,this::mafiaFamilyTree,this::advancedFamilyAI,this::leaveGang,
+            this::expandTerritory,this::livingCityMap,this::globalCityMap,this::internationalNetwork,this::globalAlliancesMenu,this::mafiaDiplomacy,
+            this::businessNetwork,this::globalAssetPortfolio,this::empireEconomyReport,this::dynamicBusinessMarket,
+            this::rivalChallenge,this::bossShowdown,this::rivalPersonalityReport,this::rivalEmpireReport,this::policeAndPrison,
+            this::worldDomination,this::mafiaElection,this::showProgress,this::emperorAchievements,this::characterReputation,this::lifetimeStatistics,this::mafiaWorldLeaderboard,this::legacyRecord,this::successionMenu,this::continueDynasty,this::safehouseNetwork,
+            this::worldEventsReport,this::majorLifeDecisions
+        };
+    }
+
+    private void rememberFeature(String feature) {
+        String old = save.getString("mafia_recent_features", "");
+        java.util.ArrayList<String> items = new java.util.ArrayList<>();
+        if (!old.isEmpty()) for (String s : old.split("\\|")) if (!s.equals(feature) && !s.isEmpty()) items.add(s);
+        items.add(0, feature);
+        while (items.size() > 5) items.remove(items.size()-1);
+        StringBuilder b = new StringBuilder();
+        for (String s : items) { if (b.length()>0) b.append("|"); b.append(s); }
+        save.edit().putString("mafia_recent_features", b.toString()).apply();
+    }
+
+    private void toggleQuickAccess(String feature) {
+        String old = save.getString("mafia_quick_features", "");
+        java.util.ArrayList<String> items = new java.util.ArrayList<>();
+        if (!old.isEmpty()) for (String s : old.split("\\|")) if (!s.isEmpty()) items.add(s);
+        if (items.contains(feature)) { items.remove(feature); message(feature + " removed from Quick Access."); }
+        else if (items.size() >= 8) { message("Quick Access can contain up to 8 features. Remove one first."); return; }
+        else { items.add(feature); message(feature + " pinned to Quick Access."); }
+        save.edit().putString("mafia_quick_features", joinFeatureNames(items)).apply();
+    }
+
+    private String joinFeatureNames(java.util.ArrayList<String> items) {
+        StringBuilder b = new StringBuilder();
+        for (String s : items) { if (b.length()>0) b.append("|"); b.append(s); }
+        return b.toString();
+    }
+
+    private void openFeatureByName(String feature) {
+        String[] names = featureNames(); Runnable[] actions = featureActions();
+        for (int i=0;i<names.length;i++) if (names[i].equals(feature)) { rememberFeature(feature); actions[i].run(); return; }
+        message("This feature is not available in the current version.");
+    }
+
+    private void showQuickAccess() {
+        String raw = save.getString("mafia_quick_features", "");
+        if (raw.isEmpty()) { message("No pinned features yet. Open a category and long-press a feature to pin it here."); return; }
+        String[] items = raw.split("\\|");
+        new AlertDialog.Builder(activity).setTitle("⭐ QUICK ACCESS")
+            .setItems(items, (d,w) -> openFeatureByName(items[w]))
+            .setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void showRecentlyUsed() {
+        String raw = save.getString("mafia_recent_features", "");
+        if (raw.isEmpty()) { message("Your recently used features will appear here."); return; }
+        String[] items = raw.split("\\|");
+        new AlertDialog.Builder(activity).setTitle("🕘 RECENTLY USED — LAST 5")
+            .setItems(items, (d,w) -> openFeatureByName(items[w]))
+            .setNegativeButton("BACK", (d,w) -> showDashboard()).show();
+    }
+
+    private void searchFeatures() {
+        EditText input = new EditText(activity);
+        input.setSingleLine(true);
+        input.setHint("Search missions, family, business, map...");
+        new AlertDialog.Builder(activity).setTitle("🔎 SEARCH FEATURES").setView(input)
+            .setPositiveButton("SEARCH", (d,w) -> {
+                String query = input.getText().toString().trim().toLowerCase(java.util.Locale.ROOT);
+                java.util.ArrayList<String> matches = new java.util.ArrayList<>();
+                for (String n : featureNames()) if (n.toLowerCase(java.util.Locale.ROOT).contains(query)) matches.add(n);
+                if (query.isEmpty() || matches.isEmpty()) { message("No matching feature found. Try another keyword."); return; }
+                String[] found = matches.toArray(new String[0]);
+                new AlertDialog.Builder(activity).setTitle("SEARCH RESULTS")
+                    .setItems(found, (dd,which) -> openFeatureByName(found[which]))
+                    .setNegativeButton("CLOSE", null).show();
+            }).setNegativeButton("CANCEL", null).show();
+    }
+
+    private void showSmartNotifications() {
+        java.util.ArrayList<String> notes = new java.util.ArrayList<>();
+        if (completedMissions < 5) notes.add("Story Missions: " + completedMissions + "/5 objectives recorded.");
+        if (controlledTerritories < 10) notes.add("Territories: " + controlledTerritories + "/10. More districts may be available.");
+        if (heat >= 60) notes.add("High police attention: review Police Attention & Prison.");
+        if (loyalty < 40) notes.add("Low organisation loyalty: review Loyalty & Family Hierarchy.");
+        if (prisonYears > 0) notes.add("Prison sentence active: " + prisonYears + " year(s) remaining.");
+        if (heirName == null || heirName.trim().isEmpty()) notes.add("Succession: consider reviewing Heir & Generational Succession.");
+        if (notes.isEmpty()) notes.add("No urgent empire alerts. Your organisation is stable.");
+        new AlertDialog.Builder(activity).setTitle("🔔 EMPIRE NOTIFICATIONS")
+            .setItems(notes.toArray(new String[0]), null)
+            .setPositiveButton("OK", null).show();
+    }
+
+    private void showEmpireOverview() {
+        String report = "ORGANISATION: " + (gang.isEmpty() ? "Not joined" : gang)
+            + "\\nRANK: " + ranks[Math.max(0, Math.min(rank, ranks.length-1))]
+            + "\\nCASH: ₹" + money + "\\nREPUTATION: " + reputation + "/100"
+            + "\\nINFLUENCE: " + influence + "\\nTERRITORIES: " + controlledTerritories + "/10"
+            + "\\nMISSIONS: " + completedMissions + "/5\\nRIVAL WINS: " + rivalWins
+            + "\\nPOLICE HEAT: " + heat + "/100\\nRIVAL POWER: " + rivalEmpirePower + "/100"
+            + "\\nGENERATIONS: " + dynastyGenerations + "\\nGLOBAL ALLIANCES: " + globalAlliances
+            + "\\nINTERNATIONAL CITIES: " + internationalCities;
+        new AlertDialog.Builder(activity).setTitle("📊 EMPIRE OVERVIEW").setMessage(report)
+            .setPositiveButton("OK", null).show();
     }
 
     private GradientDrawable makeRounded(int color, int strokeColor, int strokeWidth, int radius) {
