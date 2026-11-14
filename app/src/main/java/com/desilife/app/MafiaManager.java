@@ -285,49 +285,113 @@ public class MafiaManager {
 
         if (gang.isEmpty()) {
             button(page, "🤝 CHOOSE A GANG & JOIN", this::showGangSelection);
-            text(page, "Choose carefully: each organisation has a different speciality and starting advantage.", 13, muted);
+            text(page, "Choose an organisation to unlock the Mafia Empire management center.", 13, muted);
         } else {
-            button(page, "📜 STORY MISSIONS", this::showMissions);
-            button(page, "🏙 EXPAND INTO A NEW TERRITORY", this::expandTerritory);
-            button(page, "⚔ RIVAL GANG CHALLENGE", this::rivalChallenge);
-            button(page, "👥 GANG MANAGEMENT", this::gangManagement);
-            button(page, "⚔ RIVAL BOSS SHOWDOWN", this::bossShowdown);
-            button(page, "🤝 LOYALTY & FAMILY HIERARCHY", this::familyHierarchy);
-            button(page, "🏠 SAFEHOUSE NETWORK", this::safehouseNetwork);
-            button(page, "📜 LEGACY & GENERATION RECORD", this::legacyRecord);
-            button(page, "🏆 RANK & EMPIRE PROGRESS", this::showProgress);
-            button(page, "🏢 UNDERGROUND BUSINESS NETWORK", this::businessNetwork);
-            button(page, "🚨 POLICE ATTENTION & PRISON", this::policeAndPrison);
-            button(page, "👑 MAFIA WORLD DOMINATION", this::worldDomination);
-            button(page, "🌍 INTERNATIONAL NETWORK", this::internationalNetwork);
-            button(page, "🤝 GLOBAL ALLIANCES", this::globalAlliancesMenu);
-            button(page, "💎 WEALTH & ASSET PORTFOLIO", this::globalAssetPortfolio);
-            button(page, "🏆 EMPEROR ACHIEVEMENTS", this::emperorAchievements);
-            button(page, "🌦 DYNAMIC WORLD EVENTS", this::worldEventsReport);
-            button(page, "🗳 GLOBAL UNDERWORLD ELECTION", this::mafiaElection);
-            button(page, "👑 HEIR & GENERATIONAL SUCCESSION", this::successionMenu);
-            button(page, "🌐 RIVAL EMPIRE AI", this::rivalEmpireReport);
-            button(page, "🗺 LIVING CITY WORLD MAP", this::livingCityMap);
-            button(page, "👨‍👩‍👧 FAMILY RELATIONSHIPS", this::familyRelationships);
-            button(page, "📊 EMPIRE ECONOMY REPORT", this::empireEconomyReport);
-            button(page, "🥇 GLOBAL WORLD RANKING", this::worldRanking);
-            button(page, "📖 DYNAMIC STORY CHOICES", this::dynamicStoryChoices);
-            button(page, "🎭 CHARACTER REPUTATION", this::characterReputation);
-            button(page, "🌳 MAFIA FAMILY TREE", this::mafiaFamilyTree);
-            button(page, "🧠 RIVAL BOSS PERSONALITY", this::rivalPersonalityReport);
-            button(page, "⚖ MAJOR LIFE DECISIONS", this::majorLifeDecisions);
-            button(page, "📈 LIFETIME EMPIRE STATISTICS", this::lifetimeStatistics);
-            button(page, "♾ CONTINUE DYNASTY", this::continueDynasty);
-            button(page, "🗺 INTERACTIVE GLOBAL CITY MAP", this::globalCityMap);
-            button(page, "🕊 MAFIA DIPLOMACY & PEACE TREATIES", this::mafiaDiplomacy);
-            button(page, "👨‍👩‍👧 ADVANCED FAMILY COUNCIL AI", this::advancedFamilyAI);
-            button(page, "📉 DYNAMIC BUSINESS MARKET", this::dynamicBusinessMarket);
-            button(page, "🏅 WORLD LEADERBOARD", this::mafiaWorldLeaderboard);
-            button(page, "📜 LEGENDARY STORY CAMPAIGN", this::legendaryCampaign);
-            button(page, "🤝 LEAVE CURRENT GANG", this::leaveGang);
+            text(page, "Choose a category to see each feature's purpose and open it directly.", 13, muted);
+            button(page, "📜 STORY & MISSIONS  ·  3 OPTIONS", this::openStoryCategory);
+            button(page, "🏴 GANG & FAMILY MANAGEMENT  ·  6 OPTIONS", this::openFamilyCategory);
+            button(page, "🌍 TERRITORY & GLOBAL NETWORK  ·  6 OPTIONS", this::openTerritoryCategory);
+            button(page, "💼 BUSINESS & FINANCE  ·  4 OPTIONS", this::openFinanceCategory);
+            button(page, "⚔ RIVALRIES & EMPIRE SECURITY  ·  5 OPTIONS", this::openRivalryCategory);
+            button(page, "🏆 PROGRESSION & ACHIEVEMENTS  ·  11 OPTIONS", this::openProgressCategory);
+            button(page, "🌦 EVENTS & DECISIONS  ·  3 OPTIONS", this::openEventsCategory);
         }
         button(page, "⬅ BACK TO LIFE", activity::recreate);
         activity.setContentView(scroll);
+    }
+
+    private void openStoryCategory() {
+        showCategoryMenu("STORY & MISSIONS",
+            new String[]{"Story Missions", "Legendary Story Campaign", "Dynamic Story Choices"},
+            new String[]{"Complete individual objectives, see instructions and collect rewards.", "Play a multi-chapter campaign with choices and milestone rewards.", "Make story decisions that change reputation, family trust and influence."},
+            new Runnable[]{this::showMissions, this::legendaryCampaign, this::dynamicStoryChoices});
+    }
+
+    private void openFamilyCategory() {
+        showCategoryMenu("GANG & FAMILY MANAGEMENT",
+            new String[]{"Gang Management", "Loyalty & Family Hierarchy", "Family Relationships", "Mafia Family Tree", "Advanced Family Council", "Leave Current Gang"},
+            new String[]{"Recruit, train and manage organisation members.", "Review member loyalty, appoint lieutenants and manage leadership.", "Improve and review bonds between family members.", "View recorded parents, siblings, children and heirs.", "Hold family discussions and address ambitions or disagreements.", "Leave your current organisation."},
+            new Runnable[]{this::gangManagement, this::familyHierarchy, this::familyRelationships, this::mafiaFamilyTree, this::advancedFamilyAI, this::leaveGang});
+    }
+
+    private void openTerritoryCategory() {
+        showCategoryMenu("TERRITORY & GLOBAL NETWORK",
+            new String[]{"Expand Into a New Territory", "Living City World Map", "Interactive Global City Map", "International Network", "Global Alliances", "Mafia Diplomacy & Peace Treaties"},
+            new String[]{"Invest in and establish influence in the next available city district.", "Review local districts and your current territory coverage.", "Explore the wider city network and international locations.", "Develop your organisation's presence in international cities.", "Create and manage fictional partnerships with other organisations.", "Negotiate diplomatic agreements and peaceful settlements."},
+            new Runnable[]{this::expandTerritory, this::livingCityMap, this::globalCityMap, this::internationalNetwork, this::globalAlliancesMenu, this::mafiaDiplomacy});
+    }
+
+    private void openFinanceCategory() {
+        showCategoryMenu("BUSINESS & FINANCE",
+            new String[]{"Underground Business Network", "Wealth & Asset Portfolio", "Empire Economy Report", "Dynamic Business Market"},
+            new String[]{"Establish and manage fictional businesses and their income.", "Review and manage your assets and investments.", "See your simulated income, expenses, cash and financial performance.", "Check market changes that can affect simulated business values and income."},
+            new Runnable[]{this::businessNetwork, this::globalAssetPortfolio, this::empireEconomyReport, this::dynamicBusinessMarket});
+    }
+
+    private void openRivalryCategory() {
+        showCategoryMenu("RIVALRIES & EMPIRE SECURITY",
+            new String[]{"Rival Gang Challenge", "Rival Boss Showdown", "Rival Boss Personality", "Rival Empire AI", "Police Attention & Prison"},
+            new String[]{"Compete with another gang through abstract strategy and negotiation challenges.", "Take on a rival boss in a fictional leadership contest.", "Review the personality traits that shape rival-boss encounters.", "Monitor rival organisations' simulated power and development.", "Review police attention, legal consequences and any prison sentence."},
+            new Runnable[]{this::rivalChallenge, this::bossShowdown, this::rivalPersonalityReport, this::rivalEmpireReport, this::policeAndPrison});
+    }
+
+    private void openProgressCategory() {
+        showCategoryMenu("PROGRESSION & ACHIEVEMENTS",
+            new String[]{"Mafia World Domination", "Global Underworld Election", "Rank & Empire Progress", "Emperor Achievements", "Character Reputation", "Lifetime Empire Statistics", "World Leaderboard", "Legacy & Generation Record", "Heir & Generational Succession", "Continue Dynasty", "Safehouse Network"},
+            new String[]{"Track your overall fictional empire-domination score.", "Compete for leadership in the simulated global organisation election.", "Review your current rank and promotion requirements.", "View achievements and milestones you have unlocked.", "Track respect, fear, popularity and loyalty scores.", "Review lifetime wealth, influence, territories and records.", "Compare your organisation's score with rival organisations.", "Review family legacy and generation records.", "Choose or manage an heir and succession progress.", "Continue the story into the next generation when eligible.", "Purchase and upgrade safehouses for your organisation."},
+            new Runnable[]{this::worldDomination, this::mafiaElection, this::showProgress, this::emperorAchievements, this::characterReputation, this::lifetimeStatistics, this::mafiaWorldLeaderboard, this::legacyRecord, this::successionMenu, this::continueDynasty, this::safehouseNetwork});
+    }
+
+    private void openEventsCategory() {
+        showCategoryMenu("EVENTS & DECISIONS",
+            new String[]{"Dynamic World Events", "Major Life Decisions"},
+            new String[]{"View changing events and participate in available activities.", "Make important choices that can affect your character and organisation."},
+            new Runnable[]{this::worldEventsReport, this::majorLifeDecisions});
+    }
+
+    private void showCategoryMenu(String heading, String[] names, String[] descriptions, Runnable[] actions) {
+        LinearLayout list = new LinearLayout(activity);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setPadding(18, 8, 18, 8);
+        ScrollView scroll = new ScrollView(activity);
+        scroll.addView(list);
+        AlertDialog dialog = new AlertDialog.Builder(activity).setTitle(heading).setView(scroll)
+            .setNegativeButton("BACK TO CONTROL CENTER", (d, w) -> showDashboard()).create();
+        for (int i = 0; i < names.length; i++) {
+            final int index = i;
+            LinearLayout item = new LinearLayout(activity);
+            item.setOrientation(LinearLayout.VERTICAL);
+            item.setPadding(16, 13, 16, 13);
+            item.setBackground(makeRounded(panel, gold, 1, 12));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+            lp.setMargins(0, 5, 0, 5);
+            list.addView(item, lp);
+            TextView name = new TextView(activity);
+            name.setText("▶  " + names[i]);
+            name.setTextColor(gold);
+            name.setTextSize(16);
+            name.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+            item.addView(name);
+            TextView desc = new TextView(activity);
+            desc.setText(descriptions[i]);
+            desc.setTextColor(white);
+            desc.setTextSize(13);
+            desc.setPadding(25, 5, 0, 0);
+            item.addView(desc);
+            item.setOnClickListener(v -> {
+                dialog.dismiss();
+                actions[index].run();
+            });
+        }
+        dialog.show();
+    }
+
+    private GradientDrawable makeRounded(int color, int strokeColor, int strokeWidth, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(radius * activity.getResources().getDisplayMetrics().density);
+        drawable.setStroke(strokeWidth, strokeColor);
+        return drawable;
     }
 
     private void showGangSelection() {
