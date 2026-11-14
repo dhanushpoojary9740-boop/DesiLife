@@ -293,6 +293,11 @@ public class MafiaManager {
             button(page, "🕘 RECENTLY USED", this::showRecentlyUsed);
             button(page, "🔔 EMPIRE NOTIFICATIONS", this::showSmartNotifications);
             button(page, "📊 EMPIRE OVERVIEW", this::showEmpireOverview);
+            button(page, "🎓 FEATURE TUTORIALS", this::showFeatureTutorials);
+            button(page, "🎯 MISSION PROGRESS", this::showMissionTracker);
+            button(page, "📅 DAILY CHALLENGE", this::showDailyChallenge);
+            button(page, "🏅 ACHIEVEMENT REWARDS", this::showAchievementRewards);
+            button(page, "👤 CHARACTER PROFILE", this::showCharacterProfile);
             button(page, "📜 STORY & MISSIONS  ·  3 OPTIONS", this::openStoryCategory);
             button(page, "🏴 GANG & FAMILY MANAGEMENT  ·  6 OPTIONS", this::openFamilyCategory);
             button(page, "🌍 TERRITORY & GLOBAL NETWORK  ·  6 OPTIONS", this::openTerritoryCategory);
@@ -527,6 +532,101 @@ public class MafiaManager {
             + "\\nGENERATIONS: " + dynastyGenerations + "\\nGLOBAL ALLIANCES: " + globalAlliances
             + "\\nINTERNATIONAL CITIES: " + internationalCities;
         new AlertDialog.Builder(activity).setTitle("📊 EMPIRE OVERVIEW").setMessage(report)
+            .setPositiveButton("OK", null).show();
+    }
+
+
+    // Bundle 12: guided gameplay, progress tracking and character profile.
+    private void showFeatureTutorials() {
+        String[] names = {"Story Missions", "Gang Management", "Territory Map",
+                "Business Network", "Family Council", "Rival Empire", "World Ranking"};
+        String[] help = {
+                "Open Story & Missions. Select a mission to read its objective, then tap GO TO MISSION. Complete the activity to receive its reward.",
+                "Open Gang & Family Management to review your organisation, members, loyalty and leadership options.",
+                "Open Territory & Global Network to view districts and city expansion progress. Territory actions may require money and sufficient influence.",
+                "Open Business & Finance to establish or upgrade fictional businesses and review income and assets.",
+                "Open Gang & Family Management, then Family Council or Family Relationships to manage bonds, ambitions and succession.",
+                "Open Rivalries & Empire Security to review rival organisations, challenges and boss showdowns.",
+                "Open Progression & Achievements to compare your influence, wealth, territories and achievements."
+        };
+        new AlertDialog.Builder(activity).setTitle("🎓 FEATURE TUTORIALS")
+            .setItems(names, (d, which) -> new AlertDialog.Builder(activity)
+                .setTitle(names[which]).setMessage(help[which])
+                .setPositiveButton("GOT IT", null).show())
+            .setNegativeButton("CLOSE", null).show();
+    }
+
+    private void showMissionTracker() {
+        String next = completedMissions < 1 ? "Complete your first Story Mission."
+                : completedMissions < 5 ? "Complete " + (5 - completedMissions) + " more Story Missions to reach the 5-mission milestone."
+                : completedMissions < 10 ? "Complete " + (10 - completedMissions) + " more Story Missions to reach the 10-mission milestone."
+                : "You have completed the 10-mission milestone. Keep playing to build your lifetime record.";
+        new AlertDialog.Builder(activity).setTitle("🎯 MISSION PROGRESS")
+            .setMessage("Completed missions: " + completedMissions + "\n\nNext objective: " + next
+                    + "\n\nOpen Story & Missions → Story Missions to view available objectives.")
+            .setPositiveButton("OPEN MISSIONS", (d,w) -> showMissions())
+            .setNegativeButton("CLOSE", null).show();
+    }
+
+    private void showDailyChallenge() {
+        int age = save.getInt("age", 18);
+        int lastAge = save.getInt("mafia_challenge_age", -1);
+        boolean done = save.getBoolean("mafia_challenge_done", false);
+        if (lastAge != age) {
+            save.edit().putInt("mafia_challenge_age", age).putBoolean("mafia_challenge_done", false).apply();
+            done = false;
+        }
+        final boolean completed = done;
+        String objective;
+        int type = Math.floorMod(age, 4);
+        if (type == 0) objective = "Complete one Story Mission and strengthen your reputation.";
+        else if (type == 1) objective = "Make one positive family or council decision.";
+        else if (type == 2) objective = "Complete one business or diplomacy activity.";
+        else objective = "Complete one rivalry, campaign or world progression activity.";
+        AlertDialog.Builder b = new AlertDialog.Builder(activity).setTitle("📅 DAILY CHALLENGE")
+            .setMessage("Challenge for age " + age + "\n\n" + objective
+                    + "\n\nStatus: " + (completed ? "COMPLETED" : "IN PROGRESS")
+                    + "\n\nChallenges refresh when your character advances to a new age.");
+        if (!completed) b.setPositiveButton("MARK COMPLETE", (d,w) -> {
+            save.edit().putBoolean("mafia_challenge_done", true).apply();
+            money += 750; reputation = clamp(reputation + 3, 0, 100);
+            persist(); notifyChange("Daily challenge reward: ₹750 and +3 reputation.");
+            showDailyChallenge();
+        });
+        b.setNegativeButton("CLOSE", null).show();
+    }
+
+    private void showAchievementRewards() {
+        StringBuilder s = new StringBuilder();
+        s.append(completedMissions >= 1 ? "✓" : "○").append(" First Story Mission — ")
+            .append(completedMissions >= 1 ? "Unlocked" : "Complete 1 mission").append("\n\n");
+        s.append(completedMissions >= 10 ? "✓" : "○").append(" Mission Veteran — ")
+            .append(completedMissions >= 10 ? "Unlocked" : "Complete 10 missions").append("\n\n");
+        s.append(controlledTerritories >= 5 ? "✓" : "○").append(" District Builder — ")
+            .append(controlledTerritories >= 5 ? "Unlocked" : "Control 5 districts").append("\n\n");
+        s.append(rivalWins >= 5 ? "✓" : "○").append(" Rival Champion — ")
+            .append(rivalWins >= 5 ? "Unlocked" : "Win 5 rival challenges").append("\n\n");
+        s.append(dynastyGenerations >= 3 ? "✓" : "○").append(" Dynasty Keeper — ")
+            .append(dynastyGenerations >= 3 ? "Unlocked" : "Reach 3 generations");
+        new AlertDialog.Builder(activity).setTitle("🏅 ACHIEVEMENT REWARDS")
+            .setMessage(s.toString()).setPositiveButton("OK", null).show();
+    }
+
+    private void showCharacterProfile() {
+        new AlertDialog.Builder(activity).setTitle("👤 CHARACTER PROFILE")
+            .setMessage("Organisation: " + (gang.isEmpty() ? "Not joined" : gang)
+                + "\nRank: " + ranks[Math.min(Math.max(rank, 0), ranks.length - 1)]
+                + "\nAge: " + save.getInt("age", 18)
+                + "\nCash: ₹" + money
+                + "\nHealth: " + health + "/100"
+                + "\nHappiness: " + happiness + "/100"
+                + "\nReputation: " + reputation + "/100"
+                + "\nRespect: " + respect + "   Fear: " + fear
+                + "\nPopularity: " + popularity
+                + "\nInfluence: " + influence
+                + "\nTerritories: " + controlledTerritories
+                + "\nCompleted missions: " + completedMissions
+                + "\nDynasty generations: " + dynastyGenerations)
             .setPositiveButton("OK", null).show();
     }
 
