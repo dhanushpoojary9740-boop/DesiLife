@@ -254,7 +254,12 @@ public class EducationManager {
                     this::chooseEntranceExam);
 
             if (graduated) {
-                addButton(root, "🎓 Higher Studies", this::higherStudies);
+                if (educationLevel.contains("Undergraduate Degree")
+                        || educationLevel.contains("Bachelor")) {
+                    addButton(root, "🎓 Study Another Degree",
+                            this::startAnotherDegree);
+                }
+                addButton(root, "📚 Higher Studies", this::higherStudies);
             }
 
             addButton(root, "📊 Academic Report", this::academicReport);
@@ -974,6 +979,35 @@ public class EducationManager {
                         waitingForEntranceAdmission = true;
                         chooseEntranceExam();
                     }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // ---------------- SECOND UNDERGRADUATE DEGREE ----------------
+
+    private void startAnotherDegree() {
+        if (!graduated) {
+            toast("Complete your current course before starting another degree.");
+            return;
+        }
+
+        if (!(educationLevel.contains("Undergraduate Degree")
+                || educationLevel.contains("Bachelor"))) {
+            toast("Complete an undergraduate degree before applying for another degree.");
+            return;
+        }
+
+        new AlertDialog.Builder(activity)
+                .setTitle("Study Another Degree")
+                .setMessage(
+                        "You have completed " + course + "."
+                                + "\n\nWould you like to apply for another undergraduate degree?"
+                                + "\n\nYou can choose a different course, institution and admission method."
+                )
+                .setPositiveButton("Choose Degree", (dialog, which) -> {
+                    pendingHigherStudy = "None";
+                    chooseInstitution("Undergraduate Degree");
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
