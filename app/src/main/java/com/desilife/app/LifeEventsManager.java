@@ -30,6 +30,7 @@ public class LifeEventsManager {
     private final Random random = new Random();
 
     private int age;
+    private int ageMonths;
     private int money;
     private int health;
     private int happiness;
@@ -42,11 +43,12 @@ public class LifeEventsManager {
     private final int orange = Color.rgb(222, 54, 12);
 
     public LifeEventsManager(Activity activity, SharedPreferences save,
-            int age, int money, int health, int happiness,
+            int age, int ageMonths, int money, int health, int happiness,
             int intelligence, EventCallback callback) {
         this.activity = activity;
         this.save = save;
         this.age = age;
+        this.ageMonths = ageMonths;
         this.money = money;
         this.health = health;
         this.happiness = happiness;
@@ -57,14 +59,15 @@ public class LifeEventsManager {
     public void triggerRandomEvent() {
         if (age < 5 || activity.isFinishing()) return;
 
-        // Events are offered once per birthday. The age key also protects
-        // against accidental duplicate launches during the same year.
-        String eventKey = "desilife_event_shown_age";
-        if (save.getInt(eventKey, -1) == age) {
-            finish("You completed another year of life.");
+        // One random event opportunity per in-game month. The absolute month
+        // key prevents duplicate popups if the same month is processed twice.
+        int currentGameMonth = age * 12 + ageMonths;
+        String eventKey = "desilife_event_shown_game_month";
+        if (save.getInt(eventKey, -1) == currentGameMonth) {
+            finish("No new event came up this month.");
             return;
         }
-        save.edit().putInt(eventKey, age).apply();
+        save.edit().putInt(eventKey, currentGameMonth).apply();
 
         int event = random.nextInt(15);
         switch (event) {

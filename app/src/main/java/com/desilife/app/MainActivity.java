@@ -2312,9 +2312,14 @@ public class MainActivity extends Activity {
             showBirthdayDialog();
         } else {
             saveGame();
-            showDashboard();
-            message("One month has passed.\\n\\nYour age is now "
-                    + getFormattedAge() + ".");
+            // Trigger a random life event after every single-month age-up.
+            if (age >= 5) {
+                runRandomLifeEvent();
+            } else {
+                showDashboard();
+                message("One month has passed.\n\nYour age is now "
+                        + getFormattedAge() + ".");
+            }
         }
     }
 
@@ -2713,6 +2718,7 @@ public class MainActivity extends Activity {
             this,
             save,
             age,
+            ageMonths,
             money,
             health,
             happiness,
